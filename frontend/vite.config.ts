@@ -7,6 +7,12 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    // Bind IPv4 explicitly. Vite's default resolves `localhost`, which on
+    // Windows prefers the IPv6 loopback `::1`, so a tool that probes
+    // 127.0.0.1 - the start script's health gate, an e2e check, curl - finds
+    // nothing listening even though the server printed "ready". The proxy
+    // target below is IPv4 too, so both sides of the connection agree.
+    host: '127.0.0.1',
     port: 5173,
     proxy: {
       '/api': {

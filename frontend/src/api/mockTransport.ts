@@ -91,6 +91,11 @@ export class MockTransport implements Transport {
       ...this.runFor(scenario.id),
       test_cases: [...baselineCases, ...candidateCases],
       evidence: [...EVIDENCE],
+      // The counts are the fixture corpus' own totals, so the offline console
+      // reports the same tallies the live one reads out of the envelope.
+      evidence_count: EVIDENCE.length,
+      finding_count: FINDINGS.length,
+      event_count: timelineFor(scenario.id).length,
     }
   }
 
