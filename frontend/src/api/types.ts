@@ -137,6 +137,18 @@ export interface DemoSeed {
   runs: Run[]
   /** Recognised suggestions the one-click demo entry offers. */
   scenarios?: DemoScenario[]
+  /**
+   * The metadata the live `GET /demo/seed` returns above the faked-out
+   * `project`/`runs`. `docs/INTERFACES.md` specifies the endpoint but does not
+   * fix its body; these are the fields the running service actually sends and
+   * the adapter reads. All optional — the console never requires them.
+   */
+  scenario?: string
+  baseline_version?: string
+  candidate_version?: string
+  seed?: number
+  case_count?: number
+  deterministic?: boolean
 }
 
 export interface DemoScenario {
@@ -197,4 +209,53 @@ export interface Comparison {
   stable_regressions: number
   /** Cases that moved in one sample but not across repeats. */
   noise_only: number
+}
+
+/**
+ * The live backend's report summary.
+ *
+ * `docs/INTERFACES.md` types `Report.metrics` as a bare `object`, and the
+ * running service fills it with a flat aggregate rather than the frozen
+ * `MetricValue` map the console renders. Naming the fields here is a *local*
+ * adapter decision, documented in `frontend/TRANSPORT.md`; nothing below is
+ * invented, and every field is optional so a payload that lacks one degrades
+ * to "not reported" instead of a wrong number.
+ */
+export interface LiveReportMetrics {
+  baseline_pass_rate?: number
+  candidate_pass_rate?: number
+  baseline_score?: number
+  candidate_score?: number
+  matched_scenarios?: number
+  baseline_cases?: number
+  candidate_cases?: number
+  regression_detected?: boolean
+  regressed_scenarios?: string[]
+  control_scenarios?: string[]
+  fixed_scenarios?: string[]
+  findings_by_severity?: Partial<Record<Severity, number>>
+  by_category?: Record<string, { total?: number; regressed?: number }>
+}
+
+/**
+ * The result of resolving the demo entry against a live backend.
+ *
+ * `GET /demo/seed` is side-effect free by contract, so it cannot create the
+ * project or the run. When live, the adapter calls this instead: the seed
+ * metadata supplies the versions and seed, `listProjects`/`listRuns` supply
+ * the identities, and a run is created only when none exists. Repeated calls
+ * return the same run, which is what makes a second click of "Start demo run"
+ * idempotent rather than a second run.
+ */
+export interface DemoContext {
+  project: Project
+  /** The run the console should open. */
+  run: Run
+  /** True when this call created the run rather than reusing one. */
+  created: boolean
+  /** The versions and seed the run was (or would be) built from. */
+  baselineVersion: string
+  candidateVersion: string
+  seed: number | null
+  caseCount: number | null
 }

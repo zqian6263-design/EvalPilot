@@ -47,9 +47,10 @@ export function DemoEntry({ scenarioId, onScenarioChange, starting, onStartDemo 
             {starting ? 'Starting…' : 'Start demo run'}
           </button>
           <p className="entry__note">
-            Loads the seeded project and both versions. If the backend is reachable it runs
-            live; if not, the console presents the same run from bundled fixtures and marks
-            the data as offline.
+            Loads the seeded project and both versions. With the backend reachable this creates or
+            opens the real run for those versions and runs it live — pressing again reopens the
+            same run rather than creating a second one. Without it, the console presents the same
+            scenario from bundled fixtures and marks the data as offline.
           </p>
         </div>
         <div className="entry__controls">

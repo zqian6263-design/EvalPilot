@@ -63,7 +63,9 @@ export function Console({
           <span>
             The backend did not answer <code className="u-device">/api/health</code>. This run is
             served from bundled fixtures and reproduces identically on every load — useful for a
-            demo, but it is not evidence about a real system.
+            demo, but it is not evidence about a real system. Press{' '}
+            <strong>Start demo run</strong> again once the backend is up to switch to the real
+            service; the header will name the run it opens.
           </span>
         </div>
       )}

@@ -11,3 +11,8 @@ coverage/
 .playwright/
 *.log
 .DS_Store
+
+# Runtime state written by scripts/start-all.ps1 and scripts/e2e-check.ps1:
+# tracked PIDs, captured server logs, and the console screenshot. All of it is
+# regenerated per run and none of it belongs in a review diff.
+.runtime/
