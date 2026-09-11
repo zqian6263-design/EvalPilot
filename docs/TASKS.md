@@ -6,34 +6,39 @@
 - Product and scoring docs commit on main: `36d349d`
 - Shared contract: `docs/INTERFACES.md`
 
-## Worktrees
+## Completed streams
 
-| Stream | Branch | Worktree | Owned write scope | Status |
-|---|---|---|---|---|
-| API core | `task/api-core` | `D:\z工程文件\EvalPilot-worktrees\api-core` | `backend/**`, backend start/test scripts | running |
-| Evaluator | `task/evaluator` | `D:\z工程文件\EvalPilot-worktrees\evaluator` | `backend/evalpilot/evaluation/**`, evaluator tests/docs | running |
-| Frontend | `task/frontend` | `D:\z工程文件\EvalPilot-worktrees\frontend` | `frontend/**`, frontend start/test scripts | running |
+| Stream | Branch | Merge result | Verification |
+|---|---|---|---|
+| Evaluator | `task/evaluator` | merged | 72 tests passed |
+| API core | `task/api-core` | merged with adapter split | 43 backend tests passed |
+| Frontend | `task/frontend` | merged | 21 tests, production build passed |
+
+## Active integration streams
+
+| Stream | Branch | Owned scope | Goal |
+|---|---|---|---|
+| Evaluation integration | `task/eval-integration` | runner, adapter, backend integration tests | route persisted run data through the statistical evaluation engine |
+| E2E integration | `task/e2e-integration` | frontend API adapter and E2E scripts | verify the browser console against the live backend |
 
 ## Merge order
 
-1. API core, because it establishes the backend package and runnable service.
-2. Evaluator, then connect its service to the API boundary.
-3. Frontend, then verify it against the real API.
-4. Codex integration pass: contracts, wiring, tests, demo data, scripts, README.
+1. Evaluation integration.
+2. E2E integration.
+3. Codex final integration pass: resolve remaining contract mismatches, run clean setup, and update README.
 
 ## Review gates
 
 - No agent may modify another stream's owned paths.
-- Shared interface changes require an explicit contract decision in `docs/INTERFACES.md`.
-- Every stream must run its tests before being accepted.
+- Shared interface changes require an explicit contract decision.
+- Every stream must run its tests before acceptance.
 - Codex reruns all tests after merge; agent-reported success is not accepted as final evidence.
-- Failed or partial work is reviewed before merging; it is not automatically discarded.
 
 ## Integration checks
 
 - Backend tests pass.
 - Evaluator tests pass.
-- Frontend build passes.
+- Frontend tests and build pass.
 - Backend and frontend start together.
 - Seeded demo completes end to end.
 - UI reads real evidence and report data.
