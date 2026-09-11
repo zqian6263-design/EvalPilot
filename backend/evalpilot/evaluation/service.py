@@ -60,6 +60,16 @@ _MISSING_EVIDENCE_BY_CHECK: dict[CheckKind, EvidenceKind] = {
 #: Weight of the deterministic half of a blended score.
 DETERMINISTIC_WEIGHT = 0.5
 
+#: Suite order, so a case's failing checks report in a stable sequence rather
+#: than in whatever order a set happened to iterate.
+_CHECK_ORDER: tuple[CheckKind, ...] = (
+    CheckKind.FORMAT,
+    CheckKind.REFUSAL,
+    CheckKind.CITATION,
+    CheckKind.FACTS,
+    CheckKind.TOOL_TRACE,
+)
+
 
 class CaseEvaluation(EvaluationModel):
     """Aggregated evaluation of one test case across its sampled trials."""
@@ -72,6 +82,11 @@ class CaseEvaluation(EvaluationModel):
     judge_failures: int = 0
     errors: int = 0
     missing_evidence: list[MissingEvidence] = Field(default_factory=list)
+    #: Checks that failed on at least one trial, deduplicated in suite order.
+    #: ``missing_evidence`` only covers checks that stand for a piece of
+    #: evidence (citations, tool traces); a caller reporting *why* a case lost
+    #: points needs the content failures too.
+    failing_checks: list[CheckKind] = Field(default_factory=list)
     observations_scored: int = 0
 
     @property
@@ -514,6 +529,7 @@ class EvaluationService:
         deterministic_scores: dict[str, float] = {}
         judge_scores: dict[str, float] = {}
         gaps: dict[tuple[str, EvidenceKind], MissingEvidence] = {}
+        failing: set[CheckKind] = set()
         errors = 0
         judge_failures = 0
 
@@ -532,6 +548,9 @@ class EvaluationService:
             for item in items:
                 errors += int(item.errored)
                 judge_failures += int(item.judge_failed)
+                for outcome in item.outcomes:
+                    if outcome.applicable and not outcome.passed:
+                        failing.add(outcome.kind)
                 for gap in item.missing_evidence():
                     key = (version, gap.kind)
                     if key in gaps:
@@ -550,6 +569,7 @@ class EvaluationService:
             judge_failures=judge_failures,
             errors=errors,
             missing_evidence=list(gaps.values()),
+            failing_checks=sorted(failing, key=lambda kind: _CHECK_ORDER.index(kind)),
             observations_scored=len(scored),
         )
 

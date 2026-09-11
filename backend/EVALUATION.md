@@ -186,8 +186,11 @@ inside a live event loop rather than deadlocking on one — await
 
 Because `compare` filters observations by case, passing the whole run's
 observations is expected. `evaluate_case` is the single-case entry point and
-returns a `CaseEvaluation` with per-version scores and the deduplicated
-missing-evidence list.
+returns a `CaseEvaluation` with per-version scores, the deduplicated
+missing-evidence list, and `failing_checks` — every check that failed on at
+least one trial, in suite order. `missing_evidence` only covers the checks that
+stand for a piece of evidence (citations, tool traces); a caller reporting *why*
+a case lost points needs `failing_checks` as well.
 
 ### Comparing one case directly
 

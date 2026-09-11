@@ -1,41 +1,34 @@
 """Evaluation boundary for EvalPilot.
 
-The runner depends only on :class:`~evalpilot.orchestration_eval.service.EvaluationService`
-and its :class:`~evalpilot.orchestration_eval.service.EvaluationOutcome`. Replacing the
-deterministic checks with the full causal-evaluation pipeline (rubric LLM
-judging, repeated sampling, significance testing) is a change confined to this
-package plus the constructor call in :mod:`evalpilot.runner`.
+The runner depends on exactly one thing here: :class:`EvaluationService` and
+its :meth:`~evalpilot.orchestration_eval.service.EvaluationService.evaluate_run_async`.
 
-Not implemented in the MVP, by design:
+This package used to hold a second, weaker evaluator — pass/fail keyword checks
+with a per-scenario ``changed`` flag and no notion of sampling error. That layer
+has been retired. The evaluation logic now lives in :mod:`evalpilot.evaluation`,
+which does matched-case scoring, repeated sampling, a paired effect size, a
+bootstrap confidence interval, and an explicit regression decision. What remains
+here is the seam: mapping backend rows into the engine's models, turning the
+engine's comparison into the case verdicts and findings the backend persists,
+and reporting the engine's numbers as metrics.
 
-- LLM judging — see :class:`~evalpilot.orchestration_eval.service.JudgeHook`.
-- Repeated sampling and variance estimates.
-- Cross-version statistical significance testing.
+Keeping the seam separate from the engine leaves the engine a pure library with
+no database or HTTP knowledge, and leaves the runner a single stable method to
+call.
 """
 
-from evalpilot.orchestration_eval.checks import CaseEvaluation, CheckOutcome, evaluate_case
-from evalpilot.orchestration_eval.compare import (
-    RegressionComparison,
-    compare_matched_cases,
-    summarize_metrics,
-)
-from evalpilot.orchestration_eval.findings import build_findings
 from evalpilot.orchestration_eval.service import (
+    CaseVerdict,
     EvaluationOutcome,
     EvaluationService,
-    JudgeHook,
+    count_by_severity,
+    summarize,
 )
 
 __all__ = [
-    "CaseEvaluation",
-    "CheckOutcome",
+    "CaseVerdict",
     "EvaluationOutcome",
     "EvaluationService",
-    "JudgeHook",
-    "RegressionComparison",
-    "build_findings",
-    "compare_matched_cases",
-    "evaluate_case",
-    "summarize_metrics",
+    "count_by_severity",
+    "summarize",
 ]
-
