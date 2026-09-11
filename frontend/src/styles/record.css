@@ -1,0 +1,475 @@
+/* ============================================================================
+   The record — the case table and its evidence drawer.
+   ========================================================================= */
+
+.record-wrap {
+  min-width: 0;
+  flex: 1;
+}
+
+.record__title-cell {
+  min-width: 260px;
+}
+
+/* Scores are single tokens. They must never wrap — a wrapped cell puts the
+   candidate's score under the baseline's and the row reads as two rows. */
+.record__score-col {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.record__num {
+  width: 1%;
+  color: var(--graphite);
+}
+
+.record td.u-num,
+.record th.u-num {
+  font-family: var(--face-device);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.record__case-no {
+  font-family: var(--face-device);
+  font-size: var(--size-label);
+  color: var(--graphite);
+}
+
+.record__score--down {
+  color: var(--candidate);
+  font-weight: 700;
+}
+
+.record__score--up {
+  color: var(--baseline);
+  font-weight: 700;
+}
+
+.record__delta {
+  font-family: var(--face-device);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.record__delta--down {
+  color: var(--candidate);
+}
+
+.record__delta--up {
+  color: var(--baseline);
+}
+
+/* The whole row is the control; the button resets the browser's defaults. */
+.record__open {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--graphite);
+  text-underline-offset: 2px;
+}
+
+.record__open:hover {
+  text-decoration-color: var(--candidate);
+}
+
+.record__open:focus-visible {
+  outline: 2px solid var(--candidate);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------- filters ---- */
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s2) var(--s3);
+  border-bottom: var(--rule);
+  flex-wrap: wrap;
+  background: var(--ground);
+}
+
+.filters__group {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+/* ------------------------------------------------------------ drawer ------- */
+
+.drawer__title {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  min-width: 0;
+}
+
+.drawer__case-title {
+  font-size: var(--size-lead);
+  letter-spacing: 0.02em;
+}
+
+.drawer__close {
+  font-family: var(--face-device);
+  font-size: var(--size-body);
+  border: var(--rule);
+  background: transparent;
+  color: var(--ink);
+  padding: var(--s1) var(--s2);
+  cursor: pointer;
+  flex: none;
+}
+
+.drawer__close:hover {
+  background: var(--ink);
+  color: var(--ground);
+}
+
+.drawer__close:focus-visible {
+  outline: 2px solid var(--candidate);
+  outline-offset: 1px;
+}
+
+/* ------------------------------------------------------- evidence item ---- */
+
+.ev {
+  border: var(--rule);
+  background: var(--ground);
+}
+
+.ev__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s1) var(--s2);
+  border-bottom: var(--rule);
+  background: var(--ground-shade);
+}
+
+.ev__kind {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.ev__body {
+  padding: var(--s2) var(--s3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.ev__label {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+
+/* ------------------------------------------------------------- prompt ----- */
+
+.prompt {
+  border-left: 3px solid var(--graphite);
+  padding: var(--s1) 0 var(--s1) var(--s3);
+  font-size: var(--size-lead);
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------ the two answers --- */
+
+.answers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: var(--rule);
+}
+
+@media (max-width: 720px) {
+  .answers {
+    grid-template-columns: 1fr;
+  }
+}
+
+.answer {
+  padding: var(--s2) var(--s3);
+  min-width: 0;
+}
+
+.answer + .answer {
+  border-left: 1px solid var(--graphite-faint);
+}
+
+@media (max-width: 720px) {
+  .answer + .answer {
+    border-left: 0;
+    border-top: var(--rule-faint);
+  }
+}
+
+.answer__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding-bottom: var(--s1);
+  margin-bottom: var(--s2);
+  border-bottom: 2px solid var(--graphite-faint);
+}
+
+.answer--baseline .answer__head {
+  border-bottom-color: var(--baseline);
+}
+
+.answer--candidate .answer__head {
+  border-bottom-color: var(--candidate);
+}
+
+.answer__text {
+  white-space: pre-wrap;
+  font-size: var(--size-body);
+  line-height: 1.5;
+}
+
+.answer__text strong {
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------- point list ----- */
+
+.points {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.point {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--s3);
+  align-items: baseline;
+  padding: var(--s1) 0;
+  border-bottom: var(--rule-faint);
+}
+
+.point:last-child {
+  border-bottom: 0;
+}
+
+.point__mark {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.point__mark--stated {
+  color: var(--ink);
+}
+
+.point__mark--missing {
+  color: var(--candidate);
+  border-bottom: 1px solid var(--candidate);
+}
+
+/* ------------------------------------------------------------- citation --- */
+
+.citations {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s3);
+}
+
+@media (max-width: 720px) {
+  .citations {
+    grid-template-columns: 1fr;
+  }
+}
+
+.citation-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.citation {
+  font-family: var(--face-device);
+  font-size: var(--size-micro);
+  color: var(--ink-soft);
+  padding: var(--s1) 0;
+  border-bottom: var(--rule-faint);
+  display: flex;
+  gap: var(--s2);
+  align-items: baseline;
+}
+
+.citation--absent {
+  color: var(--graphite);
+}
+
+.citation__tick {
+  flex: none;
+}
+
+/* -------------------------------------------------- screenshot placeholder - */
+
+.shot {
+  position: relative;
+  border: var(--rule);
+  background: var(--ground-shade);
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  overflow: hidden;
+}
+
+/* A ruled frame, so an empty slot reads as a printed placeholder and not as
+   an image that failed to load. */
+.shot::before {
+  content: '';
+  position: absolute;
+  inset: var(--s3);
+  border: 1px dashed var(--graphite);
+  pointer-events: none;
+}
+
+.shot__tag {
+  font-family: var(--face-label);
+  font-size: var(--size-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  z-index: 1;
+}
+
+.shot__ref {
+  font-family: var(--face-device);
+  font-size: var(--size-micro);
+  color: var(--graphite);
+  z-index: 1;
+  text-align: center;
+  padding-inline: var(--s4);
+  word-break: break-all;
+}
+
+.shots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s3);
+}
+
+@media (max-width: 720px) {
+  .shots {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------------------------------------------------------------- log ------ */
+
+.log {
+  font-family: var(--face-device);
+  font-size: var(--size-micro);
+  line-height: 1.7;
+  background: var(--ground-lit);
+  border: var(--rule-faint);
+  padding: var(--s2);
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------- checks ------ */
+
+.check {
+  display: grid;
+  grid-template-columns: 150px 1fr 68px;
+  gap: var(--s3);
+  align-items: center;
+  padding: var(--s2) 0;
+  border-bottom: var(--rule-faint);
+}
+
+.check:last-child {
+  border-bottom: 0;
+}
+
+.check__label {
+  font-family: var(--face-label);
+  font-size: var(--size-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.check__detail {
+  font-size: var(--size-body);
+  color: var(--ink-soft);
+}
+
+.check__value {
+  font-family: var(--face-device);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ------------------------------------------------------------ rationale ---- */
+
+.rationale {
+  border-left: 3px solid var(--graphite);
+  padding-left: var(--s3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  font-size: var(--size-body);
+}
+
+.rationale__note {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+
+/* ------------------------------------------------------------- scored ------ */
+
+.scored {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.scored__row {
+  display: grid;
+  grid-template-columns: 96px 1fr 64px;
+  gap: var(--s3);
+  align-items: center;
+}
+
+.scored__value {
+  font-family: var(--face-device);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}

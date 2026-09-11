@@ -1,0 +1,5 @@
+# Local design-review captures and decision payloads.
+.impeccable/
+
+# TypeScript incremental build info.
+*.tsbuildinfo

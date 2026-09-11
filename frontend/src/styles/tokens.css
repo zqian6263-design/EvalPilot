@@ -1,0 +1,482 @@
+/* ============================================================================
+   EvalPilot console — chart paper and machine.
+   Tokens first. Every colour in the app resolves to one of these; if a value
+   is hard-coded in a component it is a bug, not a style choice.
+   ========================================================================= */
+
+:root {
+  /* --- inks. Three, plus the graphite that draws every aid hairline. --- */
+  --ground: #e8e2d4; /* bare chart paper */
+  --ground-lit: #f0ebe0; /* paper under the lamp, for raised readouts */
+  --ground-shade: #ddd6c5; /* paper in the machine's shadow */
+  --ink: #221f1a; /* the printed record */
+  --ink-soft: #4a453c; /* secondary print */
+  --baseline: #2f4a6d; /* baseline trace — deep blue */
+  --candidate: #c8452c; /* candidate trace — vermilion */
+  --graphite: #8d8677; /* graticule, rules, aid hairlines */
+  --graphite-faint: #b8b09e; /* minor graticule */
+
+  /* --- tolerance band. A tint of the baseline ink, not a new colour. --- */
+  --band: rgba(47, 74, 109, 0.11);
+  --band-edge: rgba(47, 74, 109, 0.32);
+
+  /* --- the machine's chassis. Darkest value in the system. --- */
+  --chassis: #2b2721;
+  --chassis-edge: #17140f;
+  --chassis-label: #cdc4b0;
+
+  /* --- type. Condensed industrial grotesque, plus the device face. --- */
+  --face-label: 'Arial Narrow', 'Bahnschrift SemiCondensed', 'Liberation Sans Narrow',
+    'Helvetica Neue Condensed', sans-serif;
+  --face-device: Consolas, 'SF Mono', 'Cascadia Mono', 'DejaVu Sans Mono', monospace;
+  --face-body: 'Arial Narrow', 'Bahnschrift SemiCondensed', Arial, sans-serif;
+
+  --size-micro: 10px;
+  --size-label: 11px;
+  --size-body: 13px;
+  --size-lead: 15px;
+  --size-head: 21px;
+  --size-verdict: 30px;
+
+  --track-label: 0.14em;
+  --track-micro: 0.2em;
+
+  /* --- one spacing rhythm: 4px base. --- */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+
+  /* --- rules. Structural only. --- */
+  --rule: 1px solid var(--graphite);
+  --rule-ink: 1px solid var(--ink);
+  --rule-faint: 1px solid var(--graphite-faint);
+
+  /* --- the only motion in the system: damped, single axis, no overshoot. --- */
+  --snap: 160ms cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --snap: 1ms linear;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  /* The world has no rounded corners. Anywhere. */
+  border-radius: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--face-body);
+  font-size: var(--size-body);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  /* Paper grain would be a texture; a single flat ground is the discipline. */
+}
+
+/* ------------------------------------------------------------------ type -- */
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-family: var(--face-label);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+}
+
+p {
+  margin: 0;
+}
+
+.u-label {
+  font-family: var(--face-label);
+  font-size: var(--size-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.u-device {
+  font-family: var(--face-device);
+  font-size: var(--size-label);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.u-micro {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+
+.u-num {
+  font-family: var(--face-device);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------- layout -- */
+
+.shell {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  min-height: 100%;
+}
+
+.shell__main {
+  min-height: 0;
+  border-top: var(--rule-ink);
+}
+
+/* The record block: the table and the report share this frame. */
+.block {
+  border: var(--rule);
+  background: var(--ground);
+}
+
+.block__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s2) var(--s3);
+  border-bottom: var(--rule-ink);
+}
+
+.block__body {
+  padding: var(--s3);
+}
+
+/* --------------------------------------------------------------- panels -- */
+
+.panel {
+  border: var(--rule);
+  background: var(--ground-lit);
+}
+
+.panel__title {
+  padding: var(--s2) var(--s3);
+  border-bottom: var(--rule-ink);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+/* --------------------------------------------------------------- chips --- */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  padding: 1px var(--s1);
+  border: var(--rule);
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+}
+
+.chip--ink {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.chip--graphite {
+  border-color: var(--graphite);
+  color: var(--graphite);
+}
+
+/* Status reads as printed marks, never as a filled badge. */
+.chip--pass {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.chip--fail {
+  border-color: var(--candidate);
+  color: var(--candidate);
+  border-width: 2px;
+}
+
+.chip--error {
+  border-color: var(--graphite);
+  border-style: dashed;
+  color: var(--ink-soft);
+}
+
+/* -------------------------------------------------------------- controls -- */
+
+.ctl {
+  font-family: var(--face-label);
+  font-size: var(--size-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  padding: var(--s2) var(--s3);
+  border: var(--rule-ink);
+  background: var(--ground);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--snap), color var(--snap);
+}
+
+.ctl:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--ground);
+}
+
+.ctl:focus-visible {
+  outline: 2px solid var(--candidate);
+  outline-offset: 1px;
+}
+
+.ctl:disabled {
+  color: var(--graphite);
+  border-color: var(--graphite);
+  cursor: not-allowed;
+}
+
+.ctl--primary {
+  padding: var(--s3) var(--s5);
+  font-size: var(--size-lead);
+  background: var(--ink);
+  color: var(--ground);
+}
+
+.ctl--primary:hover:not(:disabled) {
+  background: var(--candidate);
+  color: var(--ground);
+}
+
+/* A rocker pair: two positions, one light between them. */
+.rocker {
+  display: inline-flex;
+  border: var(--rule-ink);
+}
+
+.rocker__pos {
+  font-family: var(--face-label);
+  font-size: var(--size-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  padding: var(--s2) var(--s3);
+  border: 0;
+  background: var(--ground);
+  color: var(--graphite);
+  cursor: pointer;
+}
+
+.rocker__pos + .rocker__pos {
+  border-left: var(--rule-ink);
+}
+
+.rocker__pos[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--ground);
+}
+
+.rocker__pos:focus-visible {
+  outline: 2px solid var(--candidate);
+  outline-offset: -2px;
+}
+
+/* ---------------------------------------------------------------- tables -- */
+
+.record {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--size-body);
+}
+
+.record th {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-align: left;
+  padding: var(--s2) var(--s2);
+  border-bottom: var(--rule-ink);
+  white-space: nowrap;
+}
+
+.record td {
+  padding: var(--s2);
+  border-bottom: var(--rule-faint);
+  vertical-align: top;
+}
+
+.record tbody tr:hover {
+  background: var(--ground-shade);
+}
+
+.record tbody tr[aria-selected='true'] {
+  background: var(--ground-shade);
+  box-shadow: inset 2px 0 0 var(--candidate);
+}
+
+.record__num {
+  width: 1%;
+  color: var(--graphite);
+}
+
+/* A row that regressed is struck through, the way a spent entry is. */
+.record__strike {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--ink-soft);
+}
+
+/* ---------------------------------------------------------------- meter --- */
+
+/* A meter is a two-ended bar with a fixed zero — invented for this product.
+   Extent left of centre is loss, right of centre is gain. */
+.meter {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  align-items: center;
+  height: 10px;
+  border: var(--rule-faint);
+  background: var(--ground);
+}
+
+.meter__zero {
+  grid-column: 2;
+  width: 1px;
+  height: 100%;
+  background: var(--ink);
+}
+
+.meter__fill {
+  grid-row: 1;
+  height: 6px;
+  align-self: center;
+}
+
+.meter__fill--loss {
+  grid-column: 1;
+  justify-self: end;
+  background: var(--candidate);
+}
+
+.meter__fill--gain {
+  grid-column: 3;
+  justify-self: start;
+  background: var(--baseline);
+}
+
+/* --------------------------------------------------------------- drawer --- */
+
+.drawer {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: min(660px, 92vw);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: var(--ground-lit);
+  border-left: 2px solid var(--ink);
+  z-index: 40;
+}
+
+.drawer__scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(34, 31, 26, 0.42);
+  z-index: 30;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.drawer__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s3) var(--s4);
+  border-bottom: var(--rule-ink);
+}
+
+.drawer__body {
+  overflow-y: auto;
+  padding: var(--s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+/* ------------------------------------------------------------ utilities -- */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+}
+
+.row--between {
+  justify-content: space-between;
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.hairline {
+  border: 0;
+  border-top: var(--rule);
+  margin: 0;
+}
+
+.scroll-x {
+  overflow-x: auto;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

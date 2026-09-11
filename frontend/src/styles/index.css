@@ -1,0 +1,7 @@
+/* Entry point for every style in the console. Order matters: tokens define
+   the variables the rest resolve against. */
+@import './tokens.css';
+@import './shell.css';
+@import './tape.css';
+@import './record.css';
+@import './report.css';

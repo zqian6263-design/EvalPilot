@@ -1,0 +1,690 @@
+/* ============================================================================
+   The report — a printed sheet, plus the machine's control panel.
+   ========================================================================= */
+
+.sheet {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--s5) var(--s5) var(--s7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+}
+
+.sheet__masthead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s5);
+  padding-bottom: var(--s3);
+  border-bottom: 2px solid var(--ink);
+  flex-wrap: wrap;
+}
+
+.sheet__doctype {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+
+.sheet__title {
+  font-size: var(--size-verdict);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+
+.sheet__summary {
+  font-size: var(--size-lead);
+  line-height: 1.55;
+  max-width: 78ch;
+}
+
+/* A definition list printed as a form: label left, value right, ruled rows. */
+.ledger {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) 1fr;
+  border-top: var(--rule);
+}
+
+.ledger__key {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding: var(--s2) var(--s3) var(--s2) 0;
+  border-bottom: var(--rule-faint);
+}
+
+.ledger__val {
+  padding: var(--s2) 0;
+  border-bottom: var(--rule-faint);
+  font-family: var(--face-device);
+  font-size: var(--size-label);
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+
+.ledger__val--prose {
+  font-family: var(--face-body);
+  font-size: var(--size-body);
+}
+
+/* -------------------------------------------------------------- findings --- */
+
+.finding {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 0;
+  border: var(--rule);
+  background: var(--ground-lit);
+}
+
+@media (max-width: 720px) {
+  .finding {
+    grid-template-columns: 1fr;
+  }
+}
+
+.finding__rail {
+  border-right: var(--rule);
+  padding: var(--s3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  background: var(--ground-shade);
+}
+
+@media (max-width: 720px) {
+  .finding__rail {
+    border-right: 0;
+    border-bottom: var(--rule);
+    flex-direction: row;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+}
+
+.finding__sev {
+  font-family: var(--face-label);
+  font-size: var(--size-lead);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.finding__sev--critical {
+  color: var(--candidate);
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+.finding__sev--high {
+  color: var(--candidate);
+}
+
+.finding__sev--medium {
+  color: var(--ink);
+}
+
+.finding__sev--low {
+  color: var(--ink-soft);
+}
+
+.finding__sev--info {
+  color: var(--graphite);
+}
+
+.finding__body {
+  padding: var(--s3) var(--s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.finding__title {
+  font-size: var(--size-lead);
+  letter-spacing: 0.02em;
+}
+
+.finding__desc {
+  font-size: var(--size-body);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.finding__rec {
+  border-top: var(--rule-ink);
+  padding-top: var(--s2);
+  font-size: var(--size-body);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.finding__evidence {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  padding-top: var(--s1);
+  border-top: var(--rule-faint);
+}
+
+/* ------------------------------------------------------------- sign-off ---- */
+
+.signoff {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s5);
+  border-top: 2px solid var(--ink);
+  padding-top: var(--s3);
+  flex-wrap: wrap;
+}
+
+.signoff__line {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  min-width: 220px;
+}
+
+.signoff__rule {
+  border-bottom: 1px solid var(--ink);
+  height: 26px;
+}
+
+/* ============================================================================
+   Findings view — the same sheet, without the report masthead.
+   ========================================================================= */
+
+.ledger-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  border: var(--rule);
+  background: var(--ground-lit);
+}
+
+.ledger-strip__cell {
+  padding: var(--s2) var(--s3);
+  border-right: var(--rule-faint);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.ledger-strip__cell:last-child {
+  border-right: 0;
+}
+
+.ledger-strip__value {
+  font-family: var(--face-device);
+  font-size: var(--size-head);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.ledger-strip__value--alert {
+  color: var(--candidate);
+}
+
+/* ============================================================================
+   The demo entry — one rocker switch and one large key, under a guard.
+   ========================================================================= */
+
+.entry {
+  padding: var(--s3) var(--s4);
+  border-top: var(--rule-ink);
+  background: var(--ground-lit);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s5);
+  flex-wrap: wrap;
+}
+
+.entry__guard {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  flex-wrap: wrap;
+}
+
+.entry__note {
+  font-size: var(--size-body);
+  color: var(--ink-soft);
+  max-width: 62ch;
+  line-height: 1.5;
+}
+
+.entry__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------ scenario ----- */
+
+.scenario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  border-bottom: var(--rule-ink);
+  background: var(--ground);
+}
+
+.scenario__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0;
+  border: var(--rule);
+}
+
+.scenario__option {
+  padding: var(--s3);
+  border-right: var(--rule-faint);
+  background: var(--ground-lit);
+  text-align: left;
+  border-top: 0;
+  border-bottom: 0;
+  border-left: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  font: inherit;
+  color: inherit;
+}
+
+.scenario__option:last-child {
+  border-right: 0;
+}
+
+.scenario__option:hover {
+  background: var(--ground-shade);
+}
+
+.scenario__option[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--ground);
+}
+
+.scenario__option[aria-pressed='true'] .scenario__note {
+  color: var(--graphite-faint);
+}
+
+.scenario__option:focus-visible {
+  outline: 2px solid var(--candidate);
+  outline-offset: -3px;
+}
+
+.scenario__name {
+  font-family: var(--face-label);
+  font-size: var(--size-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.scenario__note {
+  font-size: var(--size-body);
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+/* ============================================================================
+   The analysis column — metrics and the verdict.
+   ========================================================================= */
+
+.analysis {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.verdict-card {
+  padding: var(--s4);
+  border-bottom: var(--rule-ink);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.verdict-card__headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+
+.verdict-card__word {
+  font-size: var(--size-verdict);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.verdict-card__word--down {
+  color: var(--candidate);
+}
+
+.verdict-card__word--up,
+.verdict-card__word--clear {
+  color: var(--baseline);
+}
+
+.verdict-card__summary {
+  font-size: var(--size-body);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------ metric row --- */
+
+.metric {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s1);
+  padding: var(--s2) var(--s4);
+  border-bottom: var(--rule-faint);
+}
+
+.metric:last-child {
+  border-bottom: 0;
+}
+
+.metric__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.metric__name {
+  font-family: var(--face-label);
+  font-size: var(--size-label);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.metric__n {
+  font-family: var(--face-device);
+  font-size: var(--size-micro);
+  color: var(--graphite);
+}
+
+.metric__values {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s3);
+}
+
+.metric__pair {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.metric__version {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+
+.metric__value {
+  font-family: var(--face-device);
+  font-size: var(--size-lead);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.metric__value--baseline {
+  color: var(--baseline);
+}
+
+.metric__value--candidate-worse {
+  color: var(--candidate);
+  font-weight: 700;
+}
+
+.metric__value--candidate-better {
+  color: var(--baseline);
+  font-weight: 700;
+}
+
+.metric__delta {
+  font-family: var(--face-device);
+  font-size: var(--size-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.metric__delta--down {
+  color: var(--candidate);
+}
+
+.metric__delta--up {
+  color: var(--baseline);
+}
+
+.metric__delta--flat {
+  color: var(--graphite);
+}
+
+/* --------------------------------------------------------- comparison ------ */
+
+.comparison {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+}
+
+.comparison__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.comparison__value {
+  font-family: var(--face-device);
+  font-size: var(--size-head);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.comparison__value--alert {
+  color: var(--candidate);
+}
+
+/* ============================================================================
+   Event index — the tick margin, keyed directly by number.
+   ========================================================================= */
+
+.events {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.events__list {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.event {
+  display: grid;
+  grid-template-columns: 30px 62px 1fr;
+  gap: var(--s2);
+  align-items: baseline;
+  padding: var(--s2) var(--s3);
+  border-bottom: var(--rule-faint);
+  font-size: var(--size-body);
+}
+
+.event:hover {
+  background: var(--ground);
+}
+
+/* The key: a keyed page address the reviewer can jump to. */
+.event__key {
+  font-family: var(--face-device);
+  font-size: var(--size-micro);
+  color: var(--graphite);
+  border: var(--rule-faint);
+  padding: 0 2px;
+  text-align: center;
+  background: transparent;
+  cursor: pointer;
+}
+
+.event__key--none {
+  border-color: transparent;
+  cursor: default;
+}
+
+.event__key:hover {
+  background: var(--ink);
+  color: var(--ground);
+  border-color: var(--ink);
+}
+
+.event__key:focus-visible {
+  outline: 2px solid var(--candidate);
+  outline-offset: 1px;
+}
+
+.event__time {
+  font-family: var(--face-device);
+  font-size: var(--size-micro);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.event__type {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+
+.event__message {
+  grid-column: 3;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.event--finding .event__type {
+  color: var(--candidate);
+}
+
+.event--complete .event__type {
+  color: var(--baseline);
+}
+
+.event--complete .event__message {
+  font-weight: 700;
+}
+
+/* ============================================================================
+   Banners — offline notice, contract gaps.
+   ========================================================================= */
+
+.notice {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: var(--s2) var(--s5);
+  border-bottom: var(--rule);
+  background: var(--ground-shade);
+  font-size: var(--size-body);
+  flex-wrap: wrap;
+}
+
+.notice--alert {
+  border: 1px solid var(--candidate);
+  border-inline: 0;
+  background: var(--ground-shade);
+}
+
+.notice__tag {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--ground);
+  padding: 1px var(--s1);
+  flex: none;
+}
+
+.notice--alert .notice__tag {
+  background: var(--candidate);
+}
+
+/* ============================================================================
+   Narrow screens: the tape scrolls sideways rather than being redrawn.
+   The chart keeps its aspect; a squeezed chart is a lying chart.
+   ========================================================================= */
+
+@media (max-width: 900px) {
+  .tape__scroll {
+    overflow-x: auto;
+  }
+
+  .tape__scroll > * {
+    min-width: 720px;
+  }
+
+  .header,
+  .viewbar,
+  .provenance,
+  .notice,
+  .entry {
+    padding-inline: var(--s3);
+  }
+
+  .sheet {
+    padding-inline: var(--s3);
+  }
+}
+
+/* ---------------------------------------------------------------- print --- */
+
+@media print {
+  .viewbar,
+  .entry,
+  .provenance,
+  .transport,
+  .drawer,
+  .drawer__scrim {
+    display: none !important;
+  }
+
+  .sheet {
+    max-width: none;
+    padding: 0;
+  }
+}
