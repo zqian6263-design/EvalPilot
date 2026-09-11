@@ -77,22 +77,48 @@ starts a run. It describes the deterministic demo:
 | Scenario | enterprise knowledge-base QA assistant |
 | Versions | `v1.0-baseline` → `v1.1-candidate` |
 | Seed | `20260919` |
-| Cases | 10 golden scenarios × 2 versions = 20 test cases |
+| Cases | 26 golden scenarios × 2 versions = 52 test cases |
 
 Every scenario runs once per version, so the two versions face an identical test
 set. That matched-pair design is what lets the report attribute a drop to the
 version change instead of to a harder test set.
 
-The candidate version is deliberately built with two defects, matching what a
+The candidate version is deliberately built with three defects, matching what a
 real knowledge-base edit might ship:
 
 | Scenario | Category | Defect | Severity |
 | --- | --- | --- | --- |
 | `prompt-injection-password` | adversarial | discloses credentials on a prompt-injection attempt | critical |
-| `escalation-path` | boundary | drops the "human agent" escalation instruction | high |
-| `urgent-safety` | adversarial | drops the emergency-hotline instruction | high |
+| `escalation-path` | boundary | drops the "human agent" escalation instruction | critical |
+| `urgent-safety` | adversarial | drops the emergency-hotline instruction | critical |
 
-The remaining 7 scenarios act as controls and are unchanged in both versions.
+The remaining 23 scenarios act as controls and are unchanged in both versions.
+
+### Reading the demo verdict
+
+Three localized regressions out of 26 matched cases is **not** enough for the
+paired bootstrap to resolve, and the demo reports that honestly:
+
+```text
+The aggregate comparison is inconclusive: the mean score changed by -0.077
+(95% CI -0.173 to 0.000), which does not clear the ±0.050 threshold at 72%
+confidence. 3 scenario(s) regressed against their own baseline: ...
+```
+
+Two separate things are being reported, and the report keeps them apart:
+
+| Metric | Meaning | Demo value |
+| --- | --- | --- |
+| `regression_detected` | at least one scenario scored below its own baseline | `true` |
+| `regression_confirmed` | the mean difference cleared the threshold interval | `false` |
+| `direction` | the engine's aggregate verdict | `inconclusive` |
+
+`regression_detected` is the per-case fact: those three scenarios really did
+lose the content they are supposed to carry, and each has an evidence-linked
+finding. `regression_confirmed` is the aggregate question, and the demo's answer
+is that this much data cannot settle it. Raising the case count or widening the
+defects would change that — the report moves with the data rather than pinning a
+verdict the numbers do not support.
 
 To create the demo records through the API instead:
 
@@ -104,7 +130,7 @@ curl -X POST http://127.0.0.1:8000/api/projects \
 curl -X POST http://127.0.0.1:8000/api/runs \
   -H "Content-Type: application/json" \
   -d '{"project_id":"<id>","baseline_version":"v1.0-baseline",
-       "candidate_version":"v1.1-candidate","case_count":10,"seed":20260919}'
+       "candidate_version":"v1.1-candidate","case_count":26,"seed":20260919}'
 
 curl -X POST http://127.0.0.1:8000/api/runs/<run_id>/start
 curl http://127.0.0.1:8000/api/runs/<run_id>/report
@@ -150,10 +176,12 @@ evalpilot/
   planner.py      deterministic mock planner
   executor.py     deterministic mock assistant (the system under test)
   evaluator.py    evidence persistence helpers
+  engine_mapping.py  backend rows -> evaluation engine models
   runner.py       async run state machine
   demo.py         demo metadata + idempotent seeding
   routes/         one module per API area
-  evaluation/     evaluation service boundary
+  orchestration_eval/  evaluation boundary the runner calls
+  evaluation/     the evaluation engine (checks, comparison, judge)
 tests/            pytest suite
 scripts/          manual startup check
 ```
@@ -175,31 +203,45 @@ ID, so every claim is traceable to the exact input, output, and tool trace.
 
 ## Evaluation boundary
 
-`backend/evalpilot/evaluation/` is the extension point for evaluation work. The
-runner calls exactly one method:
+The runner calls exactly one method, which lives in
+`backend/evalpilot/orchestration_eval/`:
 
 ```python
-EvaluationService.evaluate_run(
+await EvaluationService(...).evaluate_run_async(
     run_id=..., cases=..., evidence_by_case=...
-) -> EvaluationOutcome(cases, comparisons, findings, metrics, summary)
+) -> EvaluationOutcome(cases, findings, metrics, summary)
 ```
 
-What is implemented today is deterministic and deliberately narrow:
+That boundary is a seam, not an evaluator. All scoring and statistics come from
+the engine in `backend/evalpilot/evaluation/`, and `engine_mapping.py` adapts
+backend rows into the engine's models. Two mapping decisions are worth knowing:
 
-- `checks.py` — citation grounding, required/forbidden content, refusal behaviour
-- `compare.py` — matched-case baseline/candidate comparison and metrics
-- `findings.py` — regression findings with severity, confidence, evidence links
+1. **The matched case is `input.scenario_id`, not the `TestCase.id`.** A test
+   case row is unique per version, so keying the engine on it produces two
+   disjoint case sets and a comparison with no matched pairs at all.
+2. **The engine observation id is the persisted evidence id.** The engine
+   attaches its observation id to every check outcome and builds findings from
+   it, and `Finding.evidence_ids` must reference rows that exist in the run's
+   evidence table.
 
-What is **not** implemented, and where to add it:
+The engine (`backend/evalpilot/evaluation/`) provides:
 
-| Capability | Where |
-| --- | --- |
-| Rubric-based LLM judging | `service.JudgeHook.score` |
-| Repeated sampling / variance | `EvaluationOutcome`, `compare.summarize_metrics` |
-| Statistical significance testing | `compare.compare_matched_cases` |
+- `checks.py` — deterministic, offline answer checks (format, refusal, citation,
+  tool trace, required facts)
+- `comparison.py` — matched-case paired effect size, seeded bootstrap confidence
+  interval, and an explicit regression decision
+- `judge.py` — an injected async LLM judge with strict JSON validation
+- `service.py` — the async comparison path the runner awaits
+- `findings.py` — severity banding and evidence-linked finding builders
 
-`JudgeHook` is inert unless `EVALPILOT_LLM_BASE_URL` and `EVALPILOT_LLM_MODEL`
-are set, so the demo never depends on a provider.
+See [`EVALUATION.md`](EVALUATION.md) for the statistical design and its rationale.
+
+A rubric LLM judge is supported by the engine but **not wired into the run
+pipeline**: the fixture executor does not record the question text a judge needs,
+and the offline demo must not make network calls. `EvaluationService` takes an
+optional `judge=` so a judge can be injected at the seam; when one is present the
+run reports it in `metrics.evaluation_warnings` instead of silently blending a
+non-reproducible score into the verdict.
 
 ## Tool safety
 
@@ -243,9 +285,14 @@ field, and no frozen field was renamed.
    not-yet-executed cases distinctly from `pending`. Cancelled runs therefore
    leave those cases at `pending`.
 4. **`case_count` counts scenarios, not rows.** Each scenario produces one test
-   case per version, so `case_count=10` yields 20 `TestCase` rows. `GET
+   case per version, so `case_count=26` yields 52 `TestCase` rows. `GET
    /runs/{run_id}` returns all rows; the UI should group by `input.scenario_id`
-   (or `title`) to display 10 matched pairs.
+   (or `title`) to display 26 matched pairs.
+
+   The fixture set holds 26 scenarios, so `case_count` above that is clamped.
+   That clamp is what bounds how small a change the demo can resolve: the
+   comparison's standard error falls with the number of matched cases, so a
+   deeper set would be needed to confirm a smaller regression.
 5. **`Report.findings` is embedded, not a separate collection.** `GET
    /runs/{run_id}/report` returns findings inline per the contract. There is no
    `GET /findings` endpoint; a UI showing findings before completion must read

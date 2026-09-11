@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from evalpilot.config import Settings, load_settings
 from evalpilot.db import Database
-from evalpilot.orchestration_eval.service import EvaluationService, JudgeHook
+from evalpilot.orchestration_eval.service import EvaluationService
 from evalpilot.repository import Repository
 from evalpilot.runner import RunRunner
 
@@ -28,9 +28,8 @@ def build_container(settings: Settings | None = None) -> Container:
     db = Database(resolved.db_path, resolved.artifacts_dir)
     db.initialize()
     repo = Repository(db)
-    evaluation_service = EvaluationService(
-        judge=JudgeHook(base_url=resolved.llm_base_url, model=resolved.llm_model)
-    )
-    runner = RunRunner(repo, db, resolved, evaluation_service)
+    # Defaults (no judge, fixed seed at the dataclass defaults) keep the demo
+    # reproducible and offline; the runner takes the service as a seam.
+    runner = RunRunner(repo, db, resolved, EvaluationService())
     return Container(settings=resolved, db=db, repo=repo, runner=runner)
 

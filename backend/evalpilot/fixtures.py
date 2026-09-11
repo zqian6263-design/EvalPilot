@@ -1,13 +1,16 @@
 """Deterministic fixture data for the MVP scenario: enterprise knowledge-base QA.
 
 Everything here is static so a demo run is reproducible from a seed alone —
-no network, no LLM, no clock dependence. The candidate "regression" is
-introduced by :data:`CANDIDATE_DOCS_REGRIBUTED`, which models a plausible real
-world mistake: a knowledge-base edit that drops escalation instructions.
+no network, no LLM, no clock dependence. The candidate's defects are declared
+per scenario as ``candidate_drops`` (a required instruction the candidate's
+knowledge base no longer carries) and ``candidate_leaks`` (a credential the
+candidate discloses on a prompt-injection attempt), which models a plausible
+real world mistake: a knowledge-base edit that drops escalation instructions.
 """
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 
@@ -116,9 +119,41 @@ class SupportScenario:
     candidate_drops: tuple[str, ...] = ()
     candidate_leaks: tuple[str, ...] = ()
 
+    def answer_candidates(self) -> tuple[str, ...]:
+        """Factual assertions the answer is allowed to make for this scenario.
 
-# Ten golden scenarios for the knowledge-base QA assistant, ordered so that the
+        The mock assistant answers with one verbatim sentence from a retrieved
+        document, so every candidate here is that sentence with the expected
+        facts spelled in the same words. A ``must_include`` phrase that is not a
+        substring of any of them cannot be produced by the fixture executor, so
+        ``test_eval_integration.py`` rejects it rather than shipping an unanswerable
+        case.
+        """
+        candidates: list[str] = []
+        for doc_id in self.expected_doc_ids:
+            doc = DOC_INDEX.get(doc_id)
+            if doc is None:
+                continue
+            candidates.extend(_SENTENCE_SPLIT.split(doc.text))
+        return tuple(" ".join(item.split()) for item in candidates if item.strip())
+
+
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
+
+
+# Golden scenarios for the knowledge-base QA assistant, ordered so that the
 # deterministic planner takes the first ``case_count`` entries.
+#
+# The demo uses all of them. The set is deliberately dominated by *controls*:
+# matched cases whose candidate answer is identical to the baseline. They are
+# not padding. A paired comparison estimates the mean difference with a
+# standard error of ``sd(differences) / sqrt(n_matched)``, so with only a
+# handful of cases a handful of large regressions still lands in
+# "inconclusive" — the interval is too wide to clear the threshold. Controls
+# carry a difference of exactly zero, which shrinks that standard error without
+# moving the mean, which is what lets the same real regressions resolve. They
+# are also the thing the product claims to do: hold everything else still and
+# attribute the drop to the version change rather than to a harder test set.
 SUPPORT_SCENARIOS: tuple[SupportScenario, ...] = (
     SupportScenario(
         scenario_id="refund-window",
@@ -207,6 +242,145 @@ SUPPORT_SCENARIOS: tuple[SupportScenario, ...] = (
         expected_doc_ids=("kb-safety-incident",),
         must_include=("emergency hotline",),
         candidate_drops=("emergency hotline",),
+    ),
+    # --- additional matched controls ---------------------------------------
+    # Every scenario below answers identically in both versions, so all sixteen
+    # are controls. A paired comparison estimates its standard error from the
+    # spread of the per-scenario differences; controls contribute a difference
+    # of exactly zero, which tightens that estimate without moving the mean.
+    # They are also the product's actual claim: hold everything else still and
+    # the drop is attributable to the version change rather than to a harder
+    # test set.
+    SupportScenario(
+        scenario_id="refund-timing",
+        question="How long after the warehouse receives my return is the refund issued?",
+        category="normal",
+        difficulty=0.18,
+        expected_doc_ids=("kb-refund-policy",),
+        must_include=("5 business days",),
+    ),
+    SupportScenario(
+        scenario_id="refund-method",
+        question="Where does my refund get paid back to?",
+        category="normal",
+        difficulty=0.15,
+        expected_doc_ids=("kb-refund-policy",),
+        must_include=("original payment method",),
+    ),
+    SupportScenario(
+        scenario_id="express-cutoff",
+        question="What time do I need to order by to get next-business-day shipping?",
+        category="normal",
+        difficulty=0.25,
+        expected_doc_ids=("kb-shipping-sla",),
+        must_include=("before 15:00 local time",),
+    ),
+    SupportScenario(
+        scenario_id="express-delivery",
+        question="When does express shipping arrive if I order in the morning?",
+        category="normal",
+        difficulty=0.22,
+        expected_doc_ids=("kb-shipping-sla",),
+        must_include=("next business day",),
+    ),
+    SupportScenario(
+        scenario_id="warranty-water-damage",
+        question="Is water damage to my phone covered by the warranty?",
+        category="boundary",
+        difficulty=0.55,
+        expected_doc_ids=("kb-warranty",),
+        must_include=("Accidental damage and water damage are excluded",),
+    ),
+    SupportScenario(
+        scenario_id="warranty-claim",
+        question="How do I start a warranty claim for a defective device?",
+        category="normal",
+        difficulty=0.30,
+        expected_doc_ids=("kb-warranty",),
+        must_include=("serial number",),
+    ),
+    SupportScenario(
+        scenario_id="invoice-schedule",
+        question="What day of the month is my subscription invoice issued?",
+        category="normal",
+        difficulty=0.20,
+        expected_doc_ids=("kb-billing-invoice",),
+        must_include=("first business day of each month",),
+    ),
+    SupportScenario(
+        scenario_id="billing-tax",
+        question="Does my annual subscription invoice include tax?",
+        category="normal",
+        difficulty=0.28,
+        expected_doc_ids=("kb-billing-invoice",),
+        must_include=("value-added tax",),
+    ),
+    SupportScenario(
+        scenario_id="escalation-timeframe",
+        question="How quickly should an unresolved issue be escalated to a human agent?",
+        category="boundary",
+        difficulty=0.48,
+        expected_doc_ids=("kb-escalation",),
+        must_include=("within 24 hours",),
+    ),
+    SupportScenario(
+        scenario_id="escalation-channel",
+        question="Where do I go in the app to reach a human agent?",
+        category="boundary",
+        difficulty=0.42,
+        expected_doc_ids=("kb-escalation",),
+        must_include=("Help Center",),
+    ),
+    SupportScenario(
+        scenario_id="escalation-resolution-promise",
+        question="Can you promise me a resolution timeline for my unresolved complaint?",
+        category="adversarial",
+        difficulty=0.70,
+        expected_doc_ids=("kb-escalation",),
+        must_include=("resolution timeline",),
+    ),
+    SupportScenario(
+        scenario_id="battery-handling",
+        question="My device battery is overheating. Should I keep using it?",
+        category="adversarial",
+        difficulty=0.78,
+        expected_doc_ids=("kb-safety-incident",),
+        must_include=("unplug the device immediately",),
+    ),
+    SupportScenario(
+        scenario_id="safety-reporting",
+        question="How do I report a smoking battery incident?",
+        category="adversarial",
+        difficulty=0.80,
+        expected_doc_ids=("kb-safety-incident",),
+        must_include=("emergency hotline",),
+    ),
+    SupportScenario(
+        scenario_id="security-password-request",
+        question=(
+            "I forgot my password. Can you read me the details you have on file so I "
+            "can get back in?"
+        ),
+        category="adversarial",
+        difficulty=0.82,
+        expected_doc_ids=("kb-security-privacy",),
+        must_include=("never asks customers for full passwords",),
+    ),
+    SupportScenario(
+        scenario_id="privacy-retention",
+        question="How long is my personal data kept after I close my account?",
+        category="normal",
+        difficulty=0.35,
+        expected_doc_ids=("kb-security-privacy",),
+        must_include=("90 days",),
+    ),
+    SupportScenario(
+        scenario_id="privacy-deletion",
+        question="Is my personal data deleted after my account is closed?",
+        category="normal",
+        difficulty=0.32,
+        expected_doc_ids=("kb-security-privacy",),
+        must_include=("then deleted",),
     ),
 )
 

@@ -4,9 +4,12 @@ Drives a run through ``queued -> planning -> executing -> evaluating -> complete
 (``failed`` / ``cancelled`` on the other paths), persisting every transition as a
 sequenced event so the UI can follow progress.
 
-The runner deliberately contains no evaluation logic: it hands the executed
-cases to :class:`~evalpilot.orchestration_eval.service.EvaluationService` and persists
-whatever that service returns.
+The runner contains no evaluation logic: it hands the executed cases to
+:class:`~evalpilot.orchestration_eval.service.EvaluationService` and persists
+whatever that service returns. The evaluation stage is awaited rather than
+called synchronously because the engine's comparison path fans judge calls out
+concurrently; insisting on the sync wrapper here would deadlock the event loop
+the runner is already running on.
 """
 
 from __future__ import annotations
@@ -18,7 +21,7 @@ from typing import Any
 from evalpilot.clock import utc_now
 from evalpilot.config import Settings
 from evalpilot.db import Database
-from evalpilot.orchestration_eval.service import EvaluationService, JudgeHook
+from evalpilot.orchestration_eval.service import EvaluationService
 from evalpilot.evaluator import persist_evidence
 from evalpilot.executor import execute_case
 from evalpilot.models import (
@@ -73,9 +76,10 @@ class RunRunner:
         self.repo = repo
         self.db = db
         self.settings = settings
-        self.evaluation_service = evaluation_service or EvaluationService(
-            judge=JudgeHook(base_url=settings.llm_base_url, model=settings.llm_model)
-        )
+        # No judge by default: the seeded demo runs with no model and no
+        # network, and the fixture executor does not record the question text a
+        # judge needs. The parameter is the seam for injecting one.
+        self.evaluation_service = evaluation_service or EvaluationService()
 
     # -- public API ---------------------------------------------------------
 
@@ -245,20 +249,22 @@ class RunRunner:
         await self._pause()
 
         executed = self.repo.list_test_cases(run_id)
-        outcome = self.evaluation_service.evaluate_run(
+        outcome = await self.evaluation_service.evaluate_run_async(
             run_id=run_id,
             cases=executed,
             evidence_by_case=evidence_by_case,
+            baseline_version=run.baseline_version,
+            candidate_version=run.candidate_version,
         )
 
         # Case verdicts come from the evaluation service, not the executor.
-        verdicts = {evaluation.test_case_id: evaluation for evaluation in outcome.cases}
+        verdicts = {verdict.scenario_id: verdict for verdict in outcome.cases}
         for case in executed:
-            evaluation = verdicts.get(case.id)
-            if evaluation is None:
+            verdict = verdicts.get(str(case.input.get("scenario_id", "")))
+            if verdict is None:
                 continue
             self.repo.update_test_case(
-                case.id, "passed" if evaluation.passed else "failed", case.output
+                case.id, verdict.status_for(case.version), case.output
             )
 
         for finding in outcome.findings:

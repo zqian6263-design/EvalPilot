@@ -20,7 +20,11 @@ DEMO_SCENARIO = "kb-qa"
 DEMO_BASELINE_VERSION = "v1.0-baseline"
 DEMO_CANDIDATE_VERSION = "v1.1-candidate"
 DEMO_SEED = 20260919
-DEMO_CASE_COUNT = 10
+#: Every golden scenario. The demo compares matched case *means* with a paired
+#: bootstrap, so the number of matched cases directly sets how small a change
+#: the demo can resolve. Running a subset would leave a real regression
+#: inconclusive for lack of power rather than for lack of effect.
+DEMO_CASE_COUNT = len(SUPPORT_SCENARIOS)
 
 # The first DEMO_CASE_COUNT scenarios are the demo's fixture set.
 DEMO_SCENARIOS: tuple[SupportScenario, ...] = SUPPORT_SCENARIOS[:DEMO_CASE_COUNT]
