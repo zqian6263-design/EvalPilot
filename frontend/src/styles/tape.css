@@ -1,0 +1,341 @@
+/* ============================================================================
+   The tape — the hero, and the thesis of the whole interface.
+
+   Composition: a machine chassis strip carries the run identity and the
+   verdict stamp; the paper runs below it, inset in the chassis; a
+   character-lattice tick margin runs down the paper's edge and doubles as the
+   event index (a raise from the teletext challenger).
+   ========================================================================= */
+
+.tape {
+  display: flex;
+  flex-direction: column;
+  /* Content height. A tape that stretches to fill its column leaves a field of
+     blank paper under the trace and pushes the verdict below the fold. */
+  flex: 0 0 auto;
+}
+
+/* ----------------------------------------------------------- chassis bar -- */
+
+.tape__chassis {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s2) var(--s3);
+  background: var(--chassis);
+  border-bottom: 2px solid var(--chassis-edge);
+  flex-wrap: wrap;
+}
+
+.tape__chassis-group {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+
+.tape__plate {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tape__plate-label {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+
+.tape__plate-value {
+  font-family: var(--face-device);
+  font-size: var(--size-label);
+  color: var(--chassis-label);
+}
+
+.tape__divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--graphite);
+  opacity: 0.5;
+}
+
+/* The transport: a bank of physical controls on the chassis. */
+.transport {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.transport__key {
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  padding: var(--s1) var(--s2);
+  min-width: 64px;
+  border: 1px solid var(--chassis-label);
+  background: transparent;
+  color: var(--chassis-label);
+  cursor: pointer;
+  transition: background var(--snap), color var(--snap);
+}
+
+.transport__key:hover:not(:disabled) {
+  background: var(--chassis-label);
+  color: var(--chassis);
+}
+
+.transport__key:focus-visible {
+  outline: 2px solid var(--candidate);
+  outline-offset: 1px;
+}
+
+.transport__key:disabled {
+  color: var(--graphite);
+  border-color: var(--graphite);
+  cursor: not-allowed;
+}
+
+.transport__key--run {
+  border-width: 2px;
+}
+
+/* ------------------------------------------------------------ the paper --- */
+
+.tape__paper {
+  position: relative;
+  flex: 0 0 auto;
+  background: var(--ground);
+  display: flex;
+  flex-direction: column;
+}
+
+.tape__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Printed on the paper, clear of the y-axis and the trace. */
+.tape__watermark {
+  position: absolute;
+  inset-block-start: var(--s2);
+  inset-inline-end: var(--s3);
+  font-family: var(--face-label);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--graphite);
+  pointer-events: none;
+}
+
+/* SVG text. Without these the chart falls back to the browser's default
+   serif, which breaks the world the whole surface is built in. */
+.tape__axis-label {
+  font-family: var(--face-device);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  fill: var(--graphite);
+}
+
+.tape__tag {
+  font-family: var(--face-device);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  fill: var(--candidate);
+}
+
+/* --------------------------------------------------------- the ink stamp -- */
+
+.stamp {
+  border: 3px double var(--candidate);
+  padding: var(--s2) var(--s4);
+  transform: rotate(-1.5deg);
+  text-align: center;
+  background: transparent;
+}
+
+.stamp__word {
+  font-family: var(--face-label);
+  font-size: var(--size-head);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--candidate);
+}
+
+.stamp__sub {
+  font-family: var(--face-device);
+  font-size: var(--size-micro);
+  color: var(--candidate);
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.stamp--clear {
+  border-color: var(--baseline);
+}
+
+.stamp--clear .stamp__word,
+.stamp--clear .stamp__sub {
+  color: var(--baseline);
+}
+
+.stamp--better {
+  border-color: var(--baseline);
+  background: rgba(47, 74, 109, 0.07);
+}
+
+.stamp--better .stamp__word,
+.stamp--better .stamp__sub {
+  color: var(--baseline);
+}
+
+/* --------------------------------------------------------------- legend --- */
+
+/* The tick margin. A character lattice that doubles as the keyed case index
+   (a raise from the teletext hand): every case addressable in one press. */
+.tape__ticks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: var(--s2) var(--s3);
+  border-top: var(--rule);
+  background: var(--ground-lit);
+}
+
+.tick {
+  font-family: var(--face-device);
+  font-size: var(--size-micro);
+  font-variant-numeric: tabular-nums;
+  min-width: 26px;
+  padding: 2px 3px;
+  border: var(--rule-faint);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background var(--snap), color var(--snap);
+}
+
+.tick:hover {
+  background: var(--ink);
+  color: var(--ground);
+  border-color: var(--ink);
+}
+
+.tick:focus-visible {
+  outline: 2px solid var(--candidate);
+  outline-offset: 1px;
+}
+
+/* A regressed case is struck, the way a spent entry is. */
+.tick--down {
+  border-color: var(--candidate);
+  color: var(--candidate);
+  font-weight: 700;
+}
+
+.tick--down::after {
+  content: '';
+  display: block;
+  border-top: 1px solid var(--candidate);
+  margin-top: -6px;
+}
+
+.tick--on {
+  background: var(--candidate);
+  color: var(--ground);
+  border-color: var(--candidate);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s2) var(--s3);
+  border-top: var(--rule-faint);
+  flex-wrap: wrap;
+}
+
+.legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.legend__swatch {
+  width: 22px;
+  height: 0;
+  border-top-width: 2px;
+  border-top-style: solid;
+  flex: none;
+}
+
+.legend__swatch--baseline {
+  border-color: var(--baseline);
+}
+
+.legend__swatch--candidate {
+  border-color: var(--candidate);
+  border-top-width: 3px;
+}
+
+.legend__swatch--muted {
+  border-color: var(--graphite);
+  opacity: 0.7;
+}
+
+.legend__swatch--band {
+  height: 9px;
+  border: 1px solid var(--band-edge);
+  background: var(--band);
+}
+
+/* ------------------------------------------------------------- mid-run ---- */
+
+/* The depot-blind raise: a mid-run state shows two half-legends meeting
+   across one seam, never a spinner or a progress bar. */
+.seam {
+  border: var(--rule-ink);
+  background: var(--ground);
+  margin: var(--s5);
+}
+
+.seam__half {
+  padding: var(--s4) var(--s5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.seam__half:first-child {
+  border-bottom: 2px dashed var(--graphite);
+}
+
+.seam__clipped {
+  overflow: hidden;
+  max-height: 1.4em;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .seam__clipped {
+    animation: seam-step 900ms cubic-bezier(0.2, 0, 0.2, 1) infinite alternate;
+  }
+}
+
+@keyframes seam-step {
+  from {
+    max-height: 1.4em;
+  }
+  to {
+    max-height: 0.7em;
+  }
+}

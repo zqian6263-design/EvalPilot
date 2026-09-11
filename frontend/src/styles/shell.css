@@ -1,0 +1,190 @@
+/* ============================================================================
+   Run header — the machine's identification plate.
+   ========================================================================= */
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s5);
+  padding: var(--s3) var(--s5);
+  background: var(--ground);
+  flex-wrap: wrap;
+}
+
+.header__id {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  min-width: 0;
+}
+
+.header__name {
+  font-size: var(--size-head);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.header__meta {
+  display: flex;
+  gap: var(--s4);
+  flex-wrap: wrap;
+  color: var(--ink-soft);
+}
+
+.header__meta > span {
+  display: inline-flex;
+  gap: var(--s1);
+}
+
+.header__right {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s5);
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------ provenance -- */
+
+.provenance {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s1) var(--s5);
+  background: var(--chassis);
+  color: var(--chassis-label);
+  border-bottom: 2px solid var(--chassis-edge);
+}
+
+.provenance__lamp {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--chassis-label);
+  flex: none;
+}
+
+.provenance__lamp--live {
+  background: var(--baseline);
+}
+
+.provenance__lamp--mock {
+  background: var(--candidate);
+}
+
+.provenance__note {
+  font-family: var(--face-device);
+  font-size: var(--size-micro);
+  color: var(--graphite-faint);
+}
+
+/* ============================================================================
+   View selector — the machine's function keys.
+   ========================================================================= */
+
+.viewbar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: var(--s5);
+  padding: 0 var(--s5);
+  background: var(--ground-shade);
+  border-top: var(--rule-ink);
+  border-bottom: var(--rule-ink);
+  flex-wrap: wrap;
+}
+
+.viewbar__keys {
+  display: flex;
+}
+
+.viewbar__key {
+  font-family: var(--face-label);
+  font-size: var(--size-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  padding: var(--s3) var(--s4);
+  border: 0;
+  border-right: var(--rule);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  position: relative;
+}
+
+.viewbar__key:first-child {
+  border-left: var(--rule);
+}
+
+.viewbar__key:hover {
+  background: var(--ground);
+  color: var(--ink);
+}
+
+/* The pressed key sits down into the panel by one pixel. No glow. */
+.viewbar__key[aria-current='page'] {
+  background: var(--ground);
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--candidate), inset 0 1px 0 var(--ink);
+}
+
+.viewbar__key:focus-visible {
+  outline: 2px solid var(--candidate);
+  outline-offset: -3px;
+}
+
+.viewbar__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding-block: var(--s2);
+}
+
+/* ============================================================================
+   Console — the tape and the record.
+   ========================================================================= */
+
+.console {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 30%);
+  align-items: start;
+}
+
+/* The columns are tracks, not flex children, so `align-self` governs how each
+   one fills the row. Both grow; the record side does not. */
+.console__tape,
+.console__side {
+  align-self: stretch;
+}
+
+.console__tape {
+  min-width: 0;
+  border-right: var(--rule-ink);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding-bottom: var(--s4);
+}
+
+.console__side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ground-shade);
+  border-left: 0;
+}
+
+@media (max-width: 1180px) {
+  .console {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .console__tape {
+    border-right: 0;
+    border-bottom: var(--rule-ink);
+  }
+
+  .console__side {
+    border-left: 0;
+  }
+}
