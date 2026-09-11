@@ -120,6 +120,13 @@ is that this much data cannot settle it. Raising the case count or widening the
 defects would change that — the report moves with the data rather than pinning a
 verdict the numbers do not support.
 
+`baseline_pass_rate` and `candidate_pass_rate` are the **mean check-coverage
+score**, not a count of fully-passing cases. Since the engine was wired in they
+are the same quantity the comparison is computed on — otherwise a report could
+show a pass rate that its own verdict was not derived from. For a scenario with
+two required facts, losing one scores `0.5`, and `baseline_score` /
+`candidate_score` carry the same number for the weighted score shown in the UI.
+
 To create the demo records through the API instead:
 
 ```bash
