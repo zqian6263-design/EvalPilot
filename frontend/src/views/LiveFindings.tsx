@@ -28,7 +28,7 @@ export function LiveFindings({ evaluation, onSelectCase }: Props): React.JSX.Ele
             Findings · {evaluation.run.baseline_version} vs {evaluation.run.candidate_version}
           </span>
           <h1 className="sheet__title">
-            {evaluation.verdict === 'regression' ? 'What the change broke' : 'Nothing moved'}
+            {evaluation.verdict === 'no-regression' ? 'Nothing moved' : 'What the change broke'}
           </h1>
         </div>
         <div className="stack" style={{ gap: 'var(--s1)', textAlign: 'right' }}>

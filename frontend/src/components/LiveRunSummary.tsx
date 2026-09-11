@@ -28,23 +28,31 @@ export function LiveRunSummary({
   const byCategory = reportMetrics.by_category ?? {}
   const categories = Object.entries(byCategory)
 
-  const word = verdict === 'regression' ? 'Regression' : 'No regression'
+  const hasRegression = verdict !== 'no-regression'
+  const word =
+    verdict === 'regression'
+      ? 'Confirmed Regression'
+      : verdict === 'localized-regression'
+        ? 'Localized Regression'
+        : 'No regression'
+  const stampWord =
+    verdict === 'regression' ? 'Regressed' : verdict === 'localized-regression' ? 'Localized' : 'Clear'
 
   return (
     <section className="verdict-card" aria-label="Verdict">
       <div className="verdict-card__headline">
         <h2
           className={`verdict-card__word verdict-card__word--${
-            verdict === 'regression' ? 'down' : 'clear'
+            hasRegression ? 'down' : 'clear'
           }`}
         >
           {word}
         </h2>
         <div
-          className={verdict === 'regression' ? 'stamp' : 'stamp stamp--clear'}
+          className={hasRegression ? 'stamp' : 'stamp stamp--clear'}
           aria-hidden="true"
         >
-          <div className="stamp__word">{verdict === 'regression' ? 'Regressed' : 'Clear'}</div>
+          <div className="stamp__word">{stampWord}</div>
           <div className="stamp__sub">
             {run.candidate_version} vs {run.baseline_version}
           </div>

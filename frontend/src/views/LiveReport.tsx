@@ -35,7 +35,13 @@ export function LiveReportView({ evaluation, report }: Props): React.JSX.Element
             {evaluation.run.candidate_version}
           </span>
           <h1 className="sheet__title">
-            {verdict === 'regression' ? 'Do not ship this candidate' : 'No regression detected'}
+            {
+              verdict === 'regression'
+                ? 'Do not ship this candidate'
+                : verdict === 'localized-regression'
+                  ? 'Release blockers detected'
+                  : 'No regression detected'
+            }
           </h1>
         </div>
         <div className="stack" style={{ gap: 'var(--s1)', textAlign: 'right' }}>

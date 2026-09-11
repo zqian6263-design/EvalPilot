@@ -669,3 +669,21 @@ def test_report_contract_still_holds(client: TestClient) -> None:
 
     # The metrics blob must stay JSON-serializable for the report row.
     assert json.loads(json.dumps(payload["metrics"]))
+
+
+def test_pass_rate_metrics_are_strict_case_rates(client: TestClient) -> None:
+    """Pass rate means fully passing cases, not fractional check coverage.
+
+    A partially-correct answer is useful to the paired score, but the UI and
+    release report must not call it a passing case. This pins the same
+    invariant enforced by scripts/e2e-check.ps1.
+    """
+    run_id, report = _demo_report(client)
+    detail = client.get(f"/api/runs/{run_id}").json()
+    metrics = report["metrics"]
+
+    for version in ("baseline", "candidate"):
+        cases = [case for case in detail["test_cases"] if case["version"] == version]
+        passed = sum(1 for case in cases if case["status"] == "passed")
+        expected = passed / len(cases) if cases else 0.0
+        assert metrics[f"{version}_pass_rate"] == pytest.approx(expected, abs=5e-5)

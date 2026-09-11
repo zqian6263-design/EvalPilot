@@ -230,6 +230,7 @@ export interface LiveReportMetrics {
   baseline_cases?: number
   candidate_cases?: number
   regression_detected?: boolean
+  regression_confirmed?: boolean
   regressed_scenarios?: string[]
   control_scenarios?: string[]
   fixed_scenarios?: string[]

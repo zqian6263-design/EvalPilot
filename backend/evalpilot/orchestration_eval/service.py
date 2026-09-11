@@ -446,11 +446,12 @@ def _metrics(
 
     The first block keeps its names and meaning so the CLI, the event stream and
     anything else reading ``regression_detected`` or ``regressed_scenarios``
-    keeps working. ``baseline_pass_rate``/``candidate_pass_rate`` are now the
-    mean check-coverage score rather than a count of fully-passing cases, which
-    is the same quantity the comparison is computed on — the two must not
-    disagree, and reporting a pass rate the verdict is not derived from is how
-    they disagree.
+    keeps working. ``baseline_pass_rate``/``candidate_pass_rate`` are strict
+    case pass rates: the fraction of matched scenarios for which every check
+    passed. ``baseline_score``/``candidate_score`` retain the mean check
+    coverage, which is the continuous quantity behind the paired comparison.
+    Keeping those concepts separate prevents the UI from claiming that a
+    partially-correct answer was a fully passing test case.
     """
     comparison = report.comparison
     baseline_scores = [
@@ -459,6 +460,16 @@ def _metrics(
     candidate_scores = [
         v.candidate_score for v in verdicts if v.candidate_score is not None
     ]
+    baseline_pass_rate = (
+        sum(1 for score in baseline_scores if score >= 1.0) / len(baseline_scores)
+        if baseline_scores
+        else 0.0
+    )
+    candidate_pass_rate = (
+        sum(1 for score in candidate_scores if score >= 1.0) / len(candidate_scores)
+        if candidate_scores
+        else 0.0
+    )
 
     moved = [v for v in verdicts if v.delta is not None and v.delta < 0]
     failing = [v for v in verdicts if v.candidate_score is not None and v.candidate_score < 1.0]
@@ -470,8 +481,8 @@ def _metrics(
         "scenario_count": len(verdicts),
         "baseline_cases": len(baseline_scores),
         "candidate_cases": len(candidate_scores),
-        "baseline_pass_rate": round(_mean(baseline_scores), 4),
-        "candidate_pass_rate": round(_mean(candidate_scores), 4),
+        "baseline_pass_rate": round(baseline_pass_rate, 4),
+        "candidate_pass_rate": round(candidate_pass_rate, 4),
         "baseline_score": round(_mean(baseline_scores), 4),
         "candidate_score": round(_mean(candidate_scores), 4),
         # Both scenario-level keys keep the meaning they had before this

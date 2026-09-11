@@ -1,45 +1,27 @@
 # Parallel Work Plan
 
-## Baseline
+## Completed
 
-- Main contract commit: `2484dc1`
-- Product and scoring docs commit on main: `36d349d`
-- Shared contract: `docs/INTERFACES.md`
+| Stream | Branch | Verification |
+|---|---|---|
+| Evaluator | `task/evaluator` | 72 evaluation tests passed |
+| API core | `task/api-core` | runnable FastAPI and 43 backend tests passed |
+| Frontend | `task/frontend` | 21 tests and production build passed |
+| Evaluation integration | `task/eval-integration` | full backend suite and startup checks passed |
+| E2E integration | `task/e2e-integration` | 31/31 live-stack checks passed |
 
-## Completed streams
+## Final integrated state
 
-| Stream | Branch | Merge result | Verification |
-|---|---|---|---|
-| Evaluator | `task/evaluator` | merged | 72 tests passed |
-| API core | `task/api-core` | merged with adapter split | 43 backend tests passed |
-| Frontend | `task/frontend` | merged | 21 tests, production build passed |
+- The runner uses the rich statistical evaluation engine.
+- The frontend reads real run, report, finding, and evidence data when the backend is live.
+- Deterministic fixtures remain available only as an explicitly labelled offline fallback.
+- The demo distinguishes localized case regressions from a statistically confirmed aggregate regression.
+- `scripts/start-all.ps1` and `scripts/e2e-check.ps1` provide reproducible startup and verification.
 
-## Active integration streams
+## Final acceptance
 
-| Stream | Branch | Owned scope | Goal |
-|---|---|---|---|
-| Evaluation integration | `task/eval-integration` | runner, adapter, backend integration tests | route persisted run data through the statistical evaluation engine |
-| E2E integration | `task/e2e-integration` | frontend API adapter and E2E scripts | verify the browser console against the live backend |
-
-## Merge order
-
-1. Evaluation integration.
-2. E2E integration.
-3. Codex final integration pass: resolve remaining contract mismatches, run clean setup, and update README.
-
-## Review gates
-
-- No agent may modify another stream's owned paths.
-- Shared interface changes require an explicit contract decision.
-- Every stream must run its tests before acceptance.
-- Codex reruns all tests after merge; agent-reported success is not accepted as final evidence.
-
-## Integration checks
-
-- Backend tests pass.
-- Evaluator tests pass.
-- Frontend tests and build pass.
-- Backend and frontend start together.
-- Seeded demo completes end to end.
-- UI reads real evidence and report data.
-- Demo can be repeated without manual database cleanup.
+- Backend tests pass from the repository root.
+- Frontend tests and production build pass.
+- The live E2E check passes all 31 assertions.
+- Screenshot: `.runtime/e2e-console.png`.
+- No API key or personal data is required for the demo.

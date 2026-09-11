@@ -228,8 +228,8 @@ export function severityCounts(findings: readonly Finding[]): Record<Severity, n
   return counts
 }
 
-/** Verdicts the live backend can state. It does not distinguish improvement. */
-export type LiveVerdict = 'regression' | 'no-regression'
+/** Verdicts the live backend can state. */
+export type LiveVerdict = 'regression' | 'localized-regression' | 'no-regression'
 
 export interface LiveEvaluation {
   run: Run
@@ -273,10 +273,17 @@ export function buildLiveEvaluation({ detail, report, findings }: BuildArgs): Li
   const metrics = buildLiveMetricRows(report)
   const liveMetrics = (report?.metrics ?? {}) as LiveReportMetrics
 
-  // `regression_detected` is the backend's own verdict. When there is no
-  // report there is no verdict, so the console reports the run's own state
-  // rather than guessing one from the case rows.
-  const verdict: LiveVerdict = liveMetrics.regression_detected ? 'regression' : 'no-regression'
+  // Distinguish a statistically confirmed aggregate regression from real
+  // regressions that were localized to specific cases. Both are release
+  // blockers, but only the first is supported by the paired confidence interval.
+  // When there is no report there is no verdict, so the console reports the
+  // run's own state rather than guessing one from the case rows.
+  const verdict: LiveVerdict =
+    liveMetrics.regression_confirmed === true
+      ? 'regression'
+      : liveMetrics.regression_detected === true
+        ? 'localized-regression'
+        : 'no-regression'
 
   return {
     run: detail,

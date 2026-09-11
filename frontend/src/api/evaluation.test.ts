@@ -158,6 +158,7 @@ describe('buildLiveEvaluation never invents a metric', () => {
       candidate_pass_rate: 0,
       matched_scenarios: 1,
       regression_detected: true,
+      regression_confirmed: true,
       regressed_scenarios: ['refund-window'],
       by_category: { normal: { total: 1, regressed: 1 } },
     },
