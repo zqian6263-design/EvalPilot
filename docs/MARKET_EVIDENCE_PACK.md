@@ -132,9 +132,9 @@ the primary evidence path.
 - [x] Competitor pricing matrix.
 - [x] Public repository adoption signals.
 - [x] CI gate and exit-code integration.
-- [x] Run the same comparison on one public open-source assistant workload (SQuAD validation sample).
+- [x] Run public comparisons on SQuAD and HotpotQA.
 - [x] Publish naive-delta vs EvalPilot comparison.
-- [x] Measure token and unit cost for one live investigation.
+- [x] Measure model, compute, storage, and total run cost.
 - [x] Package a one-command cross-platform deployment path.
 
 These are execution tasks, not interview tasks.
@@ -144,7 +144,10 @@ These are execution tasks, not interview tasks.
 - Public SQuAD workload: 16 rows, 16 article titles, 5 controlled regressions, 11 controls.
 - Naive pass rate: 100.00% -> 68.75%.
 - EvalPilot: mean delta -0.3125, 95% CI [-0.5625, -0.1250], confidence 98.59%, regression confirmed.
-- Live DeepSeek V4 Pro investigation: 18,075 total tokens (5,377 input, 12,698 output).
-- Peak cost at published rates: $0.057382 per investigation.
-- Off-peak cost: $0.028691 per investigation.
+- Public comparisons: SQuAD and HotpotQA, 16 rows each, 5 controlled regressions, 11 controls.
+- Both workloads: mean -0.3125, 95% CI [-0.5625, -0.1250], confidence 98.59%.
+- Live DeepSeek V4 Pro investigation: 18,075 tokens (5,377 input, 12,698 output).
+- Full run compute: 176.52 seconds; logical storage: 0.2506 MB.
+- Model peak cost: $0.057382; compute: $0.004889; storage: $0.00000563.
+- Total peak cost: $0.062276; total off-peak cost: $0.033585.
 - Portable launcher: `python scripts/deploy.py`.

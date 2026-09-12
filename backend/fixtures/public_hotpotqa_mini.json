@@ -1,0 +1,419 @@
+{
+  "source": "hotpotqa/hotpot_qa",
+  "config": "distractor",
+  "split": "validation",
+  "source_url": "https://huggingface.co/datasets/hotpotqa/hotpot_qa",
+  "license": "CC BY-SA 4.0",
+  "selection": "first 16 validation rows",
+  "rows": [
+    {
+      "id": "5a8b57f25542995d1e6f1371",
+      "question": "Were Scott Derrickson and Ed Wood of the same nationality?",
+      "answers": [
+        "yes"
+      ],
+      "type": "comparison",
+      "level": "hard",
+      "supporting_titles": [
+        "Scott Derrickson",
+        "Ed Wood"
+      ],
+      "context_titles": [
+        "Ed Wood (film)",
+        "Scott Derrickson",
+        "Woodson, Arkansas",
+        "Tyler Bates",
+        "Ed Wood",
+        "Deliver Us from Evil (2014 film)",
+        "Adam Collis",
+        "Sinister (film)",
+        "Conrad Brooks",
+        "Doctor Strange (2016 film)"
+      ]
+    },
+    {
+      "id": "5a8c7595554299585d9e36b6",
+      "question": "What government position was held by the woman who portrayed Corliss Archer in the film Kiss and Tell?",
+      "answers": [
+        "Chief of Protocol"
+      ],
+      "type": "bridge",
+      "level": "hard",
+      "supporting_titles": [
+        "Kiss and Tell (1945 film)",
+        "Shirley Temple",
+        "Shirley Temple"
+      ],
+      "context_titles": [
+        "Meet Corliss Archer",
+        "Shirley Temple",
+        "Janet Waldo",
+        "Meet Corliss Archer (TV series)",
+        "Lord High Treasurer",
+        "A Kiss for Corliss",
+        "Kiss and Tell (1945 film)",
+        "Secretary of State for Constitutional Affairs",
+        "Village accountant",
+        "Charles Craft"
+      ]
+    },
+    {
+      "id": "5a85ea095542994775f606a8",
+      "question": "What science fantasy young adult series, told in first person, has a set of companion books narrating the stories of enslaved worlds and alien species?",
+      "answers": [
+        "Animorphs"
+      ],
+      "type": "bridge",
+      "level": "hard",
+      "supporting_titles": [
+        "The Hork-Bajir Chronicles",
+        "The Hork-Bajir Chronicles",
+        "The Hork-Bajir Chronicles",
+        "Animorphs",
+        "Animorphs"
+      ],
+      "context_titles": [
+        "Andre Norton Award",
+        "Victoria Hanley",
+        "The Hork-Bajir Chronicles",
+        "Shadowshaper",
+        "Left Behind: The Kids",
+        "List of Square Enix companion books",
+        "The Divide trilogy",
+        "Science Fantasy (magazine)",
+        "Animorphs",
+        "Etiquette &amp; Espionage"
+      ]
+    },
+    {
+      "id": "5adbf0a255429947ff17385a",
+      "question": "Are the Laleli Mosque and Esma Sultan Mansion located in the same neighborhood?",
+      "answers": [
+        "no"
+      ],
+      "type": "comparison",
+      "level": "hard",
+      "supporting_titles": [
+        "Laleli Mosque",
+        "Esma Sultan Mansion"
+      ],
+      "context_titles": [
+        "Esma Sultan (daughter of Abdülaziz)",
+        "Djamaâ el Kebir",
+        "Küçük Hüseyin Pasha",
+        "Esma Sultan (daughter of Abdul Hamid I)",
+        "Sultan Ahmed Mosque",
+        "Laleli Mosque",
+        "Esma Sultan Mansion",
+        "Esma Sultan",
+        "Gevheri Kadın",
+        "Esma Sultan (daughter of Ahmed III)"
+      ]
+    },
+    {
+      "id": "5a8e3ea95542995a26add48d",
+      "question": "The director of the romantic comedy \"Big Stone Gap\" is based in what New York city?",
+      "answers": [
+        "Greenwich Village, New York City"
+      ],
+      "type": "bridge",
+      "level": "hard",
+      "supporting_titles": [
+        "Big Stone Gap (film)",
+        "Adriana Trigiani"
+      ],
+      "context_titles": [
+        "Just Another Romantic Wrestling Comedy",
+        "Kingston Morning",
+        "Nola (film)",
+        "Adriana Trigiani",
+        "Great Eastern Conventions",
+        "New York Society of Model Engineers",
+        "Clinton, Minnesota",
+        "Hamish and Andy's Gap Year",
+        "I Love NY (2015 film)",
+        "Big Stone Gap (film)"
+      ]
+    },
+    {
+      "id": "5abd94525542992ac4f382d2",
+      "question": "2014 S/S is the debut album of a South Korean boy group that was formed by who?",
+      "answers": [
+        "YG Entertainment"
+      ],
+      "type": "bridge",
+      "level": "hard",
+      "supporting_titles": [
+        "2014 S/S",
+        "Winner (band)"
+      ],
+      "context_titles": [
+        "List of awards and nominations received by Shinee",
+        "Cho Kyuhyun",
+        "2014 S/S",
+        "History (band)",
+        "Winner (band)",
+        "Madtown",
+        "List of songs written by Ravi",
+        "SF9 (band)",
+        "Seventeen discography",
+        "BTS discography"
+      ]
+    },
+    {
+      "id": "5a85b2d95542997b5ce40028",
+      "question": "Who was known by his stage name Aladin and helped organizations improve their performance as a consultant?",
+      "answers": [
+        "Eenasul Fateh"
+      ],
+      "type": "bridge",
+      "level": "hard",
+      "supporting_titles": [
+        "Eenasul Fateh",
+        "Management consulting"
+      ],
+      "context_titles": [
+        "James P. Comer",
+        "Method Man",
+        "Indriati Iskak",
+        "Eenasul Fateh",
+        "Mick (DJ)",
+        "Criss Angel",
+        "ELDee",
+        "Management consulting",
+        "Lil Ru",
+        "Amaruk Kayshapanta"
+      ]
+    },
+    {
+      "id": "5a87ab905542996e4f3088c1",
+      "question": "The arena where the Lewiston Maineiacs played their home games can seat how many people?",
+      "answers": [
+        "3,677 seated"
+      ],
+      "type": "bridge",
+      "level": "hard",
+      "supporting_titles": [
+        "Lewiston Maineiacs",
+        "Androscoggin Bank Colisée"
+      ],
+      "context_titles": [
+        "Billings Bulls",
+        "Robins Center",
+        "2011–12 QMJHL season",
+        "Loan modification in the United States",
+        "Case Gym",
+        "Androscoggin Bank Colisée",
+        "2007 Memorial Cup",
+        "Lewiston Maineiacs",
+        "Dwyer Arena",
+        "2006–07 QMJHL season"
+      ]
+    },
+    {
+      "id": "5a7bbb64554299042af8f7cc",
+      "question": "Who is older, Annie Morton or Terry Richardson?",
+      "answers": [
+        "Terry Richardson"
+      ],
+      "type": "bridge",
+      "level": "hard",
+      "supporting_titles": [
+        "Annie Morton",
+        "Annie Morton",
+        "Terry Richardson"
+      ],
+      "context_titles": [
+        "Annie Morton",
+        "Madonna (book)",
+        "Terry Richardson",
+        "Lady Gaga x Terry Richardson",
+        "Gumbo (PJ Morton album)",
+        "Amanda Lepore",
+        "Piano Girl",
+        "Index Magazine",
+        "Snoecks",
+        "Kenton Richardson"
+      ]
+    },
+    {
+      "id": "5a8db19d5542994ba4e3dd00",
+      "question": "Are Local H and For Against both from the United States?",
+      "answers": [
+        "yes"
+      ],
+      "type": "comparison",
+      "level": "hard",
+      "supporting_titles": [
+        "Local H",
+        "For Against"
+      ],
+      "context_titles": [
+        "Mendocino County GMO Ban",
+        "United States Senate election in Illinois, 1978",
+        "William H. Cook Water Tank House",
+        "Amherst, Massachusetts",
+        "Local H",
+        "Wilford H. Fawcett House",
+        "For Against",
+        "Ophur",
+        "Suffrajett",
+        "Hallelujah! I'm a Bum (album)"
+      ]
+    },
+    {
+      "id": "5a7166395542994082a3e814",
+      "question": "What is the name of the fight song of the university whose main campus is in Lawrence, Kansas and whose branch campuses are in the Kansas City metropolitan area?",
+      "answers": [
+        "Kansas Song"
+      ],
+      "type": "bridge",
+      "level": "hard",
+      "supporting_titles": [
+        "Kansas Song",
+        "University of Kansas",
+        "University of Kansas"
+      ],
+      "context_titles": [
+        "North Kansas City, Missouri",
+        "University of Missouri–Kansas City",
+        "Kansas City jazz",
+        "Kansas City Scout",
+        "Kansas Song",
+        "Downtown Kansas City",
+        "Kansas City metropolitan area",
+        "University of the Incarnate Word",
+        "History of the Kansas City metropolitan area",
+        "University of Kansas"
+      ]
+    },
+    {
+      "id": "5a877e5d5542993e715abf7d",
+      "question": "What screenwriter with credits for \"Evolution\" co-wrote a film starring Nicolas Cage and Téa Leoni?",
+      "answers": [
+        "David Weissman"
+      ],
+      "type": "bridge",
+      "level": "hard",
+      "supporting_titles": [
+        "David Weissman",
+        "David Weissman",
+        "The Family Man"
+      ],
+      "context_titles": [
+        "Ungod",
+        "Season of the Witch (2011 film)",
+        "Time to Kill (1989 film)",
+        "David Weissman",
+        "Deadfall (1993 film)",
+        "Gone in 60 Seconds (2000 film)",
+        "Drive Angry",
+        "It Could Happen to You (1994 film)",
+        "City of Angels (film)",
+        "The Family Man"
+      ]
+    },
+    {
+      "id": "5ab3b0bf5542992ade7c6e39",
+      "question": "What year did Guns N Roses perform a promo for a movie starring Arnold Schwarzenegger as a former New York Police detective?",
+      "answers": [
+        "1999"
+      ],
+      "type": "bridge",
+      "level": "hard",
+      "supporting_titles": [
+        "Oh My God (Guns N' Roses song)",
+        "Oh My God (Guns N' Roses song)",
+        "End of Days (film)"
+      ],
+      "context_titles": [
+        "Arnold Schwarzenegger filmography",
+        "Guns N' Roses discography",
+        "Hammerjack's",
+        "Steven Adler",
+        "Faction Punk",
+        "True Lies",
+        "Last Action Hero",
+        "End of Days (film)",
+        "Oh My God (Guns N' Roses song)",
+        "Get Christie Love!"
+      ]
+    },
+    {
+      "id": "5ab56e32554299637185c594",
+      "question": "Are Random House Tower and 888 7th Avenue both used for real estate?",
+      "answers": [
+        "no"
+      ],
+      "type": "comparison",
+      "level": "hard",
+      "supporting_titles": [
+        "Random House Tower",
+        "888 7th Avenue"
+      ],
+      "context_titles": [
+        "Real estate benchmarking",
+        "Hounsfield Heights/Briar Hill, Calgary",
+        "Villard (imprint)",
+        "888 7th Avenue",
+        "Random House Tower",
+        "Pershing Square Capital Management",
+        "Carl B. Stokes United States Courthouse",
+        "Real estate technology",
+        "Loan modification in the United States",
+        "South Phoenix"
+      ]
+    },
+    {
+      "id": "5ab6d09255429954757d337d",
+      "question": "The football manager who recruited David Beckham managed Manchester United during what timeframe?",
+      "answers": [
+        "from 1986 to 2013"
+      ],
+      "type": "bridge",
+      "level": "hard",
+      "supporting_titles": [
+        "1995–96 Manchester United F.C. season",
+        "1995–96 Manchester United F.C. season",
+        "Alex Ferguson"
+      ],
+      "context_titles": [
+        "Joshua Parlby",
+        "1996 FA Charity Shield",
+        "Sir Matt Busby Sports Complex",
+        "Ernest Mangnall",
+        "David Beckham Academy",
+        "1995–96 Manchester United F.C. season",
+        "The Class of '92",
+        "David Beckham's Soccer USA",
+        "Matt Busby",
+        "Alex Ferguson"
+      ]
+    },
+    {
+      "id": "5a75e05c55429976ec32bc5f",
+      "question": "Brown State Fishing Lake is in a country that has a population of how many inhabitants ?",
+      "answers": [
+        "9,984"
+      ],
+      "type": "bridge",
+      "level": "hard",
+      "supporting_titles": [
+        "Brown State Fishing Lake",
+        "Brown County, Kansas"
+      ],
+      "context_titles": [
+        "Fishing Lake",
+        "Osage State Fishing Lake",
+        "Brown State Fishing Lake",
+        "Neosho State Fishing Lake",
+        "Narrow Hills Provincial Park",
+        "Shawnee State Fishing Lake",
+        "Higgins Lake, Michigan",
+        "Higgins Lake",
+        "Commanda Lake",
+        "Brown County, Kansas"
+      ]
+    }
+  ]
+}

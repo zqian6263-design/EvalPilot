@@ -1,11 +1,14 @@
-"""Run EvalPilot's comparison engine over a public SQuAD sample.
+"""Run EvalPilot's comparison engine over public question-answering samples.
 
-This is deliberately not another bundled enterprise-support fixture. The input
-comes from the public `rajpurkar/squad` validation set. The baseline answers
-contain the gold answer; six candidate answers lose it, while fourteen remain
-identical controls. The point is to prove the comparison engine generalises to
-external question-answering data and to make the naive score comparison visible
-next to the matched-control verdict.
+Two public datasets are used:
+
+- SQuAD: single-passage extractive question answering.
+- HotpotQA distractor: multi-hop comparison question answering.
+
+Each workload contains a controlled candidate regression while the remaining
+rows are exact controls. The goal is to demonstrate that the comparison engine
+generalises beyond EvalPilot's bundled enterprise-support fixture and that the
+naive pass-rate delta can be shown side by side with the matched-control result.
 """
 
 from __future__ import annotations
@@ -24,12 +27,37 @@ from evalpilot.evaluation.models import (
     SampleObservation,
 )
 
-DEFAULT_FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "public_squad_mini.json"
-REGRESSED_INDEXES = frozenset({1, 4, 7, 10, 13})
+FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
+
+
+@dataclass(frozen=True)
+class PublicWorkloadSpec:
+    key: str
+    label: str
+    fixture: Path
+    regressed_indexes: frozenset[int]
+
+
+PUBLIC_WORKLOADS: dict[str, PublicWorkloadSpec] = {
+    "squad": PublicWorkloadSpec(
+        key="squad",
+        label="rajpurkar/squad validation",
+        fixture=FIXTURES / "public_squad_mini.json",
+        regressed_indexes=frozenset({1, 4, 7, 10, 13}),
+    ),
+    "hotpotqa": PublicWorkloadSpec(
+        key="hotpotqa",
+        label="hotpotqa/hotpot_qa distractor validation",
+        fixture=FIXTURES / "public_hotpotqa_mini.json",
+        regressed_indexes=frozenset({1, 4, 7, 10, 13}),
+    ),
+}
 
 
 @dataclass(frozen=True)
 class PublicWorkloadResult:
+    workload: str
+    label: str
     rows: int
     authored_regressions: int
     controls: int
@@ -45,46 +73,51 @@ class PublicWorkloadResult:
     report: Any
 
 
-def load_public_rows(path: Path = DEFAULT_FIXTURE) -> list[dict[str, Any]]:
-    payload = json.loads(path.read_text(encoding="utf-8"))
+def load_public_rows(spec: PublicWorkloadSpec) -> list[dict[str, Any]]:
+    payload = json.loads(spec.fixture.read_text(encoding="utf-8"))
     rows = payload.get("rows")
     if not isinstance(rows, list) or len(rows) < 10:
-        raise ValueError(f"expected at least 10 public workload rows in {path}")
+        raise ValueError(f"expected at least 10 public workload rows in {spec.fixture}")
     return rows
 
 
-def _pass_rate(rows: list[dict[str, Any]], *, candidate: bool) -> float:
-    passed = 0
-    for index, row in enumerate(rows):
-        answer = row["answers"][0]
-        if not candidate or index not in REGRESSED_INDEXES:
-            passed += 1
-        _ = answer
+def _pass_rate(
+    rows: list[dict[str, Any]],
+    regressed_indexes: frozenset[int],
+    *,
+    candidate: bool,
+) -> float:
+    passed = sum(
+        1
+        for index in range(len(rows))
+        if not candidate or index not in regressed_indexes
+    )
     return passed / len(rows)
 
 
 async def evaluate_public_workload(
-    rows: list[dict[str, Any]] | None = None,
+    spec: PublicWorkloadSpec,
     *,
     bootstrap_resamples: int = 2000,
 ) -> PublicWorkloadResult:
-    dataset = rows if rows is not None else load_public_rows()
+    dataset = load_public_rows(spec)
     observations: list[SampleObservation] = []
     expectations: dict[str, ExpectedBehavior] = {}
     evidence_ids_by_case: dict[str, list[str]] = {}
+    run_id = f"public-{spec.key}-mini"
 
     for index, row in enumerate(dataset):
         case_id = str(row["id"])
         gold = str(row["answers"][0])
         baseline_text = f"The answer is {gold}."
         candidate_text = (
-            "The answer could not be determined from the context."
-            if index in REGRESSED_INDEXES
+            "Evidence is insufficient for a response."
+            if index in spec.regressed_indexes
             else baseline_text
         )
         evidence_ids_by_case[case_id] = [
-            f"public-squad-{index}-baseline",
-            f"public-squad-{index}-candidate",
+            f"public-{spec.key}-{index}-baseline",
+            f"public-{spec.key}-{index}-candidate",
         ]
         expectations[case_id] = ExpectedBehavior(required_keywords=[gold])
         for version, text, evidence_id in (
@@ -95,12 +128,12 @@ async def evaluate_public_workload(
                 SampleObservation(
                     id=evidence_id,
                     case_id=case_id,
-                    run_id="public-squad-mini",
+                    run_id=run_id,
                     version=version,
                     trial_index=0,
                     answer=AnswerInput(
                         text=text,
-                        citations=[Citation(uri=f"squad://{case_id}")],
+                        citations=[Citation(uri=f"{spec.key}://{case_id}")],
                     ),
                 )
             )
@@ -112,15 +145,22 @@ async def evaluate_public_workload(
         observations=observations,
         expectations=expectations,
         evidence_ids_by_case=evidence_ids_by_case,
-        run_id="public-squad-mini",
+        run_id=run_id,
     )
     comparison = report.comparison
-    baseline_pass_rate = _pass_rate(dataset, candidate=False)
-    candidate_pass_rate = _pass_rate(dataset, candidate=True)
+    baseline_pass_rate = _pass_rate(
+        dataset, spec.regressed_indexes, candidate=False
+    )
+    candidate_pass_rate = _pass_rate(
+        dataset, spec.regressed_indexes, candidate=True
+    )
+    regression_count = len(spec.regressed_indexes)
     return PublicWorkloadResult(
+        workload=spec.key,
+        label=spec.label,
         rows=len(dataset),
-        authored_regressions=len(REGRESSED_INDEXES),
-        controls=len(dataset) - len(REGRESSED_INDEXES),
+        authored_regressions=regression_count,
+        controls=len(dataset) - regression_count,
         baseline_pass_rate=baseline_pass_rate,
         candidate_pass_rate=candidate_pass_rate,
         naive_detects_regression=candidate_pass_rate < baseline_pass_rate,
@@ -136,7 +176,18 @@ async def evaluate_public_workload(
     )
 
 
-def run_public_workload(*, bootstrap_resamples: int = 2000) -> PublicWorkloadResult:
-    return asyncio.run(
-        evaluate_public_workload(bootstrap_resamples=bootstrap_resamples)
-    )
+def run_public_workloads(
+    keys: list[str] | None = None,
+    *,
+    bootstrap_resamples: int = 2000,
+) -> list[PublicWorkloadResult]:
+    selected = keys or list(PUBLIC_WORKLOADS)
+    return [
+        asyncio.run(
+            evaluate_public_workload(
+                PUBLIC_WORKLOADS[key],
+                bootstrap_resamples=bootstrap_resamples,
+            )
+        )
+        for key in selected
+    ]

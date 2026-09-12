@@ -30,6 +30,8 @@ EvalPilot 面向 AI 产品与研究团队，解决模型、Prompt、检索、记
 - Trigger: model, prompt, retrieval, memory, or tool update before release.
 - Value: convert hours of manual release checks into an auditable minutes-scale gate.
 - Public paid competitors establish willingness to pay across seat and usage models.
+- Public SQuAD and HotpotQA workloads verify cross-dataset matched-control decisions.
+- A complete live run costs about $0.0623 at peak, including model, compute, and storage.
 - Integration path: REST API -> release-gate report -> CI exit code -> team subscription -> enterprise self-host.
 - Revenue motions: fixed-scope release audit, monthly team gate, annual enterprise deployment.
 

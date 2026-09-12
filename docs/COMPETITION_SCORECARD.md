@@ -11,11 +11,11 @@ not treated as a prerequisite.
 | Criterion | Current | Target for finals | Main reason |
 |---|---:|---:|---|
 | Technical feasibility | 18/20 | 18+ | Product, tests, clean-worktree E2E, and fallback rehearsals pass |
-| Market feasibility | 13/20 | 16+ | Paid category, public adoption, enforceable CI gate, public cross-domain workload, measured unit cost, and one-command deployment |
+| Market feasibility | 14/20 | 17+ | Paid category, public adoption, enforceable CI gate, two public workloads, measured end-to-end cost, and one-command deployment |
 | Comprehensive innovation | 17/20 | 18 | Causal comparison and counterfactual replay are implemented; direct comparison with a naive delta workflow remains |
 | AI/LLM integration | 18/20 | 19 | DeepSeek V4 Pro live mode, fallback, token usage, and measured unit cost are verified |
 | Track dimension | 17/20 | 18 | Autonomous loop, report, deterministic deep links, and 2:29 demo video exist |
-| **Total** | **83/100** | **86-90** | Strong engineering, integration, public workload evidence, and measured economics |
+| **Total** | **84/100** | **87-91** | Strong engineering, integration, two public workload proofs, and measured economics |
 
 ## Verified evidence
 
@@ -63,9 +63,9 @@ not treated as a prerequisite.
 
 ### Remaining
 
-- Repeat the public workload on a second external dataset or application.
 - Validate pricing willingness through public adoption or a paid pilot.
-- Measure compute and storage cost in addition to model tokens.
+- Add a third workload in a different modality such as document or browser interaction.
+- Re-run the cost model against another model/provider.
 
 Customer interviews are optional support, not a required gate.
 

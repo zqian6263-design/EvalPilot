@@ -1,37 +1,51 @@
+
 <#
 .SYNOPSIS
-    Measure token usage and cost for one live EvalPilot investigation.
+    Measure model, compute, storage, and total cost for one EvalPilot run.
 
 .DESCRIPTION
-    Creates and starts an investigation for an existing run, waits for it to
-    complete, reads persisted token usage from LLM-backed steps, and calculates
-    peak and off-peak cost using the supplied per-million-token rates.
+    Reads persisted token usage from a live investigation when available, adds
+    wall-clock run and investigation time, and computes a logical storage
+    footprint from the API payloads. Rates are explicit parameters so the
+    result can be recomputed with a provider's published prices.
 
-    Defaults are the public DeepSeek V4 Pro peak rates on 2026-09-12:
-    input $1.32 / 1M tokens and output $3.96 / 1M tokens. Off-peak is half.
+    Defaults are reference inputs, not vendor commitments:
+    - compute: $0.10 per hour of a small worker;
+    - storage: $0.023 per GB-month.
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [string]$RunId,
+    [string]$InvestigationId,
     [int]$BackendPort = 8000,
     [int]$TimeoutSeconds = 240,
     [double]$InputPeakRate = 1.32,
-    [double]$OutputPeakRate = 3.96
+    [double]$OutputPeakRate = 3.96,
+    [double]$ComputeHourlyRate = 0.10,
+    [double]$StorageGbMonthRate = 0.023,
+    [int]$StorageRetentionMonths = 1
 )
 
 $ErrorActionPreference = 'Stop'
 $base = "http://127.0.0.1:$BackendPort/api"
-$investigation = Invoke-RestMethod -Method POST -Uri "$base/investigations" -ContentType 'application/json' -Body (@{
-    run_id = $RunId
-    objective = 'Measure real token usage and produce the evidence-backed release decision.'
-} | ConvertTo-Json)
-Invoke-RestMethod -Method Post -Uri "$base/investigations/$($investigation.id)/start" | Out-Null
+$run = Invoke-RestMethod "$base/runs/$RunId" -TimeoutSec 60
+
+if (-not $InvestigationId) {
+    $investigation = Invoke-RestMethod -Method POST -Uri "$base/investigations" -ContentType 'application/json' -Body (@{
+        run_id = $RunId
+        objective = 'Measure real token usage and produce the evidence-backed release decision.'
+    } | ConvertTo-Json)
+    $InvestigationId = $investigation.id
+    if ($investigation.status -eq 'queued') {
+        Invoke-RestMethod -Method POST -Uri "$base/investigations/$InvestigationId/start" | Out-Null
+    }
+}
 
 $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
 do {
     Start-Sleep -Seconds 1
-    $detail = Invoke-RestMethod "$base/investigations/$($investigation.id)" -TimeoutSec 60
+    $detail = Invoke-RestMethod "$base/investigations/$InvestigationId" -TimeoutSec 60
 } while ($detail.investigation.status -notin @('completed', 'failed') -and (Get-Date) -lt $deadline)
 
 if ($detail.investigation.status -ne 'completed') {
@@ -42,13 +56,24 @@ $usageSteps = @($detail.steps | Where-Object { $_.data.usage })
 $prompt = ($usageSteps | ForEach-Object { [int]$_.data.usage.prompt_tokens } | Measure-Object -Sum).Sum
 $completion = ($usageSteps | ForEach-Object { [int]$_.data.usage.completion_tokens } | Measure-Object -Sum).Sum
 $total = ($usageSteps | ForEach-Object { [int]$_.data.usage.total_tokens } | Measure-Object -Sum).Sum
-$peak = [math]::Round(($prompt * $InputPeakRate + $completion * $OutputPeakRate) / 1000000, 6)
-$offPeak = [math]::Round(($prompt * ($InputPeakRate / 2) + $completion * ($OutputPeakRate / 2)) / 1000000, 6)
+
+$runSeconds = ([datetimeoffset]$run.run.completed_at - [datetimeoffset]$run.run.created_at).TotalSeconds
+$investigationSeconds = ([datetimeoffset]$detail.investigation.completed_at - [datetimeoffset]$detail.investigation.created_at).TotalSeconds
+$computeSeconds = [math]::Max(0, $runSeconds) + [math]::Max(0, $investigationSeconds)
+
+$runJson = $run | ConvertTo-Json -Depth 30 -Compress
+$investigationJson = $detail | ConvertTo-Json -Depth 30 -Compress
+$storageBytes = [Text.Encoding]::UTF8.GetByteCount($runJson) + [Text.Encoding]::UTF8.GetByteCount($investigationJson)
+$storageGb = $storageBytes / 1GB
+
+$modelPeak = ($prompt * $InputPeakRate + $completion * $OutputPeakRate) / 1000000
+$modelOffPeak = ($prompt * ($InputPeakRate / 2) + $completion * ($OutputPeakRate / 2)) / 1000000
+$computeCost = ($computeSeconds / 3600) * $ComputeHourlyRate
+$storageCost = $storageGb * $StorageGbMonthRate * $StorageRetentionMonths
 
 [pscustomobject]@{
     run_id = $RunId
-    investigation_id = $detail.investigation.id
-    status = $detail.investigation.status
+    investigation_id = $InvestigationId
     decision = $detail.decision.verdict
     risk = $detail.decision.risk_level
     model = ($usageSteps | Select-Object -First 1).data.model
@@ -56,6 +81,15 @@ $offPeak = [math]::Round(($prompt * ($InputPeakRate / 2) + $completion * ($Outpu
     prompt_tokens = $prompt
     completion_tokens = $completion
     total_tokens = $total
-    peak_cost_usd = $peak
-    off_peak_cost_usd = $offPeak
-} | ConvertTo-Json -Depth 6
+    run_seconds = [math]::Round($runSeconds, 2)
+    investigation_seconds = [math]::Round($investigationSeconds, 2)
+    compute_seconds = [math]::Round($computeSeconds, 2)
+    logical_storage_bytes = $storageBytes
+    logical_storage_mb = [math]::Round($storageBytes / 1MB, 4)
+    model_peak_cost_usd = [math]::Round($modelPeak, 6)
+    model_off_peak_cost_usd = [math]::Round($modelOffPeak, 6)
+    compute_cost_usd = [math]::Round($computeCost, 6)
+    storage_cost_usd = [math]::Round($storageCost, 8)
+    total_peak_cost_usd = [math]::Round($modelPeak + $computeCost + $storageCost, 6)
+    total_off_peak_cost_usd = [math]::Round($modelOffPeak + $computeCost + $storageCost, 6)
+} | ConvertTo-Json -Depth 8

@@ -46,5 +46,6 @@ Exit codes: `0 allow`, `1 review`, `2 block`.
 .\scripts\measure-live-cost.ps1 -RunId <run-id>
 ```
 
-The script reads persisted token usage and computes peak and off-peak costs from
-the supplied per-million-token rates.
+The script reads persisted token usage, run/investigation wall time, and logical
+storage size, then computes model, compute, storage, and total costs. Rates are
+parameters so they can be replaced with a provider's published prices.
