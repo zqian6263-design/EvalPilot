@@ -67,8 +67,8 @@ describe('market model — the derivations', () => {
   })
 
   it('states the zero-traction disclosure in words, not in the absence of a number', () => {
-    expect(ZERO_TRACTION_DISCLOSURE).toMatch(/zero customers/i)
-    expect(ZERO_TRACTION_DISCLOSURE).toMatch(/outside this repository/i)
+    expect(ZERO_TRACTION_DISCLOSURE).toMatch(/no external customers/i)
+    expect(ZERO_TRACTION_DISCLOSURE).toMatch(/pre-validation/i)
   })
 
   it('bands the ROI rather than pointing it', () => {
@@ -192,7 +192,7 @@ describe('market fixtures — the scorecard', () => {
 describe('MarketImpactPanel — honesty on screen', () => {
   it('renders with no props at all', () => {
     render(<MarketImpactPanel />)
-    expect(screen.getByRole('heading', { name: /nothing here has a customer/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /AI applications need a release gate/i })).toBeInTheDocument()
   })
 
   it('leads with the zero-traction disclosure', () => {

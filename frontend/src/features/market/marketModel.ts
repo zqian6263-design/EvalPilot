@@ -165,7 +165,7 @@ export const TRACTION: Traction = {
 
 /** The single sentence the surface must never stop printing. */
 export const ZERO_TRACTION_DISCLOSURE =
-  'Zero customers, zero pilots, zero external users. Nothing on this surface has been validated by anyone outside this repository; every commercial figure inside it is labelled as an assumption, a target, or a range.'
+  'No external customers, pilots, or users yet. This remains a pre-validation strategy: commercial figures are hypotheses, ROI is a range, and nothing here implies customer traction.'
 
 // --------------------------------------------------------------------- ROI --
 

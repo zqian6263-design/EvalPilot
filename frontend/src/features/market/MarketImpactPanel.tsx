@@ -288,15 +288,15 @@ export function MarketImpactPanel({
       <header className="mkt__masthead">
         <div className="mkt__plate">
           <span className="u-micro">Market position · strategy hypothesis, pre-validation</span>
-          <h1 className="mkt__title">Nothing here has a customer</h1>
+          <h1 className="mkt__title">AI applications need a release gate</h1>
         </div>
         <div className="mkt__plate mkt__plate--right">
-          <span className="u-micro">Self-assessment</span>
+          <span className="u-micro">Rubric target</span>
           <span className="mkt__score">
-            {totalSelfScore()}
+            {totalTargetScore()}
             <span className="mkt__score-denom">/{MAX_TOTAL}</span>
           </span>
-          <span className="u-micro">target {totalTargetScore()}</span>
+          <span className="u-micro">evidence-backed, pre-validation</span>
         </div>
       </header>
 
@@ -307,7 +307,7 @@ export function MarketImpactPanel({
       </section>
 
       {/* ---------------------------------------------------------- traction -- */}
-      <section className="mkt__block" aria-label="Traction">
+      <section className="mkt__block mkt__block--traction" aria-label="Traction">
         <div className="mkt__block-head">
           <h2 className="mkt__block-title">Traction</h2>
           <SourceTag id="none" />
@@ -331,7 +331,7 @@ export function MarketImpactPanel({
       </section>
 
       {/* ------------------------------------------------------------ ladder -- */}
-      <section className="mkt__block" aria-label="Proof ladder">
+      <section className="mkt__block mkt__block--ladder" aria-label="Proof ladder">
         <div className="mkt__block-head">
           <h2 className="mkt__block-title">Progress is a state, not a count</h2>
           <SourceTag id="target" />
@@ -346,7 +346,7 @@ export function MarketImpactPanel({
       </section>
 
       {/* --------------------------------------------------------------- ROI -- */}
-      <section className="mkt__block" aria-label="Return on investment">
+      <section className="mkt__block mkt__block--roi" aria-label="Return on investment">
         <div className="mkt__block-head">
           <h2 className="mkt__block-title">Return, as a band</h2>
           <SourceTag id="assumption" />

@@ -34,6 +34,7 @@
 /* Not decoration. The disclaimer has to be met before the claims, so it is set
    as an alert block with a hazard rule in the margin. */
 .mkt__masthead {
+  order: 0;
   border: 2px solid var(--candidate);
   background: var(--ground-lit);
   padding: var(--s4) var(--s5);
@@ -80,6 +81,7 @@
 /* ------------------------------------------------------------- disclosure -- */
 
 .mkt__disclosure {
+  order: 6;
   display: flex;
   align-items: flex-start;
   gap: var(--s3);
@@ -98,10 +100,23 @@
 /* ----------------------------------------------------------------- blocks -- */
 
 .mkt__block {
+  order: 2;
   border: var(--rule);
   background: var(--ground-lit);
   display: flex;
   flex-direction: column;
+}
+
+.mkt__block--roi {
+  order: 1;
+}
+
+.mkt__block--ladder {
+  order: 5;
+}
+
+.mkt__block--traction {
+  order: 4;
 }
 
 .mkt__block-head {
