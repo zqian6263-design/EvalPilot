@@ -1,5 +1,7 @@
 # EvalPilot Competition Video Production
 
+Status: rendered at `release/EvalPilot-competition-demo.mp4` (2:28.9, 1920x1080, 30fps).
+
 Target duration: 2 minutes 30 seconds  
 Language: Chinese  
 Format: 1920x1080, 30 fps, H.264 MP4  

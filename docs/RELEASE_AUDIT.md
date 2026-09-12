@@ -24,7 +24,7 @@ additional product breadth.
 | Deliberate live failure fallback | Pass | invalid key -> HTTP 401 -> 2 fallback steps -> BLOCK/CRITICAL |
 | Public claims aligned | Pass | current tool surface documented as kb_search/http_get/file_read |
 | Reproducible run/investigation deep links | Pass | #console&run=<id> and #investigation&run=<id>&inv=<id> open recorded service data in seconds |
-| Video recording path | Pending | script exists; recording not yet produced |
+| Competition video | Pass | `release/EvalPilot-competition-demo.mp4`, 1920x1080, 30fps, 2:28.9, Chinese narration |
 
 ## Verified now
 
@@ -67,12 +67,11 @@ decision: block
 risk: critical
 ```
 
-## Remaining before recording
+## Remaining before submission
 
-- Freeze the exact demo run id and numbers used in the video.
-- Record the 2-3 minute video with the live model badge visible.
-- Verify the public upload plays in a logged-out browser.
-- Submit an updated team description and detailed product description.
+- Upload the finished video and verify it plays in a logged-out browser.
+- Submit the updated team description and detailed product description.
+- Complete real market interviews; do not fabricate traction.
 
 ## Non-blocking improvements after the video
 
