@@ -18,14 +18,16 @@ import { FindingsView } from './views/Findings'
 import { LiveConsole } from './views/LiveConsole'
 import { LiveFindings } from './views/LiveFindings'
 import { LiveReportView } from './views/LiveReport'
+import { InvestigationWorkspace } from './InvestigationWorkspace'
 import { ReportView } from './views/Report'
 
-export type View = 'console' | 'findings' | 'report'
+export type View = 'console' | 'findings' | 'report' | 'investigation'
 
 const VIEWS: ReadonlyArray<{ id: View; label: string }> = [
   { id: 'console', label: 'Run console' },
   { id: 'findings', label: 'Findings' },
   { id: 'report', label: 'Report' },
+  { id: 'investigation', label: 'Investigation' },
 ]
 
 /**
@@ -316,6 +318,16 @@ export function App(): React.JSX.Element {
                 }
               />
             )}
+            {route.view === 'investigation' && (
+              <InvestigationWorkspace
+                runId={live.run.id}
+                runContext={{
+                  baselineVersion: live.run.baseline_version,
+                  candidateVersion: live.run.candidate_version,
+                  matchedCases: live.evaluation!.counts.cases,
+                }}
+              />
+            )}
           </>
         ) : (
           <>
@@ -345,6 +357,7 @@ export function App(): React.JSX.Element {
             )}
 
             {route.view === 'report' && <ReportView scenario={scenario} transport={transport} />}
+            {route.view === 'investigation' && <InvestigationWorkspace />}
           </>
         )}
       </main>

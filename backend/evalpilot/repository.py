@@ -424,6 +424,14 @@ class Repository:
             ).fetchall()
         return [_evidence(row) for row in rows]
 
+    def get_evidence(self, evidence_id: str) -> Evidence | None:
+        """Return one persisted evidence row, or ``None`` when it is absent."""
+        with self.db.connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM evidence WHERE id = ?", (evidence_id,)
+            ).fetchone()
+        return _evidence(row) if row is not None else None
+
     # -- findings -----------------------------------------------------------
 
     def add_finding(self, finding: Finding) -> Finding:

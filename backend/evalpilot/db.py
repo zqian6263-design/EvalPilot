@@ -95,7 +95,6 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE INDEX IF NOT EXISTS idx_test_cases_run ON test_cases(run_id, seq);
 CREATE INDEX IF NOT EXISTS idx_evidence_run ON evidence(run_id, seq);
 CREATE INDEX IF NOT EXISTS idx_findings_run ON findings(run_id, seq);
-CREATE INDEX IF NOT EXISTS idx_events_entity ON events(entity_id, sequence);
 """
 
 #: Current schema version, recorded in the database file's ``user_version``.
@@ -233,6 +232,11 @@ class Database:
         with self.connect() as conn:
             conn.executescript(SCHEMA)
             self._migrate(conn)
+            # Create after migration: an old file still has run_id, and
+            # indexing entity_id before the rewrite aborts initialization.
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_events_entity ON events(entity_id, sequence)"
+            )
             conn.executescript(INVESTIGATION_SCHEMA)
 
     @staticmethod

@@ -141,7 +141,9 @@ p {
 
 .shell {
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  /* Header renders the title plate and provenance bar as two direct grid
+     children, followed by the viewbar and main content. */
+  grid-template-rows: auto auto auto 1fr;
   min-height: 100%;
 }
 

@@ -60,6 +60,12 @@ class CounterfactualRequest:
     category: str
     question: str
     original_score: float
+    #: Identities needed by a measured replay provider. Defaults preserve the
+    #: fallback-only tests while production always supplies them.
+    investigation_id: str = ""
+    run_id: str = ""
+    test_case_id: str = ""
+    failed_checks: tuple[str, ...] = ()
     #: Required facts the candidate answer lost, in the evaluator's words.
     missing_facts: tuple[str, ...] = ()
     #: Forbidden strings the candidate answer disclosed.

@@ -156,6 +156,12 @@ export function InvestigationWorkspace({
 
   useEffect(() => () => abortRef.current?.abort(), [])
 
+  // The host may resolve the live run after this component first mounts.
+  // Adopt that id instead of keeping the empty initial state forever.
+  useEffect(() => {
+    if (runId) setResolvedRunId(runId)
+  }, [runId])
+
   useEffect(() => {
     if (injected) return
     let cancelled = false

@@ -17,6 +17,9 @@
 - 使用确定性检查和可注入 LLM Judge 评分。
 - 对 baseline / candidate 做匹配比较，报告 effect size、置信区间和 verdict。
 - 区分“统计上确认的整体回归”和“局部真实回归”，不会把噪声说成结论。
+- 确认回归后自动启动发布调查：生成风险假设、召回历史事故、追加探查并输出结构化时间线。
+- 通过真实反事实重放确认根因：禁用压缩层恢复条款丢失，恢复安全护栏消除凭证泄露。
+- 输出 BLOCK / REVIEW / ALLOW 发布决策和可下载的 Markdown 证据报告。
 
 ## 快速开始
 
@@ -41,6 +44,7 @@
 .\scripts\test-backend.ps1
 .\scripts\test-frontend.ps1
 .\scripts\e2e-check.ps1
+.\scripts\v2-e2e-check.ps1
 ```
 
 `e2e-check.ps1` 会真实启动双服务，创建、执行并轮询一次完整 run，验证报告指标、证据链接、前端代理和截图，然后只停止它自己启动的进程。

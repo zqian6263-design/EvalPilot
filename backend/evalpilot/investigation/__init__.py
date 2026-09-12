@@ -14,6 +14,7 @@ Public surface:
 
 from __future__ import annotations
 
+from evalpilot.investigation.engine_provider import EngineCounterfactualProvider
 from evalpilot.investigation.providers import (
     CounterfactualProvider,
     CounterfactualRequest,
@@ -32,6 +33,7 @@ __all__ = [
     "CounterfactualProvider",
     "CounterfactualRequest",
     "DeterministicProvider",
+    "EngineCounterfactualProvider",
     "InvestigationError",
     "InvestigationOutcome",
     "InvestigationService",

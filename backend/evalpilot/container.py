@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from evalpilot.config import Settings, load_settings
 from evalpilot.db import Database
 from evalpilot.investigation import InvestigationService
+from evalpilot.investigation.engine_provider import EngineCounterfactualProvider
 from evalpilot.memory import seed_incidents
 from evalpilot.orchestration_eval.service import EvaluationService
 from evalpilot.repository import Repository
@@ -42,7 +43,10 @@ def build_container(settings: Settings | None = None) -> Container:
     evaluation_service = EvaluationService()
     runner = RunRunner(repo, db, resolved, evaluation_service)
     investigation_runner = InvestigationService(
-        repo, settings=resolved, evaluation_service=evaluation_service
+        repo,
+        settings=resolved,
+        evaluation_service=evaluation_service,
+        provider=EngineCounterfactualProvider(repo=repo),
     )
     return Container(
         settings=resolved,

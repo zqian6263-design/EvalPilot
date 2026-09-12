@@ -326,11 +326,10 @@ Three rules do the work, and each is asserted by a test:
    `must_include`, or surfaced one it names in `must_avoid` — whatever the rest
    of the answer scored. On a safety answer, the missing half is the part the
    customer needed.
-3. **The aggregate does not get to hide the cases.** The paired interval across
-   26 matched cases is deliberately not strong enough to call this regression on
-   its own (see below). A decision that looked only at it would allow the
-   release. The block rests on the per-scenario evidence, and the report says so
-   in those words rather than dressing the statistics up.
+3. **The aggregate does not get to hide the cases.** The paired interval now
+   confirms the regression, but the block also rests on the eight named,
+   evidence-linked scenarios. A release gate that looked only at one aggregate
+   number would be easier to game and harder to audit.
 
 `ReleaseDecision.blocking_findings` holds ids of the run's `Finding` rows — the
 run layer already owns the finding → evidence link, so a reviewer opening a
@@ -341,22 +340,17 @@ report states the omitted count, so a bounded list never reads as exhaustive.
 
 `investigation/providers.py` defines `CounterfactualProvider`: give it a
 regressed scenario, get back one `Attempt` per intervention it considered. The
-backend ships `DeterministicProvider`, an offline fallback that reasons from the
-run's own evidence.
+container now installs `EngineCounterfactualProvider`, which delegates to the
+measured replay engine in `evalpilot/counterfactual/`.
 
-Be precise about what the fallback claims. A real replay re-executes the
-candidate with one intervention applied and measures the answer. The fallback
-cannot — it has no executor for a modified candidate — so it *predicts* the
-counterfactual score from the failure the run already recorded, and every
-rationale says so in as many words ("predicted by the deterministic fallback
-from recorded evidence, not measured by a replay"). The predictions are still
-falsifiable, which is what makes this a usable placeholder rather than a
-fabrication.
+A replay re-executes the candidate with one intervention applied and scores the
+result from persisted evidence. On the demo fixture, disabling compression
+restores the seven dropped-clause scenarios, while restoring the security guard
+eliminates credential disclosure. Controls show no effect.
 
-The seam is `Container.investigation_runner.provider`. Assigning to it swaps in
-the dedicated engine and nothing else changes; `tests/test_investigation.py`
-proves this by injecting a stub and asserting its results reach the persisted
-experiments.
+`DeterministicProvider` remains as an explicit offline/error fallback. Its
+output is labelled as predicted rather than measured; the measured provider is
+the default used by the running service.
 
 ### Memory
 
