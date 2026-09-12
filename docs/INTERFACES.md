@@ -17,6 +17,7 @@ Run
   baseline_version: str
   candidate_version: str
   status: queued | planning | executing | evaluating | completed | failed | cancelled
+  case_count: int | null
   created_at: datetime
   completed_at: datetime | null
 

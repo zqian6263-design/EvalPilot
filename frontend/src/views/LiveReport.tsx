@@ -10,11 +10,11 @@ interface Props {
 /**
  * The run's report, as a printed sheet.
  *
- * Every figure below is read from `GET /api/runs/{run_id}/report`. Where the
- * service reports nothing — there is no regression-confidence estimate, no
- * repeat count, and no per-metric breakdown — the sheet says so instead of
- * borrowing the fixture corpus' equivalent. The fixture sheet is a different
- * document with different numbers, and mixing the two would make both
+ * Every figure below is read from `GET /api/runs/{run_id}/report`. The report
+ * now exposes the paired effect, confidence interval, and confidence. Where the
+ * service reports no per-metric series or per-case score, the sheet says so
+ * instead of borrowing the fixture corpus' equivalent. The fixture sheet is a
+ * different document with different numbers, and mixing the two would make both
  * untrustworthy.
  */
 export function LiveReportView({ evaluation, report }: Props): React.JSX.Element {
@@ -157,13 +157,56 @@ export function LiveReportView({ evaluation, report }: Props): React.JSX.Element
                   : null
               }
             />
+            <MetricRow
+              label="Mean score delta"
+              value={
+                typeof metrics.mean_difference === 'number'
+                  ? metrics.mean_difference.toFixed(3)
+                  : null
+              }
+            />
+            <MetricRow
+              label="95% confidence interval"
+              value={
+                typeof metrics.ci_lower === 'number' && typeof metrics.ci_upper === 'number'
+                  ? `${metrics.ci_lower.toFixed(3)} to ${metrics.ci_upper.toFixed(3)}`
+                  : null
+              }
+            />
+            <MetricRow
+              label="Paired effect size"
+              value={
+                typeof metrics.effect_size === 'number' ? metrics.effect_size.toFixed(3) : null
+              }
+            />
+            <MetricRow
+              label="Confidence effect clears threshold"
+              value={
+                typeof metrics.confidence === 'number'
+                  ? formatPercent(metrics.confidence, 1)
+                  : null
+              }
+            />
+            <MetricRow
+              label="Aggregate direction"
+              value={typeof metrics.direction === 'string' ? metrics.direction : null}
+            />
+            <MetricRow
+              label="Regression confirmed"
+              value={
+                typeof metrics.regression_confirmed === 'boolean'
+                  ? metrics.regression_confirmed
+                    ? 'yes'
+                    : 'no'
+                  : null
+              }
+            />
           </tbody>
         </table>
         <p className="u-micro" style={{ padding: 'var(--s2) var(--s4)', lineHeight: 1.6 }}>
-          This service reports aggregate pass/score figures and no per-metric or per-case score, and
-          no confidence estimate. Metrics the console can display but this run does not carry —
-          citation coverage, groundedness, latency — are listed as unavailable on the console's
-          metric panel rather than computed here.
+          The aggregate comparison fields are read directly from the running evaluation service.
+          Per-metric and per-case score series are not present in the current contract; where the
+          console has no backend value it says so rather than borrowing a fixture number.
         </p>
       </section>
 

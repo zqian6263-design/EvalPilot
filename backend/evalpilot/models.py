@@ -63,6 +63,7 @@ class Run(_Model):
     baseline_version: str
     candidate_version: str
     status: RunStatus
+    case_count: int | None = None
     created_at: datetime
     completed_at: datetime | None = None
 

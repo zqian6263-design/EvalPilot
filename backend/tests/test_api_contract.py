@@ -56,6 +56,7 @@ def test_run_creation_matches_contract_fields(
         "baseline_version",
         "candidate_version",
         "status",
+        "case_count",
         "created_at",
         "completed_at",
     }

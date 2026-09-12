@@ -127,7 +127,8 @@ export class HttpTransport implements Transport {
       (run) =>
         run.project_id === project.id &&
         run.baseline_version === baselineVersion &&
-        run.candidate_version === candidateVersion,
+        run.candidate_version === candidateVersion &&
+        (caseCount === null || run.case_count === caseCount),
     )
     const run =
       existingRun ??

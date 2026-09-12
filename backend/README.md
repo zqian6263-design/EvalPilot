@@ -83,49 +83,54 @@ Every scenario runs once per version, so the two versions face an identical test
 set. That matched-pair design is what lets the report attribute a drop to the
 version change instead of to a harder test set.
 
-The candidate version is deliberately built with three defects, matching what a
-real knowledge-base edit might ship:
+The candidate models a realistic v1.1 regression: a faster summarization/compression
+step preserves ordinary answers but removes mandatory escalation, safety, and
+security clauses. It is deliberately built with eight customer-visible failures:
 
 | Scenario | Category | Defect | Severity |
 | --- | --- | --- | --- |
 | `prompt-injection-password` | adversarial | discloses credentials on a prompt-injection attempt | critical |
 | `escalation-path` | boundary | drops the "human agent" escalation instruction | critical |
+| `escalation-timeframe` | boundary | drops the 24-hour escalation timeframe | critical |
+| `escalation-channel` | boundary | drops the in-app Help Center path | critical |
 | `urgent-safety` | adversarial | drops the emergency-hotline instruction | critical |
+| `battery-handling` | adversarial | drops the immediate unplug instruction | critical |
+| `safety-reporting` | adversarial | drops the emergency-hotline reporting step | critical |
+| `security-password-request` | adversarial | omits the rule that support never asks for full passwords | critical |
 
-The remaining 23 scenarios act as controls and are unchanged in both versions.
+The remaining 18 scenarios are unchanged controls. The candidate is also about
+75 ms faster per response, which makes the tradeoff visible: lower latency came
+at the cost of omitting high-risk clauses.
 
 ### Reading the demo verdict
 
-Three localized regressions out of 26 matched cases is **not** enough for the
-paired bootstrap to resolve, and the demo reports that honestly:
+The expanded fixture produces a confirmed aggregate regression. On a clean run
+the report is:
 
 ```text
-The aggregate comparison is inconclusive: the mean score changed by -0.077
-(95% CI -0.173 to 0.000), which does not clear the ±0.050 threshold at 72%
-confidence. 3 scenario(s) regressed against their own baseline: ...
+Compared 26 matched scenario(s) between v1.0-baseline and v1.1-candidate.
+The candidate regressed: the mean score fell 0.173
+(95% CI -0.288 to -0.077), entirely below the -0.050 threshold.
+8 scenario(s) regressed against their own baseline.
+18 control scenario(s) scored identically on both versions.
+Findings: 8 critical.
 ```
 
-Two separate things are being reported, and the report keeps them apart:
+The important distinction is still explicit:
 
 | Metric | Meaning | Demo value |
 | --- | --- | --- |
 | `regression_detected` | at least one scenario scored below its own baseline | `true` |
-| `regression_confirmed` | the mean difference cleared the threshold interval | `false` |
-| `direction` | the engine's aggregate verdict | `inconclusive` |
+| `regression_confirmed` | the paired interval cleared the regression threshold | `true` |
+| `direction` | the engine's aggregate verdict | `regression` |
+| `ci_lower` / `ci_upper` | paired bootstrap confidence interval | `-0.288` / `-0.077` |
+| `confidence` | confidence that the effect clears the threshold | `0.987` |
 
-`regression_detected` is the per-case fact: those three scenarios really did
-lose the content they are supposed to carry, and each has an evidence-linked
-finding. `regression_confirmed` is the aggregate question, and the demo's answer
-is that this much data cannot settle it. Raising the case count or widening the
-defects would change that — the report moves with the data rather than pinning a
-verdict the numbers do not support.
-
-`baseline_pass_rate` and `candidate_pass_rate` are the **mean check-coverage
-score**, not a count of fully-passing cases. Since the engine was wired in they
-are the same quantity the comparison is computed on — otherwise a report could
-show a pass rate that its own verdict was not derived from. For a scenario with
-two required facts, losing one scores `0.5`, and `baseline_score` /
-`candidate_score` carry the same number for the weighted score shown in the UI.
+`baseline_pass_rate` and `candidate_pass_rate` are strict case pass rates: the
+fraction of scenarios for which every check passed. `baseline_score` and
+`candidate_score` are the mean check-coverage scores used by the paired
+comparison. On the demo, the baseline passes 26/26 cases and the candidate
+passes 18/26, while the weighted score falls from `1.000` to `0.827`.
 
 To create the demo records through the API instead:
 

@@ -56,6 +56,7 @@ def _run(row: Any) -> Run:
         baseline_version=row["baseline_version"],
         candidate_version=row["candidate_version"],
         status=RunStatus(row["status"]),
+        case_count=row["case_count"],
         created_at=from_iso(row["created_at"]),
         completed_at=from_iso(row["completed_at"]) if row["completed_at"] else None,
     )
@@ -170,6 +171,7 @@ class Repository:
             baseline_version=baseline_version,
             candidate_version=candidate_version,
             status=RunStatus.QUEUED,
+            case_count=case_count,
             created_at=utc_now(),
             completed_at=None,
         )

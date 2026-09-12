@@ -195,7 +195,7 @@ if ($project) {
             baseline_version  = 'v1.0-baseline'
             candidate_version = 'v1.1-candidate'
             seed              = 20260919
-            case_count        = 10
+            case_count        = 26
         }
         Check 'POST /api/runs creates a queued run' ($run.status -eq 'queued') "status=$($run.status)"
     } catch {

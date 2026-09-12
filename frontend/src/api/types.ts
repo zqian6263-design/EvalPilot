@@ -50,6 +50,8 @@ export interface Run {
   baseline_version: string
   candidate_version: string
   status: RunStatus
+  /** Number of matched scenarios the run was planned with, when reported. */
+  case_count?: number
   created_at: ISODateTime
   completed_at: ISODateTime | null
 }
@@ -231,6 +233,14 @@ export interface LiveReportMetrics {
   candidate_cases?: number
   regression_detected?: boolean
   regression_confirmed?: boolean
+  mean_difference?: number
+  ci_lower?: number
+  ci_upper?: number
+  effect_size?: number
+  confidence?: number
+  direction?: string
+  is_significant?: boolean
+  regression_threshold?: number
   regressed_scenarios?: string[]
   control_scenarios?: string[]
   fixed_scenarios?: string[]

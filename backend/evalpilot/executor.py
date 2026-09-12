@@ -97,7 +97,7 @@ def execute_case(
     answer = _compose(scenario, version, docs)
     refused = scenario.expects_refusal
 
-    latency_ms = int(rng.uniform(180, 420)) + (60 if version == CANDIDATE_VERSION else 0)
+    latency_ms = max(90, int(rng.uniform(180, 420)) - (75 if version == CANDIDATE_VERSION else 0))
     citations = [doc["doc_id"] for doc in docs] if not refused else []
 
     output = {

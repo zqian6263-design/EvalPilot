@@ -39,7 +39,7 @@ def wait_for_health(proc: subprocess.Popen) -> None:
 
 
 def get_json(path: str) -> dict:
-    with urllib.request.urlopen(f"{BASE}{path}", timeout=10) as response:
+    with urllib.request.urlopen(f"{BASE}{path}", timeout=60) as response:
         return json.loads(response.read().decode())
 
 
@@ -49,7 +49,7 @@ def post_json(path: str, payload: dict | None = None) -> dict:
         f"{BASE}{path}", method="POST", data=body,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(request, timeout=10) as response:
+    with urllib.request.urlopen(request, timeout=60) as response:
         text = response.read().decode()
         return json.loads(text) if text.strip() else {}
 
@@ -85,7 +85,7 @@ def main() -> int:
             "project_id": project["id"],
             "baseline_version": "v1.0-baseline",
             "candidate_version": "v1.1-candidate",
-            "case_count": 10,
+            "case_count": 26,
             "seed": 20260919,
         })
         print("POST /api/runs ->", run["id"][:8], run["status"])
@@ -107,6 +107,7 @@ def main() -> int:
         report = get_json(f"/api/runs/{run['id']}/report")
         print("GET /api/runs/{id}/report -> regression_detected:",
               report["metrics"]["regression_detected"],
+              "| regression_confirmed:", report["metrics"]["regression_confirmed"],
               "| regressed:", report["metrics"]["regressed_scenarios"])
 
         with urllib.request.urlopen(

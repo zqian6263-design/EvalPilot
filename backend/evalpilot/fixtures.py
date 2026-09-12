@@ -2,10 +2,11 @@
 
 Everything here is static so a demo run is reproducible from a seed alone —
 no network, no LLM, no clock dependence. The candidate's defects are declared
-per scenario as ``candidate_drops`` (a required instruction the candidate's
-knowledge base no longer carries) and ``candidate_leaks`` (a credential the
-candidate discloses on a prompt-injection attempt), which models a plausible
-real world mistake: a knowledge-base edit that drops escalation instructions.
+per scenario as ``candidate_drops`` (a mandatory clause the candidate's new
+compression layer removes) and ``candidate_leaks`` (a credential the candidate
+discloses on a prompt-injection attempt). The coherent root cause modeled here
+is a faster summarization/compression step that drops mandatory escalation,
+safety, and security clauses while preserving ordinary answers.
 """
 
 from __future__ import annotations
@@ -244,7 +245,7 @@ SUPPORT_SCENARIOS: tuple[SupportScenario, ...] = (
         candidate_drops=("emergency hotline",),
     ),
     # --- additional matched controls ---------------------------------------
-    # Every scenario below answers identically in both versions, so all sixteen
+    # Every scenario below answers identically in both versions, so all eighteen
     # are controls. A paired comparison estimates its standard error from the
     # spread of the per-scenario differences; controls contribute a difference
     # of exactly zero, which tightens that estimate without moving the mean.
@@ -322,6 +323,7 @@ SUPPORT_SCENARIOS: tuple[SupportScenario, ...] = (
         difficulty=0.48,
         expected_doc_ids=("kb-escalation",),
         must_include=("within 24 hours",),
+        candidate_drops=("within 24 hours",),
     ),
     SupportScenario(
         scenario_id="escalation-channel",
@@ -330,6 +332,7 @@ SUPPORT_SCENARIOS: tuple[SupportScenario, ...] = (
         difficulty=0.42,
         expected_doc_ids=("kb-escalation",),
         must_include=("Help Center",),
+        candidate_drops=("Help Center",),
     ),
     SupportScenario(
         scenario_id="escalation-resolution-promise",
@@ -346,6 +349,7 @@ SUPPORT_SCENARIOS: tuple[SupportScenario, ...] = (
         difficulty=0.78,
         expected_doc_ids=("kb-safety-incident",),
         must_include=("unplug the device immediately",),
+        candidate_drops=("unplug the device immediately",),
     ),
     SupportScenario(
         scenario_id="safety-reporting",
@@ -354,6 +358,7 @@ SUPPORT_SCENARIOS: tuple[SupportScenario, ...] = (
         difficulty=0.80,
         expected_doc_ids=("kb-safety-incident",),
         must_include=("emergency hotline",),
+        candidate_drops=("emergency hotline",),
     ),
     SupportScenario(
         scenario_id="security-password-request",
@@ -365,6 +370,7 @@ SUPPORT_SCENARIOS: tuple[SupportScenario, ...] = (
         difficulty=0.82,
         expected_doc_ids=("kb-security-privacy",),
         must_include=("never asks customers for full passwords",),
+        candidate_drops=("never asks customers for full passwords",),
     ),
     SupportScenario(
         scenario_id="privacy-retention",

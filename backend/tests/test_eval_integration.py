@@ -627,31 +627,26 @@ async def _recompute_engine(run_id: str, client: TestClient):
     return report.comparison
 
 
-def test_inconclusive_verdict_is_stated_honestly(client: TestClient) -> None:
-    """When the data cannot support a verdict, the report must say so.
+def test_confirmed_verdict_is_supported_by_the_engine(client: TestClient) -> None:
+    """The expanded demo must produce a statistically confirmed regression.
 
-    The demo's three regressions are real but too small a share of 26 matched
-    cases for the interval to separate from noise. The one thing the report must
-    not do is call that a confirmed regression.
+    The result is not hardcoded: the paired bootstrap has to place the entire
+    confidence interval below the regression threshold. If fixture behavior
+    changes and the signal weakens, this test fails rather than allowing the UI
+    to claim a stronger result than the data supports.
     """
     _, report = _demo_report(client)
     summary = report["summary"]
     metrics = report["metrics"]
 
-    if metrics["direction"] == "inconclusive":
-        assert "The aggregate comparison is inconclusive" in summary
-        assert metrics["regression_confirmed"] is False
-        # It still names the cases and points at their evidence.
-        assert "regressed against their own baseline" in summary
-        assert metrics["regression_detected"] is True
-    else:
-        assert metrics["regression_confirmed"] is True
-        assert "regressed" in summary
-
-    # A confirmed regression is the only way both keys can be true together;
-    # a per-scenario move must never be reported as a confirmed aggregate one.
-    if metrics["regression_detected"] and metrics["regression_confirmed"]:
-        assert metrics["direction"] == "regression"
+    assert metrics["regression_detected"] is True
+    assert metrics["regression_confirmed"] is True
+    assert metrics["direction"] == "regression"
+    assert metrics["is_significant"] is True
+    assert metrics["ci_upper"] < -metrics["regression_threshold"]
+    assert metrics["confidence"] >= 0.95
+    assert "regressed" in summary
+    assert "regressed against their own baseline" in summary
 
 
 def test_report_contract_still_holds(client: TestClient) -> None:

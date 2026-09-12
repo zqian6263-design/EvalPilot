@@ -15,7 +15,7 @@
 - The runner uses the rich statistical evaluation engine.
 - The frontend reads real run, report, finding, and evidence data when the backend is live.
 - Deterministic fixtures remain available only as an explicitly labelled offline fallback.
-- The demo distinguishes localized case regressions from a statistically confirmed aggregate regression.
+- The demo produces a statistically confirmed aggregate regression and keeps all eight case-level findings evidence-linked.
 - `scripts/start-all.ps1` and `scripts/e2e-check.ps1` provide reproducible startup and verification.
 
 ## Final acceptance

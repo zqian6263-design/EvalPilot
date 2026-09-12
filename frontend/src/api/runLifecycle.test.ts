@@ -231,7 +231,7 @@ describe('HttpTransport.getDemoContext is idempotent', () => {
             baseline_version: 'v1.0-baseline',
             candidate_version: 'v1.1-candidate',
             seed: 20260919,
-            case_count: 10,
+            case_count: 26,
           }
         }
         if (url.endsWith('/projects')) {
@@ -259,7 +259,7 @@ describe('HttpTransport.getDemoContext is idempotent', () => {
   }
 
   it('adopts the existing project and run without writing anything', async () => {
-    const existing = run({ id: '99999999-9999-4999-8999-999999999999' })
+    const existing = run({ id: '99999999-9999-4999-8999-999999999999', case_count: 26 })
     const { fetchImpl, writes } = demoFetch([existing])
     const transport = new HttpTransport('/api', fetchImpl)
 
@@ -270,8 +270,8 @@ describe('HttpTransport.getDemoContext is idempotent', () => {
     expect(writes).toEqual([])
   })
 
-  it('creates exactly one run when none matches the demo versions', async () => {
-    const { fetchImpl, writes } = demoFetch([run({ candidate_version: 'something-else' })])
+  it('creates exactly one run when the existing run has an outdated case count', async () => {
+    const { fetchImpl, writes } = demoFetch([run({ case_count: 10 })])
     const transport = new HttpTransport('/api', fetchImpl)
 
     const context = await transport.getDemoContext()
@@ -279,7 +279,7 @@ describe('HttpTransport.getDemoContext is idempotent', () => {
     expect(context.baselineVersion).toBe('v1.0-baseline')
     expect(context.candidateVersion).toBe('v1.1-candidate')
     expect(context.seed).toBe(20260919)
-    expect(context.caseCount).toBe(10)
+    expect(context.caseCount).toBe(26)
     expect(writes).toEqual(['POST /api/runs'])
   })
 })

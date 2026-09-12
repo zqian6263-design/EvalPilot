@@ -119,6 +119,7 @@ def ensure_demo_project(
             existing.project_id == project.id
             and existing.baseline_version == DEMO_BASELINE_VERSION
             and existing.candidate_version == DEMO_CANDIDATE_VERSION
+            and existing.case_count == DEMO_CASE_COUNT
         ):
             run = existing
             break

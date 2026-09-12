@@ -117,6 +117,26 @@ export function LiveRunSummary({
               </dd>
             </>
           )}
+        {typeof reportMetrics.mean_difference === 'number' && (
+          <>
+            <dt className="ledger__key">Mean delta</dt>
+            <dd className="ledger__val">{reportMetrics.mean_difference.toFixed(3)}</dd>
+          </>
+        )}
+        {typeof reportMetrics.ci_lower === 'number' && typeof reportMetrics.ci_upper === 'number' && (
+          <>
+            <dt className="ledger__key">95% interval</dt>
+            <dd className="ledger__val">
+              {reportMetrics.ci_lower.toFixed(3)} to {reportMetrics.ci_upper.toFixed(3)}
+            </dd>
+          </>
+        )}
+        {typeof reportMetrics.confidence === 'number' && (
+          <>
+            <dt className="ledger__key">Confidence</dt>
+            <dd className="ledger__val">{formatPercent(reportMetrics.confidence)}</dd>
+          </>
+        )}
       </dl>
 
       {categories.length > 0 && (
