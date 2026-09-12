@@ -19,7 +19,7 @@ from evalpilot.memory import seed_incidents
 from evalpilot.orchestration_eval.service import EvaluationService
 from evalpilot.repository import Repository
 from evalpilot.runner import RunRunner
-from evalpilot.tools import ToolRegistry
+from evalpilot.tools import ToolPolicy, ToolRegistry
 
 
 @dataclass
@@ -46,7 +46,13 @@ def build_container(settings: Settings | None = None) -> Container:
     db = Database(resolved.db_path, resolved.artifacts_dir)
     db.initialize()
     repo = Repository(db)
-    tools = ToolRegistry(enable_python=resolved.enable_python_tool)
+    tools = ToolRegistry(
+        enable_python=resolved.enable_python_tool,
+        policy=ToolPolicy(
+            http_allowed_hosts=("127.0.0.1",),
+            file_read_roots=(resolved.artifacts_dir.resolve(),),
+        ),
+    )
     # The incident history is fixture data, so it is seeded on every build.
     # `seed_incidents` is idempotent, which is what makes that safe.
     seed_incidents(repo)

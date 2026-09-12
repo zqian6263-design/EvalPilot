@@ -46,13 +46,13 @@ import {
  */
 export interface MarketMeasuredContext {
   /** How to name the run, e.g. `v1.4.2 vs v1.5.0-rc1`. */
-  runLabel?: string
+  runLabel?: string | undefined
   /** `false` means the run is attributed but has no verdict yet. */
-  confirmed?: boolean
-  meanDifference?: number
-  ciLow?: number
-  ciHigh?: number
-  threshold?: number
+  confirmed?: boolean | undefined
+  meanDifference?: number | undefined
+  ciLow?: number | undefined
+  ciHigh?: number | undefined
+  threshold?: number | undefined
 }
 
 export interface MarketImpactPanelProps {

@@ -53,7 +53,7 @@ def test_deterministic_mode_reports_no_model(tmp_path) -> None:
         "model": None,
         "base_url_host": None,
         "fallback_active": False,
-        "tools": ["kb_search"],
+        "tools": ["kb_search", "http_get", "file_read"],
     }
 
 
@@ -107,14 +107,17 @@ def test_the_endpoint_never_returns_the_api_key(tmp_path) -> None:
 
 def test_tools_are_read_from_the_registry_not_hard_coded(tmp_path) -> None:
     with _client(tmp_path) as client:
-        assert client.get("/api/runtime").json()["tools"] == ["kb_search"]
+        assert client.get("/api/runtime").json()["tools"] == [
+            "kb_search",
+            "http_get",
+            "file_read",
+        ]
     with _client(tmp_path, enable_python_tool=True) as client:
         tools = client.get("/api/runtime").json()["tools"]
     assert "python_run" in tools
-    # The stubs stay unlisted: the registry refuses them, so the endpoint must
-    # not imply the capability.
-    assert "http_get" not in tools
-    assert "file_read" not in tools
+    # The gated network and file tools are registered for this container,
+    # so the endpoint reports them alongside the enabled Python capability.
+    assert {"http_get", "file_read"} <= set(tools)
 
 
 def test_the_endpoint_is_reachable_with_no_environment_configured() -> None:

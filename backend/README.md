@@ -485,7 +485,7 @@ export EVALPILOT_LLM_TIMEOUT_SECONDS=45        # optional, default 45
 curl http://127.0.0.1:8000/api/runtime
 # {"mode":"live","llm_configured":true,"model":"deepseek-v4-pro",
 #  "base_url_host":"api.deepseek.com","fallback_active":false,
-#  "tools":["kb_search"]}
+#  "tools":["kb_search","http_get","file_read"]}
 ```
 
 Any OpenAI-compatible `/chat/completions` endpoint works; DeepSeek is the

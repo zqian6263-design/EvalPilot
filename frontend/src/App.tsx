@@ -19,15 +19,17 @@ import { LiveConsole } from './views/LiveConsole'
 import { LiveFindings } from './views/LiveFindings'
 import { LiveReportView } from './views/LiveReport'
 import { InvestigationWorkspace } from './InvestigationWorkspace'
+import { MarketImpactPanel } from './features/market'
 import { ReportView } from './views/Report'
 
-export type View = 'console' | 'findings' | 'report' | 'investigation'
+export type View = 'console' | 'findings' | 'report' | 'investigation' | 'market'
 
 const VIEWS: ReadonlyArray<{ id: View; label: string }> = [
   { id: 'console', label: 'Run console' },
   { id: 'findings', label: 'Findings' },
   { id: 'report', label: 'Report' },
   { id: 'investigation', label: 'Investigation' },
+  { id: 'market', label: 'Market' },
 ]
 
 /**
@@ -40,10 +42,10 @@ const PROBE_TIMEOUT_MS = 1200
 /**
  * How long the console follows a live run before showing the partial state.
  *
- * The demo's ten-scenario run takes a couple of seconds; ten seconds leaves
- * room for a cold start on a loaded machine without presenting a hung page.
+ * The 26-scenario run plus investigation can take several seconds; thirty
+ * seconds leaves room for a cold start without presenting a hung page.
  */
-const RUN_TIMEOUT_MS = 10_000
+const RUN_TIMEOUT_MS = 30_000
 
 /**
  * The live run the console is showing, once one exists.
@@ -52,6 +54,13 @@ const RUN_TIMEOUT_MS = 10_000
  * from `GET /runs/{id}` and its report. Both are kept so the header can name
  * the run even while its report is still being written.
  */
+interface RuntimeStatus {
+  mode: 'deterministic' | 'live'
+  llm_configured: boolean
+  model: string | null
+  fallback_active: boolean
+}
+
 interface LiveState {
   run: Run
   status: RunStatus
@@ -113,7 +122,21 @@ export function App(): React.JSX.Element {
   const [live, setLive] = useState<LiveState | null>(null)
   const [liveNote, setLiveNote] = useState<string | null>(null)
   const [autoDemoDone, setAutoDemoDone] = useState(false)
+  const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void fetch('/api/runtime')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: RuntimeStatus | null) => {
+        if (!cancelled && payload) setRuntimeStatus(payload)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     const onHashChange = (): void => setRoute(readRoute())
@@ -270,6 +293,13 @@ export function App(): React.JSX.Element {
           ))}
         </div>
         <div className="viewbar__tools">
+          {runtimeStatus && (
+            <span className={runtimeStatus.mode === 'live' ? 'u-device' : 'u-micro'}>
+              {runtimeStatus.mode === 'live'
+                ? `LIVE LLM · ${runtimeStatus.model ?? 'configured'}`
+                : 'DETERMINISTIC'}
+            </span>
+          )}
           {hasLiveRun ? (
             <>
               <span className="u-micro">Matched</span>
@@ -329,6 +359,30 @@ export function App(): React.JSX.Element {
                 }}
               />
             )}
+            {route.view === 'market' && (
+              <MarketImpactPanel
+                measured={{
+                  runLabel: `${live.run.baseline_version} vs ${live.run.candidate_version}`,
+                  confirmed: live.evaluation!.reportMetrics.regression_confirmed === true,
+                  meanDifference:
+                    typeof live.evaluation!.reportMetrics.mean_difference === 'number'
+                      ? live.evaluation!.reportMetrics.mean_difference
+                      : undefined,
+                  ciLow:
+                    typeof live.evaluation!.reportMetrics.ci_lower === 'number'
+                      ? live.evaluation!.reportMetrics.ci_lower
+                      : undefined,
+                  ciHigh:
+                    typeof live.evaluation!.reportMetrics.ci_upper === 'number'
+                      ? live.evaluation!.reportMetrics.ci_upper
+                      : undefined,
+                  threshold:
+                    typeof live.evaluation!.reportMetrics.regression_threshold === 'number'
+                      ? live.evaluation!.reportMetrics.regression_threshold
+                      : undefined,
+                }}
+              />
+            )}
           </>
         ) : (
           <>
@@ -359,6 +413,7 @@ export function App(): React.JSX.Element {
 
             {route.view === 'report' && <ReportView scenario={scenario} transport={transport} />}
             {route.view === 'investigation' && <InvestigationWorkspace />}
+            {route.view === 'market' && <MarketImpactPanel />}
           </>
         )}
       </main>
