@@ -45,6 +45,7 @@ from typing import Any
 from evalpilot import __version__
 from evalpilot.clock import new_id, utc_now
 from evalpilot.engine_mapping import to_expected_behavior
+from evalpilot.llm.runtime import LLMRuntime
 from evalpilot.memory import match_incidents, search_terms
 from evalpilot.memory.retrieval import confidence_for
 from evalpilot.models import (
@@ -68,11 +69,13 @@ from evalpilot.orchestration_eval.service import CaseVerdict, EvaluationService
 from evalpilot.repository import NotFoundError, Repository
 from evalpilot.tools import ToolError, ToolPolicy, ToolRegistry
 
+from .live import LiveLLMAugmenter
 from .providers import (
     CounterfactualProvider,
     CounterfactualRequest,
     DeterministicProvider,
 )
+from .sources import SOURCE_DETERMINISTIC
 
 #: Stable step titles. The UI groups on them.
 ROOT_TITLE = "Release investigation"
@@ -368,7 +371,7 @@ class _Recorder:
             title=title,
             status=status,
             detail=detail,
-            data=dict(data or {}),
+            data={"source": SOURCE_DETERMINISTIC, **(data or {})},
             evidence_ids=list(evidence_ids),
             created_at=utc_now(),
             completed_at=None,
@@ -407,12 +410,17 @@ class InvestigationService:
 
     Args:
         repo: Repository for every read and write.
-        settings: Container settings, used for nothing but the version string.
+        settings: Container settings, used for the version string and as the
+            fallback source of the LLM configuration.
         evaluation_service: The evaluation boundary the run pipeline uses, so
             hypothesis scores cannot drift from the run report.
         provider: Counterfactual replay seam. Defaults to the deterministic
             offline fallback.
         memory_limit: How many incidents a recall may return.
+        llm_runtime: Live-LLM configuration. ``None``, or a runtime that is not
+            :attr:`~evalpilot.llm.runtime.LLMRuntime.live`, keeps the
+            investigation exactly deterministic — the model is never consulted
+            and every step carries ``data.source = "deterministic"``.
     """
 
     def __init__(
@@ -423,12 +431,25 @@ class InvestigationService:
         evaluation_service: EvaluationService | None = None,
         provider: CounterfactualProvider | None = None,
         memory_limit: int = 3,
+        llm_runtime: LLMRuntime | None = None,
     ) -> None:
         self.repo = repo
         self.settings = settings
         self.evaluation_service = evaluation_service or EvaluationService()
         self.provider = provider or DeterministicProvider()
         self.memory_limit = memory_limit
+        self.llm_runtime = llm_runtime or LLMRuntime()
+
+    @property
+    def augmenter(self) -> LiveLLMAugmenter:
+        """The live-mode augmenter, bound to the *current* runtime.
+
+        Built on each access rather than cached in ``__init__``, so replacing
+        :attr:`llm_runtime` — which the container does when a deployment
+        switches modes, and which tests do to inject a fake — is picked up
+        immediately instead of leaving a stale provider behind.
+        """
+        return LiveLLMAugmenter(repo=self.repo, runtime=self.llm_runtime)
 
     # ------------------------------------------------------------------
     # Intake
@@ -533,6 +554,7 @@ class InvestigationService:
             hypotheses = self._risk_hypotheses(
                 recorder, root, intake, matches, incidents
             )
+            await self.augmenter.hypotheses(recorder, root, intake, hypotheses)
             self._investigating(recorder, root, intake)
             self._probing(recorder, root, intake, hypotheses)
             self._replaying(recorder, root, investigation_id)
@@ -549,6 +571,7 @@ class InvestigationService:
                 reference,
                 reference_evidence,
             )
+            await self.augmenter.rationale(recorder, root, intake, decision)
         except Exception as exc:
             self._fail(recorder, root, investigation_id, exc)
             raise

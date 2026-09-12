@@ -15,6 +15,7 @@ Public surface:
 from __future__ import annotations
 
 from evalpilot.investigation.engine_provider import EngineCounterfactualProvider
+from evalpilot.investigation.live import LiveLLMAugmenter
 from evalpilot.investigation.providers import (
     CounterfactualProvider,
     CounterfactualRequest,
@@ -37,6 +38,7 @@ __all__ = [
     "InvestigationError",
     "InvestigationOutcome",
     "InvestigationService",
+    "LiveLLMAugmenter",
     "RunIntake",
     "ScenarioFinding",
     "recommend_actions",

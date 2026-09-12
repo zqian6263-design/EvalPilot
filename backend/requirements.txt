@@ -1,6 +1,8 @@
 fastapi>=0.110
 uvicorn[standard]>=0.27
 pydantic>=2.6
+# OpenAI-compatible chat-completions client for the optional live-LLM mode.
+# The deterministic default never makes an outbound request.
 httpx>=0.27
 
 # dev / test

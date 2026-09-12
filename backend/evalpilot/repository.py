@@ -811,6 +811,26 @@ class Repository:
                 )
         return self.get_step(step_id)
 
+    def save_step_data(self, step_id: str, data: dict[str, Any]) -> InvestigationStep:
+        """Replace a step's ``data`` payload.
+
+        Separate from :meth:`update_step` because the two are genuinely
+        different writes: ``update_step`` moves a step through its lifecycle
+        (status, detail, completion time), while this one amends the structured
+        payload a finished step carries.
+
+        Live mode uses it to *merge* model commentary into a step's ``data``
+        after the deterministic keys were written. The caller is responsible
+        for merging rather than overwriting, which is what keeps a measured
+        value from being rewritten by a model.
+        """
+        with self.db.connect() as conn:
+            conn.execute(
+                "UPDATE investigation_steps SET data = ? WHERE id = ?",
+                (_dumps(data), step_id),
+            )
+        return self.get_step(step_id)
+
     def get_step(self, step_id: str) -> InvestigationStep:
         with self.db.connect() as conn:
             row = conn.execute(

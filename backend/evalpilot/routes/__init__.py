@@ -11,4 +11,5 @@ __all__ = [
     "projects",
     "reports",
     "runs",
+    "runtime",
 ]
