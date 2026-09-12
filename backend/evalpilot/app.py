@@ -19,6 +19,7 @@ from evalpilot.routes import memory as memory_routes
 from evalpilot.routes import projects as project_routes
 from evalpilot.routes import reports as report_routes
 from evalpilot.routes import runs as run_routes
+from evalpilot.routes import runtime as runtime_routes
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -29,8 +30,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         version=__version__,
         description=(
             "Regression evaluation backend. MVP runs are deterministic and require "
-            "no external model or network access. Contracts: docs/INTERFACES.md "
-            "and docs/V2_INTERFACES.md"
+            "no external model or network access. Contracts: docs/INTERFACES.md, "
+            "docs/V2_INTERFACES.md and docs/V3_LLM_INTERFACES.md"
         ),
     )
     app.add_middleware(
@@ -53,6 +54,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         investigation_routes.router, prefix="/api", tags=["investigations"]
     )
     app.include_router(memory_routes.router, prefix="/api", tags=["memory"])
+    app.include_router(runtime_routes.router, prefix="/api", tags=["runtime"])
 
     @app.get("/", include_in_schema=False)
     def root() -> dict[str, str]:

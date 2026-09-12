@@ -7,6 +7,7 @@ required to complete a run or an investigation.
 
 - Contract (source of truth): [`../docs/INTERFACES.md`](../docs/INTERFACES.md)
 - Investigation contract: [`../docs/V2_INTERFACES.md`](../docs/V2_INTERFACES.md)
+- Live-LLM contract: [`../docs/V3_LLM_INTERFACES.md`](../docs/V3_LLM_INTERFACES.md)
 - Product contract: [`../docs/SPEC.md`](../docs/SPEC.md)
 - Collaboration rules: [`../CLAUDE.md`](../CLAUDE.md)
 
@@ -182,6 +183,7 @@ Base path `/api`. Full request/response shapes live in `docs/INTERFACES.md`.
 | `GET` | `/investigations/{id}/events` | progress stream; same envelope as a run's |
 | `GET` | `/investigations/{id}/report.md` | Markdown report; **409** until it completes |
 | `GET` | `/memory/incidents?query=&tag=` | seeded incident history, scored when `query` is given |
+| `GET` | `/runtime` | resolved mode, model, host, fallback state, registered tools |
 
 `fmt=sse` (default) emits `text/event-stream`; `fmt=ndjson` emits
 newline-delimited JSON. `follow=true` keeps the stream open until the run
@@ -210,6 +212,8 @@ evalpilot/
   demo.py         demo metadata + idempotent seeding (+ investigation metadata)
   memory/         seeded incident history and the memory matcher
   investigation/  autonomous investigation engine + counterfactual seam
+                  (+ live.py: the live-mode augmentation)
+  llm/            optional live-LLM runtime: provider, client, schema, prompts
   routes/         one module per API area
   orchestration_eval/  evaluation boundary the runner calls
   evaluation/     the evaluation engine (checks, comparison, judge)
@@ -397,12 +401,108 @@ defaults run the demo with no configuration.
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `EVALPILOT_DB_PATH` | `backend/data/evalpilot.db` | SQLite file |
-| `EVALPILOT_LLM_BASE_URL` | *(empty)* | optional judge endpoint |
-| `EVALPILOT_LLM_API_KEY` | *(empty)* | never committed |
-| `EVALPILOT_LLM_MODEL` | *(empty)* | optional judge model |
+| `EVALPILOT_LLM_BASE_URL` | *(empty)* | OpenAI-compatible endpoint (live mode) |
+| `EVALPILOT_LLM_API_KEY` | *(empty)* | never committed, never returned |
+| `EVALPILOT_LLM_MODEL` | *(empty)* | model id, e.g. `deepseek-v4-pro` |
+| `EVALPILOT_LLM_MODE` | `deterministic` | `deterministic` or `live` |
+| `EVALPILOT_LLM_TIMEOUT_SECONDS` | `45` | per-request LLM timeout |
 | `EVALPILOT_ENABLE_PYTHON_TOOL` | `false` | allowlist gate |
 | `EVALPILOT_DEMO_MODE` | `true` | deterministic fixtures |
 | `EVALPILOT_STEP_DELAY` | `0.05` | simulated per-step latency; `0` is fastest |
+
+## Live LLM mode (optional)
+
+Everything above works offline. Live mode
+([`docs/V3_LLM_INTERFACES.md`](../docs/V3_LLM_INTERFACES.md)) adds a real model
+to the same investigation without weakening any of it. It is **off by default**:
+the shipped demo is byte-for-byte reproducible and needs no key.
+
+```bash
+export EVALPILOT_LLM_MODE=live
+export EVALPILOT_LLM_BASE_URL=https://api.deepseek.com
+export EVALPILOT_LLM_API_KEY=sk-...            # never committed
+export EVALPILOT_LLM_MODEL=deepseek-v4-pro
+export EVALPILOT_LLM_TIMEOUT_SECONDS=45        # optional, default 45
+
+curl http://127.0.0.1:8000/api/runtime
+# {"mode":"live","llm_configured":true,"model":"deepseek-v4-pro",
+#  "base_url_host":"api.deepseek.com","fallback_active":false,
+#  "tools":["kb_search"]}
+```
+
+Any OpenAI-compatible `/chat/completions` endpoint works; DeepSeek is the
+documented default. The client sends `Authorization: Bearer <key>`, requests a
+JSON object, and validates the response against a schema.
+
+### What the model may and may not do
+
+| Live mode adds | Live mode may never change |
+| --- | --- |
+| additional risk hypotheses, cited to scenarios the run actually regressed on | the measured per-scenario scores |
+| a second, advisory decision step explaining the verdict | the verdict, risk level and confidence |
+| extra recommended actions, appended after the deterministic ones | `blocking_findings` and their evidence ids |
+| | the counterfactual replay results |
+
+A model hypothesis is a `risk` step with `data.authoritative = false`; it never
+becomes a `Finding` and never enters `ReleaseDecision`. If the model echoes a
+verdict that disagrees with the measured one, the disagreement is recorded on
+the step (`data.verdict_disagreement`) and the measured verdict stands.
+
+Every step the model contributed to carries `data.source = "llm"`,
+`data.model` and `data.llm_call_id`. Every deterministic step carries
+`data.source = "deterministic"`.
+
+### When the model is unavailable
+
+An investigation never fails because a model failed. A timeout, a transport
+error, malformed JSON, a schema violation, or a hypothesis citing a scenario
+that does not exist all produce the same outcome: the step is kept, closed as
+completed, and carries `data.fallback_reason`. The deterministic analysis is
+already complete and unchanged. `GET /api/runtime` then reports
+`fallback_active: true`.
+
+Live mode with an incomplete configuration (a missing key, say) is a related
+case: the backend installs **no** provider, reports `llm_configured: false` on
+`/api/runtime`, and runs deterministically rather than attempting requests that
+must fail. It never reports a mode it is not actually using.
+
+### The API key
+
+The key is read in exactly one place (`evalpilot/llm/runtime.py`) and used in
+exactly one place (to build a request header). It is never returned by an
+endpoint, never written to a step, an event or an artifact, and never included
+in an exception message — error text is built from the base URL's *host*, the
+status code and the HTTP library's own message. `GET /api/runtime` reports
+`base_url_host`, never the full URL.
+
+### The judge seam
+
+In live mode the same provider is installed as the rubric judge at
+`EvaluationService(judge=...)`, through `evalpilot/llm/judge_adapter.py`. The
+engine in `evalpilot/evaluation/` still owns validation and still has no LLM
+dependency of its own.
+
+Note that the **judge still does not contribute to a demo run's numbers**: the
+fixture executor does not record the question text a judge needs, so
+`metrics.evaluation_warnings` says a judge is configured but was not scored.
+That was true before live mode existed and remains true. The seam is wired and
+tested through fakes rather than silently blending a non-reproducible score
+into a verdict — see "Evaluation boundary" above.
+
+### Testing live mode offline
+
+The suite never opens a socket and never needs a key. Provider behaviour is
+driven by a scripted fake, and the HTTP client is exercised through
+`httpx.MockTransport`:
+
+```bash
+cd backend && python -m pytest tests/test_llm_runtime.py tests/test_llm_investigation.py \
+    tests/test_llm_judge_seam.py tests/test_runtime_endpoint.py
+```
+
+Covered: success, malformed JSON, schema failure, timeout, transport error,
+non-2xx status, fallback, secret non-leakage, the runtime endpoint, and the
+anti-override invariants above.
 
 ## Contract concerns
 

@@ -10,12 +10,16 @@ from dataclasses import dataclass
 
 from evalpilot.config import Settings, load_settings
 from evalpilot.db import Database
+from evalpilot.evaluation.judge import RubricJudge
 from evalpilot.investigation import InvestigationService
 from evalpilot.investigation.engine_provider import EngineCounterfactualProvider
+from evalpilot.llm.judge_adapter import build_judge_callable
+from evalpilot.llm.runtime import LLMRuntime, build_runtime
 from evalpilot.memory import seed_incidents
 from evalpilot.orchestration_eval.service import EvaluationService
 from evalpilot.repository import Repository
 from evalpilot.runner import RunRunner
+from evalpilot.tools import ToolRegistry
 
 
 @dataclass
@@ -28,25 +32,44 @@ class Container:
     #: the counterfactual provider can be swapped for the dedicated engine at
     #: one place: `Container.investigation_runner.provider`.
     investigation_runner: InvestigationService
+    #: The registered tool set, so `GET /api/runtime` reports what the process
+    #: can actually do rather than a hard-coded list.
+    tools: ToolRegistry
+    #: Resolved LLM mode. `deterministic` by default; `live` installs a
+    #: provider into the investigation and the judge seam.
+    llm_runtime: LLMRuntime
 
 
 def build_container(settings: Settings | None = None) -> Container:
     resolved = settings or load_settings()
+    llm_runtime = build_runtime(resolved)
     db = Database(resolved.db_path, resolved.artifacts_dir)
     db.initialize()
     repo = Repository(db)
+    tools = ToolRegistry(enable_python=resolved.enable_python_tool)
     # The incident history is fixture data, so it is seeded on every build.
     # `seed_incidents` is idempotent, which is what makes that safe.
     seed_incidents(repo)
     # Defaults (no judge, fixed seed at the dataclass defaults) keep the demo
     # reproducible and offline; the runner takes the service as a seam.
-    evaluation_service = EvaluationService()
+    #
+    # The judge seam is populated only in live mode. In deterministic mode
+    # `build_judge_callable` returns None and no judge is installed at all, so
+    # the offline path is byte-for-byte what it was before this package
+    # existed. Note that the fixture executor does not record the question text
+    # a judge needs, so live mode still warns rather than blending a judge
+    # score in — see `orchestration_eval.service`.
+    judge_callable = build_judge_callable(llm_runtime)
+    evaluation_service = EvaluationService(
+        judge=RubricJudge(judge_callable) if judge_callable is not None else None,
+    )
     runner = RunRunner(repo, db, resolved, evaluation_service)
     investigation_runner = InvestigationService(
         repo,
         settings=resolved,
         evaluation_service=evaluation_service,
         provider=EngineCounterfactualProvider(repo=repo),
+        llm_runtime=llm_runtime,
     )
     return Container(
         settings=resolved,
@@ -54,4 +77,20 @@ def build_container(settings: Settings | None = None) -> Container:
         repo=repo,
         runner=runner,
         investigation_runner=investigation_runner,
+        tools=tools,
+        llm_runtime=llm_runtime,
     )
+
+
+def use_llm_runtime(container: "Container", runtime: LLMRuntime) -> LLMRuntime:
+    """Install ``runtime`` as *the* LLM runtime for the whole container.
+
+    There is exactly one runtime object per container, and both the service
+    that consults the model and ``GET /api/runtime`` read it. Swapping it in
+    one place only would let the status endpoint report a mode the
+    investigation is not actually using, which is precisely the kind of
+    dishonesty this endpoint exists to prevent.
+    """
+    container.llm_runtime = runtime
+    container.investigation_runner.llm_runtime = runtime
+    return runtime
