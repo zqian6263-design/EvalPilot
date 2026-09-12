@@ -45,7 +45,7 @@ DEFAULT_TIMEOUT_SECONDS = 45.0
 #: Cap on a completion. Generous enough for a handful of hypotheses or one
 #: rationale; low enough that a runaway generation cannot stall an
 #: investigation.
-MAX_TOKENS = 1024
+MAX_TOKENS = 8192
 
 
 class OpenAICompatibleProvider:

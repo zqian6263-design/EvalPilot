@@ -2068,6 +2068,26 @@ def render_markdown(
             "",
         ]
 
+    model_rationales = [
+        step
+        for step in steps
+        if step.data.get("source") == "llm" and step.data.get("rationale")
+    ]
+    if model_rationales:
+        step = model_rationales[0]
+        lines += [
+            "## Model release rationale",
+            "",
+            f"**Model:** `{step.data.get('model', 'unknown')}`",
+            "",
+            str(step.data["rationale"]),
+            "",
+            "> This section explains the measured decision. The verdict, risk level, "
+            "blocking findings and counterfactual results above remain authoritative "
+            "and are not changed by the model.",
+            "",
+        ]
+
     lines += [
         "## What the run measured",
         "",
