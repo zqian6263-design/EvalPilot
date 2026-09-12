@@ -1,10 +1,12 @@
 # EvalPilot Backend
 
-FastAPI service that plans, executes, evaluates, and reports on regression runs.
-The MVP is **fully deterministic and offline**: no LLM, no API key, and no
-network access are required to complete a run.
+FastAPI service that plans, executes, evaluates, and reports on regression runs,
+and then investigates a completed run autonomously. The MVP is **fully
+deterministic and offline**: no LLM, no API key, and no network access are
+required to complete a run or an investigation.
 
 - Contract (source of truth): [`../docs/INTERFACES.md`](../docs/INTERFACES.md)
+- Investigation contract: [`../docs/V2_INTERFACES.md`](../docs/V2_INTERFACES.md)
 - Product contract: [`../docs/SPEC.md`](../docs/SPEC.md)
 - Collaboration rules: [`../CLAUDE.md`](../CLAUDE.md)
 
@@ -65,6 +67,14 @@ complete run, and streams events):
 
 ```bash
 cd backend && python scripts/startup_check.py
+```
+
+For a real-socket check of the autonomous investigation (binds `127.0.0.1:8130`,
+runs the demo, then drives an investigation end to end and asserts every promise
+in `docs/V2_INTERFACES.md`):
+
+```bash
+cd backend && python scripts/investigation_check.py
 ```
 
 ## The seeded demo
@@ -165,6 +175,13 @@ Base path `/api`. Full request/response shapes live in `docs/INTERFACES.md`.
 | `GET` | `/events?run_id=&after=&fmt=&follow=` | progress stream; omit `run_id` for the newest run |
 | `GET` | `/runs/{run_id}/events` | same stream on the frozen contract path |
 | `GET` | `/demo/seed` | deterministic demo metadata, no side effects |
+| `GET` | `/demo/investigation` | investigation workspace metadata, no side effects |
+| `POST` | `/investigations` | create a queued investigation; **201**, idempotent on `run_id` |
+| `GET` | `/investigations/{id}` | investigation + steps + memory matches + counterfactuals + decision |
+| `POST` | `/investigations/{id}/start` | **202**; only valid from `queued`, else **409** |
+| `GET` | `/investigations/{id}/events` | progress stream; same envelope as a run's |
+| `GET` | `/investigations/{id}/report.md` | Markdown report; **409** until it completes |
+| `GET` | `/memory/incidents?query=&tag=` | seeded incident history, scored when `query` is given |
 
 `fmt=sse` (default) emits `text/event-stream`; `fmt=ndjson` emits
 newline-delimited JSON. `follow=true` keeps the stream open until the run
@@ -178,10 +195,10 @@ The event stream is published on **both** `/events` and
 ```text
 evalpilot/
   app.py          FastAPI factory + router wiring
-  container.py    resolved collaborators (settings, db, repo, runner)
+  container.py    resolved collaborators (settings, db, repo, runner, investigation)
   config.py       environment settings
-  models.py       Pydantic v2 domain models (frozen contract)
-  db.py           SQLite schema, connection factory, artifact paths
+  models.py       Pydantic v2 domain models (frozen contracts, V1 + V2)
+  db.py           SQLite schema, migrations, connection factory, artifact paths
   repository.py   all SQL reads and writes
   clock.py        UTC ISO-8601 timestamps, UUIDs
   fixtures.py     static knowledge base + golden scenarios
@@ -190,12 +207,14 @@ evalpilot/
   evaluator.py    evidence persistence helpers
   engine_mapping.py  backend rows -> evaluation engine models
   runner.py       async run state machine
-  demo.py         demo metadata + idempotent seeding
+  demo.py         demo metadata + idempotent seeding (+ investigation metadata)
+  memory/         seeded incident history and the memory matcher
+  investigation/  autonomous investigation engine + counterfactual seam
   routes/         one module per API area
   orchestration_eval/  evaluation boundary the runner calls
   evaluation/     the evaluation engine (checks, comparison, judge)
 tests/            pytest suite
-scripts/          manual startup check
+scripts/          manual startup checks (run + investigation)
 ```
 
 **Run state machine:** `queued → planning → executing → evaluating → completed`,
@@ -255,6 +274,119 @@ optional `judge=` so a judge can be injected at the seam; when one is present th
 run reports it in `metrics.evaluation_warnings` instead of silently blending a
 non-reproducible score into the verdict.
 
+## Autonomous investigation
+
+Once a run completes, `docs/V2_INTERFACES.md` turns it into a release
+investigation. The engine drives exactly the sequence the contract names:
+
+```text
+release objective
+-> risk hypotheses -> recalled incidents -> follow-up probes
+-> counterfactual replay -> root cause -> release decision
+-> exportable evidence report
+```
+
+The demo entry point is the confirmed 26-case regression run:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/investigations \
+  -H "Content-Type: application/json" \
+  -d '{"run_id":"<completed_run_id>","objective":"Can v1.1-candidate ship?"}'
+
+curl -X POST http://127.0.0.1:8000/api/investigations/<id>/start   # 202
+curl http://127.0.0.1:8000/api/investigations/<id>
+curl http://127.0.0.1:8000/api/investigations/<id>/report.md
+```
+
+On the seeded run the investigation produces:
+
+| Contract requirement | Result |
+| --- | --- |
+| ≥ 3 risk hypotheses | 5: the summarization mechanism, one per affected domain (safety, security, escalation), and the credential disclosure |
+| ≥ 2 memory matches | 2: the summarizer precedent (0.80) and the refusal-bypass precedent (1.00) |
+| a probe per regressed scenario | 8, one per regressed scenario, each citing that scenario's candidate evidence |
+| one counterfactual per critical finding | 8, one per regressed scenario |
+| `compression_disabled` dominant for dropped clauses | 7 root causes, all seven clause-loss scenarios |
+| `security_guard_enabled` for the credential disclosure | 1 root cause on `prompt-injection-password` |
+| `decision.verdict = block` | `block` at `critical` risk |
+| a report whose claims cite evidence | every hypothesis, probe, experiment and blocking finding carries evidence ids, indexed at the end |
+
+### How a decision is reached
+
+Three rules do the work, and each is asserted by a test:
+
+1. **Nothing is attributed to a mechanism the run does not support.** A scenario
+   is only linked to an intervention when the failure the run recorded is one
+   that intervention repairs. A disclosed credential is not a dropped clause and
+   is not fixed by the same change, so the two get different interventions
+   (`security_guard_enabled` vs `compression_disabled`) instead of one blanket
+   "revert the candidate".
+2. **A named case that lost a mandatory clause blocks.** A scenario is a hard
+   failure when the candidate answered without a phrase its expectation names in
+   `must_include`, or surfaced one it names in `must_avoid` — whatever the rest
+   of the answer scored. On a safety answer, the missing half is the part the
+   customer needed.
+3. **The aggregate does not get to hide the cases.** The paired interval across
+   26 matched cases is deliberately not strong enough to call this regression on
+   its own (see below). A decision that looked only at it would allow the
+   release. The block rests on the per-scenario evidence, and the report says so
+   in those words rather than dressing the statistics up.
+
+`ReleaseDecision.blocking_findings` holds ids of the run's `Finding` rows — the
+run layer already owns the finding → evidence link, so a reviewer opening a
+blocking id gets the check-level rationale. The list is capped at eight and the
+report states the omitted count, so a bounded list never reads as exhaustive.
+
+### The counterfactual seam
+
+`investigation/providers.py` defines `CounterfactualProvider`: give it a
+regressed scenario, get back one `Attempt` per intervention it considered. The
+backend ships `DeterministicProvider`, an offline fallback that reasons from the
+run's own evidence.
+
+Be precise about what the fallback claims. A real replay re-executes the
+candidate with one intervention applied and measures the answer. The fallback
+cannot — it has no executor for a modified candidate — so it *predicts* the
+counterfactual score from the failure the run already recorded, and every
+rationale says so in as many words ("predicted by the deterministic fallback
+from recorded evidence, not measured by a replay"). The predictions are still
+falsifiable, which is what makes this a usable placeholder rather than a
+fabrication.
+
+The seam is `Container.investigation_runner.provider`. Assigning to it swaps in
+the dedicated engine and nothing else changes; `tests/test_investigation.py`
+proves this by injecting a stub and asserting its results reach the persisted
+experiments.
+
+### Memory
+
+`memory/` seeds four authored incidents (`docs/V2_INTERFACES.md` requires at
+least three) and scores them against a run's symptoms. Scoring is per symptom
+line, then aggregated: each line is a mini-query with its own coverage score and
+the incident is judged on the line it explains best, because pooling every
+failure into one bag of words lets the unrelated lines drown a decisive match.
+Within a line, terms are weighted by inverse document frequency and terms the
+corpus does not know at all are dropped, so the score reads as "fraction of the
+recognisable part of this failure the incident accounts for".
+
+The matcher is deliberately lexical, not an embedding search: the investigation
+must be reproducible offline, and every recall has to be explainable by the
+exact terms that matched. `MemoryMatch` carries `matched_terms` and a `reason`
+built from them, so the UI and the report can say *why* an incident was recalled.
+
+The terms handed to the matcher come only from observed failures — the
+scenario's own question and the required content it lost or the markers it
+disclosed. No inference about a cause goes in, so the fixtures have to earn the
+match on the failure itself and cannot be talked into an incident the run does
+not resemble. `tests/test_investigation.py` asserts that no cause vocabulary
+leaks into the query.
+
+Recalled incidents then *narrow* the investigation rather than expanding it: an
+incident only contributes a hypothesis when the run actually regressed on the
+scenario that incident guards. Each incident carries an `intervention` field
+read from the persisted row, which is what turns "we have seen this before" into
+a concrete counterfactual to replay.
+
 ## Tool safety
 
 Only `kb_search` is available, and it is a pure in-process function. `http_get`
@@ -309,3 +441,30 @@ field, and no frozen field was renamed.
    /runs/{run_id}/report` returns findings inline per the contract. There is no
    `GET /findings` endpoint; a UI showing findings before completion must read
    them from the event stream (`finding.created`) instead.
+
+## Contract concerns (V2)
+
+6. **The V2 event vocabulary is the run vocabulary.** `docs/V2_INTERFACES.md`
+   asks the investigation stream to "reuse the run-event envelope", and
+   `docs/INTERFACES.md` freezes the type list, so the same types are reused with
+   `run_id` holding the investigation id. The stream starts with `run.started`
+   and ends with `run.completed` — accurate, but the prefix is a little odd for
+   a client that renders both streams side by side. Two things make it
+   unambiguous, and both are asserted by tests: the payload's
+   `data.investigation_id` is always set, and an investigation can never share
+   an id with a run.
+7. **`events.run_id` lost its foreign key.** SQLite cannot drop a constraint
+   with `ALTER TABLE`, so the column was rebuilt once as `entity_id` during
+   `Database.initialize` (guarded on the column shape, so the row copy runs at
+   most once per file). Fresh databases get the new shape directly and copy
+   nothing.
+8. **`ReleaseDecision.blocking_findings` holds finding ids, not evidence ids.**
+   `docs/V2_INTERFACES.md` types the field as `list[uuid]` without saying which
+   entity. Findings are the right referent — they are what a release gate acts
+   on, and the run layer already carries their evidence links — but the contract
+   does not state it, so the interpretation is recorded here and in the model
+   docstring.
+9. **`HistoricalIncident` gained a field.** The contract's incident shape has no
+   place to record the change that fixed the incident, and without it a recalled
+   incident cannot produce a concrete counterfactual. `intervention` is added as
+   an optional field, which is additive and breaks no existing field name.

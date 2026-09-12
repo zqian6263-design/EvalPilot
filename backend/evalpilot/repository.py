@@ -13,14 +13,23 @@ from typing import Any
 from evalpilot.clock import from_iso, new_id, to_iso, utc_now
 from evalpilot.db import Database
 from evalpilot.models import (
+    CounterfactualExperiment,
     Event,
     EventType,
     Evidence,
     Finding,
+    HistoricalIncident,
+    Investigation,
+    InvestigationStatus,
+    InvestigationStep,
+    InvestigationStepKind,
+    MemoryMatch,
     Project,
+    ReleaseDecision,
     Report,
     Run,
     RunStatus,
+    StepStatus,
     TestCase,
 )
 
@@ -105,12 +114,100 @@ def _finding(row: Any) -> Finding:
 
 def _event(row: Any) -> Event:
     return Event(
-        run_id=row["run_id"],
+        run_id=row["entity_id"],
         sequence=row["sequence"],
         type=EventType(row["type"]),
         message=row["message"],
         data=_loads(row["data"]),
         created_at=from_iso(row["created_at"]),
+    )
+
+
+# --- V2 row mappers ---------------------------------------------------------
+# The event envelope is shared with runs: for an investigation the row's
+# ``run_id`` holds the investigation id, so ``_event`` above maps both streams.
+
+
+def _investigation(row: Any) -> Investigation:
+    return Investigation(
+        id=row["id"],
+        run_id=row["run_id"],
+        objective=row["objective"],
+        status=InvestigationStatus(row["status"]),
+        summary=row["summary"],
+        risk_level=row["risk_level"],
+        decision_verdict=row["decision_verdict"],
+        created_at=from_iso(row["created_at"]),
+        completed_at=from_iso(row["completed_at"]) if row["completed_at"] else None,
+    )
+
+
+def _step(row: Any) -> InvestigationStep:
+    return InvestigationStep(
+        id=row["id"],
+        investigation_id=row["investigation_id"],
+        parent_id=row["parent_id"],
+        sequence=row["seq"],
+        kind=InvestigationStepKind(row["kind"]),
+        title=row["title"],
+        status=StepStatus(row["status"]),
+        detail=row["detail"],
+        data=_loads(row["data"]),
+        evidence_ids=_loads(row["evidence_ids"]),
+        created_at=from_iso(row["created_at"]),
+        completed_at=from_iso(row["completed_at"]) if row["completed_at"] else None,
+    )
+
+
+def _incident(row: Any) -> HistoricalIncident:
+    return HistoricalIncident(
+        id=row["id"],
+        title=row["title"],
+        symptoms=_loads(row["symptoms"]),
+        tags=_loads(row["tags"]),
+        root_cause=row["root_cause"],
+        resolution=row["resolution"],
+        intervention=row["intervention"],
+        guard_scenario_id=row["guard_scenario_id"],
+        occurred_at=from_iso(row["occurred_at"]),
+    )
+
+
+def _memory_match(row: Any) -> MemoryMatch:
+    return MemoryMatch(
+        incident_id=row["incident_id"],
+        score=row["score"],
+        reason=row["reason"],
+        matched_terms=_loads(row["matched_terms"]),
+    )
+
+
+def _counterfactual(row: Any) -> CounterfactualExperiment:
+    return CounterfactualExperiment(
+        id=row["id"],
+        investigation_id=row["investigation_id"],
+        scenario_id=row["scenario_id"],
+        intervention=row["intervention"],
+        original_score=row["original_score"],
+        counterfactual_score=row["counterfactual_score"],
+        delta=row["delta"],
+        confidence=row["confidence"],
+        verdict=row["verdict"],
+        evidence_ids=_loads(row["evidence_ids"]),
+        rationale=row["rationale"],
+        created_at=from_iso(row["created_at"]),
+    )
+
+
+def _decision(row: Any) -> ReleaseDecision:
+    return ReleaseDecision(
+        verdict=row["verdict"],
+        risk_level=row["risk_level"],
+        summary=row["summary"],
+        blocking_findings=_loads(row["blocking_findings"]),
+        recommended_actions=_loads(row["recommended_actions"]),
+        confidence=row["confidence"],
+        generated_at=from_iso(row["generated_at"]),
     )
 
 
@@ -420,15 +517,22 @@ class Repository:
         message: str,
         data: dict[str, Any] | None = None,
     ) -> Event:
+        """Append to a stream. ``run_id`` is the id of the owning entity.
+
+        The column is ``entity_id`` — the envelope is shared between a run's
+        events and an investigation's (``docs/V2_INTERFACES.md``), so the same
+        reader serves both. The parameter keeps its contract name because
+        ``Event.run_id`` is the frozen field.
+        """
         created_at = utc_now()
         with self.db.connect() as conn:
             seq = conn.execute(
-                "SELECT COALESCE(MAX(sequence), 0) + 1 AS next FROM events WHERE run_id = ?",
+                "SELECT COALESCE(MAX(sequence), 0) + 1 AS next FROM events WHERE entity_id = ?",
                 (run_id,),
             ).fetchone()["next"]
             conn.execute(
                 """
-                INSERT INTO events (run_id, sequence, type, message, data, created_at)
+                INSERT INTO events (entity_id, sequence, type, message, data, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (
@@ -452,10 +556,392 @@ class Repository:
     def list_events(self, run_id: str, after: int = 0) -> list[Event]:
         with self.db.connect() as conn:
             rows = conn.execute(
-                "SELECT * FROM events WHERE run_id = ? AND sequence > ? ORDER BY sequence",
+                "SELECT * FROM events WHERE entity_id = ? AND sequence > ? ORDER BY sequence",
                 (run_id, after),
             ).fetchall()
         return [_event(row) for row in rows]
+
+    # -- historical incidents (V2) ------------------------------------------
+
+    def add_historical_incident(
+        self, incident: HistoricalIncident, seq: int
+    ) -> bool:
+        """Insert an incident unless it already exists.
+
+        Returns ``True`` when a row was written. Idempotent on purpose: seeding
+        runs on every container build, and an existing investigation's recalled
+        incidents must not shift under it when a fixture is edited.
+        """
+        with self.db.connect() as conn:
+            cursor = conn.execute(
+                """
+                INSERT OR IGNORE INTO historical_incidents (
+                    id, seq, title, symptoms, tags, root_cause, resolution,
+                    intervention, guard_scenario_id, occurred_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    incident.id,
+                    seq,
+                    incident.title,
+                    _dumps(incident.symptoms),
+                    _dumps(incident.tags),
+                    incident.root_cause,
+                    incident.resolution,
+                    incident.intervention,
+                    incident.guard_scenario_id,
+                    to_iso(incident.occurred_at),
+                ),
+            )
+            return cursor.rowcount > 0
+
+    def get_historical_incident(self, incident_id: str) -> HistoricalIncident:
+        with self.db.connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM historical_incidents WHERE id = ?", (incident_id,)
+            ).fetchone()
+        if row is None:
+            raise NotFoundError(f"historical incident {incident_id} not found")
+        return _incident(row)
+
+    def list_historical_incidents(self) -> list[HistoricalIncident]:
+        with self.db.connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM historical_incidents ORDER BY seq, id"
+            ).fetchall()
+        return [_incident(row) for row in rows]
+
+    def count_historical_incidents(self) -> int:
+        with self.db.connect() as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) AS n FROM historical_incidents"
+            ).fetchone()
+        return int(row["n"])
+
+    # -- investigations (V2) ------------------------------------------------
+
+    def create_investigation(
+        self, run_id: str, objective: str
+    ) -> Investigation:
+        """Create a queued investigation for ``run_id``.
+
+        Idempotent: a run has at most one investigation, so re-posting the same
+        ``run_id`` returns the existing record instead of starting a second
+        narrative over the same evidence.
+        """
+        existing = self.find_investigation_for_run(run_id)
+        if existing is not None:
+            return existing
+
+        investigation = Investigation(
+            id=new_id(),
+            run_id=run_id,
+            objective=objective,
+            status=InvestigationStatus.QUEUED,
+            summary="",
+            risk_level="low",
+            decision_verdict="allow",
+            created_at=utc_now(),
+            completed_at=None,
+        )
+        with self.db.connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO investigations (
+                    id, run_id, objective, status, summary, risk_level,
+                    decision_verdict, created_at, completed_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)
+                """,
+                (
+                    investigation.id,
+                    investigation.run_id,
+                    investigation.objective,
+                    investigation.status.value,
+                    investigation.summary,
+                    investigation.risk_level,
+                    investigation.decision_verdict,
+                    to_iso(investigation.created_at),
+                ),
+            )
+        return investigation
+
+    def get_investigation(self, investigation_id: str) -> Investigation:
+        with self.db.connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM investigations WHERE id = ?", (investigation_id,)
+            ).fetchone()
+        if row is None:
+            raise NotFoundError(f"investigation {investigation_id} not found")
+        return _investigation(row)
+
+    def find_investigation_for_run(self, run_id: str) -> Investigation | None:
+        with self.db.connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM investigations WHERE run_id = ? ORDER BY created_at, id LIMIT 1",
+                (run_id,),
+            ).fetchone()
+        return _investigation(row) if row is not None else None
+
+    def list_investigations(self) -> list[Investigation]:
+        with self.db.connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM investigations ORDER BY created_at DESC, id"
+            ).fetchall()
+        return [_investigation(row) for row in rows]
+
+    def update_investigation(
+        self,
+        investigation_id: str,
+        *,
+        status: InvestigationStatus | None = None,
+        summary: str | None = None,
+        risk_level: str | None = None,
+        decision_verdict: str | None = None,
+        completed_at: datetime | None = None,
+        clear_completed_at: bool = False,
+    ) -> Investigation:
+        """Patch the mutable fields of an investigation."""
+        assignments: list[str] = []
+        values: list[Any] = []
+        if status is not None:
+            assignments.append("status = ?")
+            values.append(status.value)
+        if summary is not None:
+            assignments.append("summary = ?")
+            values.append(summary)
+        if risk_level is not None:
+            assignments.append("risk_level = ?")
+            values.append(risk_level)
+        if decision_verdict is not None:
+            assignments.append("decision_verdict = ?")
+            values.append(decision_verdict)
+        if clear_completed_at:
+            assignments.append("completed_at = NULL")
+        elif completed_at is not None:
+            assignments.append("completed_at = ?")
+            values.append(to_iso(completed_at))
+
+        if assignments:
+            values.append(investigation_id)
+            with self.db.connect() as conn:
+                conn.execute(
+                    f"UPDATE investigations SET {', '.join(assignments)} WHERE id = ?",
+                    tuple(values),
+                )
+        return self.get_investigation(investigation_id)
+
+    # -- investigation steps (V2) -------------------------------------------
+
+    def add_step(self, step: InvestigationStep) -> InvestigationStep:
+        """Insert a step. The caller owns ``sequence``.
+
+        Unlike test cases and evidence, a step's sequence is decided by the
+        investigation engine: steps are a narrative, and their order is part of
+        what the report asserts, so it is not left to insertion order.
+
+        A step created already-``completed`` gets a completion timestamp here.
+        The engine builds most steps in one shot, and a port that left
+        ``completed_at`` null on a finished step would report a duration of
+        "never" to anything reading the timeline.
+        """
+        completed_at = step.completed_at
+        if completed_at is None and step.status is StepStatus.COMPLETED:
+            completed_at = utc_now()
+        with self.db.connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO investigation_steps (
+                    id, investigation_id, parent_id, seq, kind, title, status,
+                    detail, data, evidence_ids, created_at, completed_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    step.id,
+                    step.investigation_id,
+                    step.parent_id,
+                    step.sequence,
+                    step.kind.value,
+                    step.title,
+                    step.status.value,
+                    step.detail,
+                    _dumps(step.data),
+                    _dumps(step.evidence_ids),
+                    to_iso(step.created_at),
+                    to_iso(completed_at) if completed_at else None,
+                ),
+            )
+        return step.model_copy(update={"completed_at": completed_at})
+
+    def update_step(
+        self,
+        step_id: str,
+        *,
+        status: StepStatus,
+        detail: str | None = None,
+        completed_at: datetime | None = None,
+    ) -> InvestigationStep:
+        with self.db.connect() as conn:
+            if detail is None:
+                conn.execute(
+                    "UPDATE investigation_steps SET status = ?, completed_at = ? WHERE id = ?",
+                    (
+                        status.value,
+                        to_iso(completed_at) if completed_at else None,
+                        step_id,
+                    ),
+                )
+            else:
+                conn.execute(
+                    "UPDATE investigation_steps SET status = ?, detail = ?, "
+                    "completed_at = ? WHERE id = ?",
+                    (
+                        status.value,
+                        detail,
+                        to_iso(completed_at) if completed_at else None,
+                        step_id,
+                    ),
+                )
+        return self.get_step(step_id)
+
+    def get_step(self, step_id: str) -> InvestigationStep:
+        with self.db.connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM investigation_steps WHERE id = ?", (step_id,)
+            ).fetchone()
+        if row is None:
+            raise NotFoundError(f"investigation step {step_id} not found")
+        return _step(row)
+
+    def list_steps(self, investigation_id: str) -> list[InvestigationStep]:
+        with self.db.connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM investigation_steps WHERE investigation_id = ? "
+                "ORDER BY seq, id",
+                (investigation_id,),
+            ).fetchall()
+        return [_step(row) for row in rows]
+
+    # -- recalled memory (V2) -----------------------------------------------
+
+    def add_memory_match(
+        self, investigation_id: str, match: MemoryMatch, seq: int
+    ) -> None:
+        with self.db.connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO memory_matches (
+                    investigation_id, incident_id, seq, score, reason, matched_terms
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(investigation_id, incident_id) DO NOTHING
+                """,
+                (
+                    investigation_id,
+                    match.incident_id,
+                    seq,
+                    match.score,
+                    match.reason,
+                    _dumps(match.matched_terms),
+                ),
+            )
+
+    def list_memory_matches(self, investigation_id: str) -> list[MemoryMatch]:
+        with self.db.connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM memory_matches WHERE investigation_id = ? "
+                "ORDER BY seq, incident_id",
+                (investigation_id,),
+            ).fetchall()
+        return [_memory_match(row) for row in rows]
+
+    # -- counterfactual experiments (V2) ------------------------------------
+
+    def add_counterfactual(
+        self, experiment: CounterfactualExperiment
+    ) -> CounterfactualExperiment:
+        with self.db.connect() as conn:
+            seq = conn.execute(
+                "SELECT COALESCE(MAX(seq), -1) + 1 AS next FROM counterfactual_experiments "
+                "WHERE investigation_id = ?",
+                (experiment.investigation_id,),
+            ).fetchone()["next"]
+            conn.execute(
+                """
+                INSERT INTO counterfactual_experiments (
+                    id, investigation_id, seq, scenario_id, intervention,
+                    original_score, counterfactual_score, delta, confidence,
+                    verdict, evidence_ids, rationale, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    experiment.id,
+                    experiment.investigation_id,
+                    seq,
+                    experiment.scenario_id,
+                    experiment.intervention,
+                    experiment.original_score,
+                    experiment.counterfactual_score,
+                    experiment.delta,
+                    experiment.confidence,
+                    experiment.verdict,
+                    _dumps(experiment.evidence_ids),
+                    experiment.rationale,
+                    to_iso(experiment.created_at),
+                ),
+            )
+        return experiment
+
+    def list_counterfactuals(
+        self, investigation_id: str
+    ) -> list[CounterfactualExperiment]:
+        with self.db.connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM counterfactual_experiments WHERE investigation_id = ? "
+                "ORDER BY seq, id",
+                (investigation_id,),
+            ).fetchall()
+        return [_counterfactual(row) for row in rows]
+
+    # -- release decision (V2) ----------------------------------------------
+
+    def save_decision(
+        self, investigation_id: str, decision: ReleaseDecision
+    ) -> ReleaseDecision:
+        with self.db.connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO release_decisions (
+                    investigation_id, verdict, risk_level, summary,
+                    blocking_findings, recommended_actions, confidence, generated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(investigation_id) DO UPDATE SET
+                    verdict = excluded.verdict,
+                    risk_level = excluded.risk_level,
+                    summary = excluded.summary,
+                    blocking_findings = excluded.blocking_findings,
+                    recommended_actions = excluded.recommended_actions,
+                    confidence = excluded.confidence,
+                    generated_at = excluded.generated_at
+                """,
+                (
+                    investigation_id,
+                    decision.verdict,
+                    decision.risk_level,
+                    decision.summary,
+                    _dumps(decision.blocking_findings),
+                    _dumps(decision.recommended_actions),
+                    decision.confidence,
+                    to_iso(decision.generated_at),
+                ),
+            )
+        return decision
+
+    def get_decision(self, investigation_id: str) -> ReleaseDecision | None:
+        with self.db.connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM release_decisions WHERE investigation_id = ?",
+                (investigation_id,),
+            ).fetchone()
+        return _decision(row) if row is not None else None
 
     # -- counts -------------------------------------------------------------
 
@@ -476,6 +962,6 @@ class Repository:
     def count_events(self, run_id: str) -> int:
         with self.db.connect() as conn:
             row = conn.execute(
-                "SELECT COUNT(*) AS n FROM events WHERE run_id = ?", (run_id,)
+                "SELECT COUNT(*) AS n FROM events WHERE entity_id = ?", (run_id,)
             ).fetchone()
         return int(row["n"])

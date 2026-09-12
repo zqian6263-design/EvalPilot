@@ -4,6 +4,10 @@
 only *describes* the demo. The side-effecting :func:`ensure_demo_project` is
 used by ``python -m evalpilot.cli seed`` and by tests, never by the read
 endpoint.
+
+``GET /demo/investigation`` follows the same rule: it reports where the
+investigation workspace currently stands and what it is made of, and never
+creates one.
 """
 
 from __future__ import annotations
@@ -12,7 +16,8 @@ from typing import Any
 
 from evalpilot.config import Settings
 from evalpilot.fixtures import SUPPORT_SCENARIOS, SupportScenario
-from evalpilot.models import Project, Run
+from evalpilot.memory import incident_metadata
+from evalpilot.models import Project, Run, RunStatus
 from evalpilot.repository import Repository
 
 DEMO_PROJECT_NAME = "Enterprise Knowledge Base QA"
@@ -98,6 +103,69 @@ def find_demo_project(repo: Repository) -> Project | None:
         if project.name == DEMO_PROJECT_NAME:
             return project
     return None
+
+
+#: The deterministic lifecycle the investigation workspace renders. Fixed text,
+#: not a prediction: it describes the phases the engine actually runs.
+INVESTIGATION_STEPS: tuple[dict[str, str], ...] = (
+    {"key": "risk", "title": "Risk hypotheses from the run's evidence"},
+    {"key": "memory", "title": "Recall the seeded incident history"},
+    {"key": "probe", "title": "Follow-up probe for every regressed scenario"},
+    {"key": "counterfactual", "title": "Counterfactual replay per critical finding"},
+    {"key": "decision", "title": "Release decision"},
+    {"key": "report", "title": "Exportable Markdown report with evidence citations"},
+)
+
+
+def investigation_metadata(repo: Repository) -> dict[str, Any]:
+    """Describe the investigation workspace. Read-only, no side effects.
+
+    Reports the most recent completed demo run as the entry point when one
+    exists, and otherwise says the workspace is waiting for a run. It never
+    seeds a project, starts a run, or creates an investigation.
+    """
+    project = find_demo_project(repo)
+    entry: Run | None = None
+    if project is not None:
+        for run in repo.list_runs():
+            if (
+                run.project_id == project.id
+                and run.baseline_version == DEMO_BASELINE_VERSION
+                and run.candidate_version == DEMO_CANDIDATE_VERSION
+                and run.status in (RunStatus.COMPLETED, RunStatus.QUEUED)
+            ):
+                entry = run
+                break
+
+    investigation = (
+        repo.find_investigation_for_run(entry.id) if entry is not None else None
+    )
+    seeded = repo.list_historical_incidents()
+
+    return {
+        "entry_run_id": entry.id if entry else None,
+        "run_status": entry.status.value if entry else None,
+        "investigation_id": investigation.id if investigation else None,
+        "investigation_status": (
+            investigation.status.value if investigation else None
+        ),
+        "incident_count": len(seeded),
+        "interventions": sorted(
+            {
+                incident.intervention
+                for incident in seeded
+                if incident.intervention is not None
+            }
+        ),
+        "incidents": incident_metadata()["incidents"],
+        "steps": [dict(step) for step in INVESTIGATION_STEPS],
+        "how_to_run": [
+            "POST /api/investigations with the entry_run_id and an objective",
+            "POST /api/investigations/{id}/start",
+            "GET /api/investigations/{id} or /api/investigations/{id}/events",
+            "GET /api/investigations/{id}/report.md",
+        ],
+    }
 
 
 def ensure_demo_project(
