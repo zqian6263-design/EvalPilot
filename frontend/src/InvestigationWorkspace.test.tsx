@@ -3,6 +3,13 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { InvestigationWorkspace } from './InvestigationWorkspace'
 import { MockInvestigationTransport } from './mockInvestigationTransport'
+import {
+  counterfactualVerdictLabel,
+  decisionVerdictLabel,
+  riskLevelLabel,
+  stepKindLabel,
+} from './i18n/labels'
+import { MOCK_RECALLED_INCIDENT_ID } from './i18n/mockScript'
 
 /**
  * The workspace's own tests. They pin the three things a rendering assertion
@@ -14,10 +21,17 @@ import { MockInvestigationTransport } from './mockInvestigationTransport'
  *      text, and the endpoint named beside the button is not a dead one;
  *   3. that the surface shows *structured actions*, never reasoning.
  *
+ * The assertions are written against the Chinese labels the workspace prints,
+ * resolved through `i18n/labels` rather than typed in as literals — so a change
+ * to a status word fails one place, not twelve. Where a value is an invariant
+ * of the record (a scenario id, an evidence id, a tool name) the assertion
+ * still names the English string, because that is what the console must keep
+ * showing unchanged.
+ *
  * `cleanup` is called explicitly rather than relied on from the global setup.
  * The setup file clears `document.body` between tests, which unmounts nothing:
  * React keeps its tree, so the previous test's markers stay in the DOM and a
- * `getByText(/^block$/)` finds two.
+ * `getByText` finds two.
  */
 afterEach(cleanup)
 
@@ -40,7 +54,7 @@ const RUN_ID = 'a4f1c8e2-7d35-4b90-8e21-5f6a9c3d0b47'
 async function startWorkspace(): Promise<MockInvestigationTransport> {
   const transport = new MockInvestigationTransport()
   render(<InvestigationWorkspace transport={transport} runId={RUN_ID} />)
-  await userEvent.click(screen.getByRole('button', { name: /start autonomous investigation/i }))
+  await userEvent.click(screen.getByRole('button', { name: /启动自主调查/ }))
   await waitFor(() => expect(transport.currentStage).toBe(5), { timeout: 10_000 })
   await waitFor(() => expect(document.querySelector('.decision__word')).not.toBeNull())
   return transport
@@ -59,24 +73,22 @@ describe('InvestigationWorkspace — intake', () => {
         }}
       />,
     )
-    const field = screen.getByLabelText(/release objective/i) as HTMLTextAreaElement
+    const field = screen.getByLabelText(/发布目标/) as HTMLTextAreaElement
     expect(field.value).toContain('v1.1-candidate')
-    expect(field.value).toContain('26 matched scenarios')
-    expect(screen.getByRole('button', { name: /start autonomous investigation/i })).toBeEnabled()
+    expect(field.value).toContain('26 个匹配场景')
+    expect(screen.getByRole('button', { name: /启动自主调查/ })).toBeEnabled()
   })
 
   it('names its data source, so a mock is never read as a real investigation', () => {
     render(<InvestigationWorkspace transport={new MockInvestigationTransport()} runId={RUN_ID} />)
-    expect(screen.getByText(/deterministic mock investigation/i)).toBeInTheDocument()
-    expect(
-      screen.getByText(/Every figure in this investigation is seeded mock data/i),
-    ).toBeInTheDocument()
+    expect(screen.getByText(/确定性模拟调查/)).toBeInTheDocument()
+    expect(screen.getByText(/本次调查中的每个数字都是预置模拟数据/)).toBeInTheDocument()
   })
 
   it('will not start with an empty objective', async () => {
     render(<InvestigationWorkspace transport={new MockInvestigationTransport()} runId={RUN_ID} />)
-    await userEvent.clear(screen.getByLabelText(/release objective/i))
-    expect(screen.getByRole('button', { name: /start autonomous investigation/i })).toBeDisabled()
+    await userEvent.clear(screen.getByLabelText(/发布目标/))
+    expect(screen.getByRole('button', { name: /启动自主调查/ })).toBeDisabled()
   })
 })
 
@@ -84,18 +96,22 @@ describe('InvestigationWorkspace — root-cause rendering', () => {
   it('renders the release decision, its blocking evidence and its actions', async () => {
     await startWorkspace()
 
-    const decision = screen.getByRole('region', { name: /release decision/i })
-    expect(within(decision).getByRole('heading', { name: /^block$/i })).toBeInTheDocument()
-    expect(within(decision).getByText(/critical risk/i)).toBeInTheDocument()
-    expect(within(decision).getByText(/Do not ship v1\.1-candidate/i)).toBeInTheDocument()
-    // Each blocking finding is a citable evidence id, not a count.
+    const decision = screen.getByRole('region', { name: /发布裁决/ })
+    expect(
+      within(decision).getByRole('heading', { name: decisionVerdictLabel('block') }),
+    ).toBeInTheDocument()
+    expect(within(decision).getByText(riskLevelLabel('critical'))).toBeInTheDocument()
+    expect(within(decision).getByText(/不要将 v1\.1-candidate 发布到企业支持试点/)).toBeInTheDocument()
+    // Each blocking finding is a citable evidence id, not a count — and the id
+    // is an invariant of the record, so it stays in English.
     expect(within(decision).getByText('ev-prompt-injection-password-replay')).toBeInTheDocument()
   })
 
   it('renders before/after scores and the derived break-even reading per scenario', async () => {
     await startWorkspace()
 
-    const panel = screen.getByRole('region', { name: /counterfactual root causes/i })
+    const panel = screen.getByRole('region', { name: /反事实根因/ })
+    // Scenario ids and intervention names are identifiers, not prose.
     expect(within(panel).getByText('escalation-path')).toBeInTheDocument()
     expect(within(panel).getAllByText('compression_disabled').length).toBeGreaterThan(0)
 
@@ -110,52 +126,64 @@ describe('InvestigationWorkspace — root-cause rendering', () => {
     expect(within(passwordGroup).getByText('security_guard_enabled')).toBeInTheDocument()
     expect(within(passwordGroup).getAllByText('0.00').length).toBeGreaterThan(0)
     expect(within(passwordGroup).getAllByText('1.00').length).toBeGreaterThan(0)
-    expect(within(passwordGroup).getAllByText('no effect').length).toBeGreaterThan(0)
+    expect(
+      within(passwordGroup).getAllByText(counterfactualVerdictLabel('no_effect')).length,
+    ).toBeGreaterThan(0)
 
     // The break-even reading is a derivation, and it says so and carries its
     // margin rather than asserting a winner.
-    expect(within(panel).getAllByText(/would restore/i).length).toBeGreaterThan(0)
-    expect(within(panel).getAllByText(/ahead of the next intervention/i).length).toBeGreaterThan(0)
+    expect(within(panel).getAllByText(/可恢复至/).length).toBeGreaterThan(0)
+    expect(within(panel).getAllByText(/领先次优干预/).length).toBeGreaterThan(0)
   })
 
   it('labels every replay verdict in words, not colour alone', async () => {
     await startWorkspace()
-    const panel = screen.getByRole('region', { name: /counterfactual root causes/i })
-    expect(within(panel).getAllByText('root cause').length).toBeGreaterThan(0)
-    expect(within(panel).getAllByText('partial').length).toBeGreaterThan(0)
-    expect(within(panel).getAllByText('no effect').length).toBeGreaterThan(0)
-    expect(within(panel).getAllByText('inconclusive').length).toBeGreaterThan(0)
+    const panel = screen.getByRole('region', { name: /反事实根因/ })
+    expect(
+      within(panel).getAllByText(counterfactualVerdictLabel('root_cause')).length,
+    ).toBeGreaterThan(0)
+    expect(
+      within(panel).getAllByText(counterfactualVerdictLabel('partial')).length,
+    ).toBeGreaterThan(0)
+    expect(
+      within(panel).getAllByText(counterfactualVerdictLabel('no_effect')).length,
+    ).toBeGreaterThan(0)
+    expect(
+      within(panel).getAllByText(counterfactualVerdictLabel('inconclusive')).length,
+    ).toBeGreaterThan(0)
   })
 
   it('renders the recalled incidents with their match reasons and terms', async () => {
     await startWorkspace()
-    const panel = screen.getByRole('region', { name: /recalled incidents/i })
-    expect(within(panel).getByText('ESC-2214')).toBeInTheDocument()
-    expect(within(panel).getByText('SEC-3310')).toBeInTheDocument()
-    expect(within(panel).getByText(/brevity pass kept only the first/i)).toBeInTheDocument()
-    expect(within(panel).getByText('emergency hotline')).toBeInTheDocument()
+    const panel = screen.getByRole('region', { name: /召回的历史事故/ })
+    // Incident ids are record identifiers; the prose around them is Chinese.
+    expect(within(panel).getByText(MOCK_RECALLED_INCIDENT_ID.escalation)).toBeInTheDocument()
+    expect(within(panel).getByText(MOCK_RECALLED_INCIDENT_ID.credential)).toBeInTheDocument()
+    expect(within(panel).getByText(/只保留了前者/)).toBeInTheDocument()
+    expect(within(panel).getByText('紧急热线')).toBeInTheDocument()
   })
 })
 
 describe('InvestigationWorkspace — timeline as structured actions', () => {
   it('renders the tree with hypotheses, probes, replays and the decision', async () => {
     await startWorkspace()
-    const panel = screen.getByRole('region', { name: /investigation timeline/i })
-    expect(within(panel).getAllByText('risk').length).toBeGreaterThanOrEqual(5)
-    expect(within(panel).getAllByText('probe').length).toBeGreaterThan(0)
-    expect(within(panel).getAllByText('counterfactual').length).toBeGreaterThan(0)
-    expect(within(panel).getByText(/Release decision: block/i)).toBeInTheDocument()
+    const panel = screen.getByRole('region', { name: /调查时间线/ })
+    expect(within(panel).getAllByText(stepKindLabel('risk')).length).toBeGreaterThanOrEqual(5)
+    expect(within(panel).getAllByText(stepKindLabel('probe')).length).toBeGreaterThan(0)
+    expect(within(panel).getAllByText(stepKindLabel('counterfactual')).length).toBeGreaterThan(0)
+    expect(within(panel).getByText(/发布裁决：阻断/)).toBeInTheDocument()
   })
 
   it('opens a step into a structured action, never a transcript', async () => {
     await startWorkspace()
-    const panel = screen.getByRole('region', { name: /investigation timeline/i })
-    await userEvent.click(within(panel).getByText(/memory\.recall — escalation clause regressions/i))
+    const panel = screen.getByRole('region', { name: /调查时间线/ })
+    await userEvent.click(within(panel).getByText(/memory\.recall —— 升级条款回归/))
 
-    const detail = screen.getByRole('region', { name: /step detail/i })
+    const detail = screen.getByRole('region', { name: /步骤详情/ })
     // The tool call is printed as a named action with its arguments and artefact
-    // — there is no field here a reasoning transcript could occupy.
-    expect(within(detail).getByText('action')).toBeInTheDocument()
+    // — there is no field here a reasoning transcript could occupy. The tool
+    // name and the artefact URI are identifiers and stay as the record has them.
+    expect(within(detail).getByText('动作')).toBeInTheDocument()
     expect(within(detail).getByText('memory.recall')).toBeInTheDocument()
     expect(within(detail).getByText('memory://incidents?tags=escalation')).toBeInTheDocument()
     // And the evidence it wrote is listed by id so it can be drilled into.
@@ -164,12 +192,12 @@ describe('InvestigationWorkspace — timeline as structured actions', () => {
 
   it('collapses a subtree on demand', async () => {
     await startWorkspace()
-    const panel = screen.getByRole('region', { name: /investigation timeline/i })
-    expect(within(panel).getByText(/Release decision: block/i)).toBeInTheDocument()
+    const panel = screen.getByRole('region', { name: /调查时间线/ })
+    expect(within(panel).getByText(/发布裁决：阻断/)).toBeInTheDocument()
     await userEvent.click(
-      within(panel).getByRole('button', { name: /collapse Release objective and scope/i }),
+      within(panel).getByRole('button', { name: /折叠 发布目标与范围/ }),
     )
-    expect(within(panel).queryByText(/Release decision: block/i)).not.toBeInTheDocument()
+    expect(within(panel).queryByText(/发布裁决：阻断/)).not.toBeInTheDocument()
   })
 })
 
@@ -191,15 +219,15 @@ describe('InvestigationWorkspace — report download', () => {
       // A mock has no report endpoint, and the workspace says so rather than
       // printing a URL that would 404.
       expect(
-        screen.getByText(/no endpoint — the mock report is generated locally/i),
+        screen.getByText(/无端点 —— 模拟报告在本地生成/),
       ).toBeInTheDocument()
 
-      await userEvent.click(screen.getByRole('button', { name: /download report\.md/i }))
+      await userEvent.click(screen.getByRole('button', { name: /下载 report\.md/ }))
       await waitFor(() => expect(created).toHaveLength(1))
       expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob))
       expect(URL.revokeObjectURL).toHaveBeenCalledWith(created[0])
       // The button reports what it read, so a silent failure is not possible.
-      expect(await screen.findByText(/lines written/i)).toBeInTheDocument()
+      expect(await screen.findByText(/已写入 \d+ 行/)).toBeInTheDocument()
     } finally {
       URL.createObjectURL = realCreate
       URL.revokeObjectURL = realRevoke

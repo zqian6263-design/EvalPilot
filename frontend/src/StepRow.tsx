@@ -1,6 +1,7 @@
 import type { InvestigationStep, StepTreeNode } from './api/investigation'
 import { probeTargets } from './api/investigation'
 import { formatClock } from './lib/format'
+import { stepKindLabel, stepStatusLabel } from './i18n/labels'
 
 interface Props {
   node: StepTreeNode
@@ -73,7 +74,7 @@ export function StepRow({
             type="button"
             className="step__twist"
             aria-expanded={!isCollapsed}
-            aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} ${step.title}`}
+            aria-label={`${isCollapsed ? '展开' : '折叠'} ${step.title}`}
             onClick={() => onToggleCollapse(step.id)}
           >
             {isCollapsed ? '+' : '−'}
@@ -91,15 +92,15 @@ export function StepRow({
           onClick={() => onSelectStep(step.id)}
         >
           <span className="step__seq u-device">{String(step.sequence).padStart(2, '0')}</span>
-          <span className="step__kind">{step.kind}</span>
+          <span className="step__kind">{stepKindLabel(step.kind)}</span>
           <span className="step__title">{step.title}</span>
           {targets.length > 0 && (
-            <span className="step__targets u-device">{targets.length} scenario(s)</span>
+            <span className="step__targets u-device">{targets.length} 个场景</span>
           )}
         </button>
 
         <span className={stepStatusClass(step.status)}>
-          <span aria-hidden="true">{STATUS_MARK[step.status]}</span> {step.status}
+          <span aria-hidden="true">{STATUS_MARK[step.status]}</span> {stepStatusLabel(step.status)}
         </span>
         <span className="step__time u-device">{formatClock(step.created_at)}</span>
       </div>

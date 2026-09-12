@@ -6,6 +6,7 @@ import {
   moveDirection,
   type MoveDirection,
 } from '../lib/format'
+import { metricLabel } from '../i18n/labels'
 
 interface Props {
   scenario: Scenario
@@ -56,19 +57,19 @@ function MetricRow({
   return (
     <div className="metric" data-metric={id}>
       <div className="metric__head">
-        <span className="metric__name">{metric.label}</span>
+        <span className="metric__name">{metricLabel(id, metric.label)}</span>
         <span className="metric__n">n = {metric.n}</span>
       </div>
 
       <div className="metric__values">
         <div className="metric__pair">
-          <span className="metric__version">{scenario.baselineVersion} baseline</span>
+          <span className="metric__version">{scenario.baselineVersion} 基线</span>
           <span className="metric__value metric__value--baseline">
             {formatMetricValue(metric, metric.baseline)}
           </span>
         </div>
         <div className="metric__pair">
-          <span className="metric__version">{scenario.candidateVersion} candidate</span>
+          <span className="metric__version">{scenario.candidateVersion} 候选</span>
           <span className={candidateClass(move)}>{formatMetricValue(metric, metric.candidate)}</span>
         </div>
       </div>
@@ -91,10 +92,10 @@ function MetricRow({
 
 export function Metrics({ scenario }: Props): React.JSX.Element {
   return (
-    <section aria-label="Metrics" className="panel" style={{ border: 'none', background: 'transparent' }}>
+    <section aria-label="指标对比" className="panel" style={{ border: 'none', background: 'transparent' }}>
       <div className="panel__title" style={{ borderBottom: 'var(--rule-ink)' }}>
-        <span className="u-label">Metric comparison</span>
-        <span className="u-micro">matched cases only</span>
+        <span className="u-label">指标对比</span>
+        <span className="u-micro">仅统计匹配场景</span>
       </div>
       {ORDER.map((id) => {
         const metric = scenario.metrics[id]
@@ -102,9 +103,8 @@ export function Metrics({ scenario }: Props): React.JSX.Element {
         return <MetricRow key={id} id={id} metric={metric} scenario={scenario} />
       })}
       <p className="u-micro" style={{ padding: 'var(--s3) var(--s4)', lineHeight: 1.6 }}>
-        Aggregates cover cases carried to completion on both versions. A case that errored on
-        either side is excluded from both, so a version cannot improve its score by failing fewer
-        cases or by shrinking the denominator.
+        聚合只统计在两个版本上都执行完成的场景。任一侧出错的场景会同时从两侧剔除，
+        因此某个版本无法通过减少失败场景或缩小分母来提高自己的得分。
       </p>
     </section>
   )

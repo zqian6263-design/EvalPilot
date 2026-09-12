@@ -39,7 +39,7 @@ export class HttpTransport implements Transport {
   ) {}
 
   describe(): TransportInfo {
-    return { kind: 'http', live: true, label: 'live backend', baseUrl: this.baseUrl }
+    return { kind: 'http', live: true, label: '实时后端', baseUrl: this.baseUrl }
   }
 
   health(): Promise<Health> {

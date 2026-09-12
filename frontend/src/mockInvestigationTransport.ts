@@ -86,7 +86,7 @@ export class MockInvestigationTransport implements InvestigationTransport {
     return {
       kind: 'mock',
       live: false,
-      label: 'offline — deterministic mock investigation',
+      label: '离线 — 确定性模拟调查',
       baseUrl: null,
     }
   }

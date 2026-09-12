@@ -239,9 +239,9 @@ export function defaultObjective(context: {
   baselineVersion?: string | undefined
   matchedCases?: number | undefined
 }): string {
-  const candidate = context.candidateVersion ?? 'the candidate'
-  const baseline = context.baselineVersion ?? 'the baseline'
+  const candidate = context.candidateVersion ?? '候选版本'
+  const baseline = context.baselineVersion ?? '基线版本'
   const cases =
-    typeof context.matchedCases === 'number' ? `${context.matchedCases} matched scenarios` : 'the matched scenarios'
-  return `Decide whether ${candidate} may ship, given that ${baseline} passed all ${cases} and ${candidate} failed the regressed ones.`
+    typeof context.matchedCases === 'number' ? `${context.matchedCases} 个匹配场景` : '全部匹配场景'
+  return `请判定 ${candidate} 是否可以发布：${baseline} 通过了全部 ${cases}，而 ${candidate} 在出现回归的场景上未通过。`
 }

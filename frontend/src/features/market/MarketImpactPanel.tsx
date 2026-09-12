@@ -25,6 +25,12 @@ import {
 } from './marketModel'
 import type { RoiBand } from './marketModel'
 import {
+  SOURCE_TAG_LABEL,
+  confidenceLabel,
+  factBasisLabel,
+  moatStrengthLabel,
+} from '../../i18n/labels'
+import {
   CRITERIA,
   MAX_TOTAL,
   POSITION,
@@ -70,12 +76,19 @@ export interface MarketImpactPanelProps {
   renderWorkspace?: () => ReactNode
 }
 
-/** A label rendered beside a block, so no number is ever unlabelled. */
+/**
+ * A label rendered beside a block, so no number is ever unlabelled.
+ *
+ * The chip's text is Chinese; its `title` is the model's own `meaning` string,
+ * which is the sentence saying what kind of number this block carries. The
+ * class suffix is the id, so the styling follows the honest category rather
+ * than the word.
+ */
 function SourceTag({ id }: { id: Parameters<typeof sourceLabel>[0] }): JSX.Element {
   const label = sourceLabel(id)
   return (
     <span className={`mkt__tag mkt__tag--${label.id}`} title={label.meaning}>
-      {label.text}
+      {SOURCE_TAG_LABEL[id] ?? label.text}
     </span>
   )
 }
@@ -122,13 +135,12 @@ function RoiStrip(): JSX.Element {
         viewBox={`0 0 ${W} 132`}
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        aria-label={`Annual value of avoided bad releases, ${formatBand(value)}. Modelled annual cost of this tool, ${formatBand(cost)}.`}
+        aria-label={`避免糟糕发布所带来的年化价值 ${formatBand(value)}。本工具的年化建模成本 ${formatBand(cost)}。`}
       >
-        <title>Modelled annual value against modelled annual cost</title>
+        <title>年化价值与年化建模成本的对比</title>
         <desc>
-          The value band spans {spread === null ? 'an unbounded' : spread.toFixed(1)} orders of
-          magnitude and overlaps the cost band. The model therefore does not support a confident
-          return figure in either direction.
+          价值区间跨越 {spread === null ? '无限多' : spread.toFixed(1)} 个数量级，并与成本区间重叠。
+          因此该模型在任何方向上都不支持给出一个有把握的回报数字。
         </desc>
 
         {ticks.map((tick) => (
@@ -176,7 +188,7 @@ function RoiStrip(): JSX.Element {
           strokeWidth="1"
         />
         <text x={x(midpoint) + 8} y={41} className="mkt__axis-label">
-          midpoint — not evidence
+          中点 —— 不是证据
         </text>
 
         {/* The cost of the tool itself, on the same axis. */}
@@ -188,37 +200,37 @@ function RoiStrip(): JSX.Element {
           fill="var(--baseline)"
         />
         <text x={x(cost.low)} y={108} className="mkt__axis-label">
-          modelled cost of this tool
+          本工具的建模成本
         </text>
       </svg>
 
       <dl className="mkt__band">
         <div className="mkt__band-item">
-          <dt className="u-micro">Value band / year</dt>
+          <dt className="u-micro">价值区间 / 年</dt>
           <dd className="mkt__band-value mkt__band-value--band">{formatBand(value)}</dd>
         </div>
         <div className="mkt__band-item">
-          <dt className="u-micro">Cost band / year</dt>
+          <dt className="u-micro">成本区间 / 年</dt>
           <dd className="mkt__band-value mkt__band-value--cost">{formatBand(cost)}</dd>
         </div>
         <div className="mkt__band-item">
-          <dt className="u-micro">Band span</dt>
+          <dt className="u-micro">区间跨度</dt>
           <dd className="mkt__band-value">
-            {spread === null ? 'unbounded' : `${spread.toFixed(2)} orders of magnitude`}
+            {spread === null ? '无上界' : `${spread.toFixed(2)} 个数量级`}
           </dd>
         </div>
         <div className="mkt__band-item">
-          <dt className="u-micro">Reading</dt>
+          <dt className="u-micro">读数</dt>
           <dd className={`mkt__verdict mkt__verdict--${unresolved ? 'unresolved' : 'narrow'}`}>
-            {unresolved ? 'Unresolved' : 'Narrow enough to quote'}
+            {unresolved ? '无法判定' : '足够窄，可以引用'}
           </dd>
         </div>
       </dl>
 
       <p className="mkt__note">
         {unresolved
-          ? 'Two of the four inputs have never been observed on a real deployment, so the value band spans more than an order of magnitude and overlaps the cost of the tool. The model does not support a confident return figure in either direction, and the midpoint is not evidence. Two retrospective numbers from one real team would narrow it more than any further modelling.'
-          : 'The band is narrow enough to quote with its assumptions attached.'}
+          ? '四个输入中有两个从未在任何真实部署上被观测过，因此价值区间跨越了一个以上的数量级，并与工具成本重叠。该模型在任何方向上都不支持给出一个有把握的回报数字，中点也不是证据。来自一个真实团队的两个事后数字，比任何进一步的建模都更能收窄它。'
+          : '该区间已经窄到可以连同其假设一起引用。'}
       </p>
     </div>
   )
@@ -245,7 +257,7 @@ function ProofLadder(): JSX.Element {
   const currentIndex = PROOF_LADDER.indexOf(current)
 
   return (
-    <div className="mkt__ladder" role="list" aria-label="Evidence ladder">
+    <div className="mkt__ladder" role="list" aria-label="证据阶梯">
       {PROOF_LADDER.map((level, index) => {
         const state = index < currentIndex ? 'passed' : index === currentIndex ? 'current' : 'ahead'
         return (
@@ -256,13 +268,13 @@ function ProofLadder(): JSX.Element {
               </span>
               <span className="mkt__rung-label">{level.label}</span>
               <span className="mkt__rung-state">
-                {state === 'current' ? 'we are here' : state === 'ahead' ? 'not reached' : 'passed'}
+                {state === 'current' ? '我们在这里' : state === 'ahead' ? '尚未达到' : '已通过'}
               </span>
             </div>
             <p className="mkt__rung-def">{level.definition}</p>
             {state === 'current' && (
               <p className="mkt__rung-requires">
-                <span className="u-micro">Required to claim this</span> {level.requires}
+                <span className="u-micro">主张这一级所需</span> {level.requires}
               </p>
             )}
           </div>
@@ -287,29 +299,29 @@ export function MarketImpactPanel({
     <div className="mkt">
       <header className="mkt__masthead">
         <div className="mkt__plate">
-          <span className="u-micro">Market position · strategy hypothesis, pre-validation</span>
-          <h1 className="mkt__title">AI applications need a release gate</h1>
+          <span className="u-micro">市场定位 · 战略假设，尚未验证</span>
+          <h1 className="mkt__title">AI 应用需要一个发布门禁</h1>
         </div>
         <div className="mkt__plate mkt__plate--right">
-          <span className="u-micro">Rubric target</span>
+          <span className="u-micro">评分表目标分</span>
           <span className="mkt__score">
             {totalTargetScore()}
             <span className="mkt__score-denom">/{MAX_TOTAL}</span>
           </span>
-          <span className="u-micro">evidence-backed, pre-validation</span>
+          <span className="u-micro">有证据支撑，尚未验证</span>
         </div>
       </header>
 
       {/* The disclosure is a block, not a footnote. It is the first thing read. */}
-      <section className="mkt__disclosure" aria-label="Zero-traction disclosure">
-        <span className="mkt__tag mkt__tag--none">No data</span>
+      <section className="mkt__disclosure" aria-label="零牵引力声明">
+        <span className="mkt__tag mkt__tag--none">无数据</span>
         <p className="mkt__disclosure-text">{ZERO_TRACTION_DISCLOSURE}</p>
       </section>
 
       {/* ---------------------------------------------------------- traction -- */}
-      <section className="mkt__block mkt__block--traction" aria-label="Traction">
+      <section className="mkt__block mkt__block--traction" aria-label="牵引力">
         <div className="mkt__block-head">
-          <h2 className="mkt__block-title">Traction</h2>
+          <h2 className="mkt__block-title">牵引力</h2>
           <SourceTag id="none" />
         </div>
         <div className="mkt__counts">
@@ -325,48 +337,43 @@ export function MarketImpactPanel({
           })}
         </div>
         <p className="mkt__note">
-          A dash means <em>not measured</em>, not <em>measured zero</em>. The two are different
-          claims and only the first is true here.
+          短横线表示<em>未测量</em>，而不是<em>测量结果为零</em>。这是两种不同的断言，而此处只有前者为真。
         </p>
       </section>
 
       {/* ------------------------------------------------------------ ladder -- */}
-      <section className="mkt__block mkt__block--ladder" aria-label="Proof ladder">
+      <section className="mkt__block mkt__block--ladder" aria-label="证据阶梯">
         <div className="mkt__block-head">
-          <h2 className="mkt__block-title">Progress is a state, not a count</h2>
+          <h2 className="mkt__block-title">进展是一种状态，不是一个计数</h2>
           <SourceTag id="target" />
         </div>
         <p className="mkt__lede">
-          A shipped product is not a pilot, and a pilot is not a customer. The honest way to report
-          progress before revenue is to say which rung of the ladder we are standing on — currently{' '}
-          <strong>{current.label}</strong>, with <strong>{remaining} rungs</strong> between here and
-          a first paying customer.
+          一个已交付的产品不等于一次试点，一次试点也不等于一个客户。在收入出现之前，报告进展最诚实的方式是说明我们正站在阶梯的哪一级 ——
+          目前是<strong>{current.label}</strong>，距离第一位付费客户还有 <strong>{remaining} 级</strong>。
         </p>
         <ProofLadder />
       </section>
 
       {/* --------------------------------------------------------------- ROI -- */}
-      <section className="mkt__block mkt__block--roi" aria-label="Return on investment">
+      <section className="mkt__block mkt__block--roi" aria-label="投资回报">
         <div className="mkt__block-head">
-          <h2 className="mkt__block-title">Return, as a band</h2>
+          <h2 className="mkt__block-title">回报，以区间呈现</h2>
           <SourceTag id="assumption" />
         </div>
         <p className="mkt__lede">
-          Annual value is one avoided bad release, multiplied by how many happen and how many this
-          tool would catch. Four inputs, and every one of them is a guess, so the answer is an
-          interval: {formatBand(value)} per year. It is adjustable below, so a reader can substitute
-          their own numbers rather than argue with ours.
+          年化价值 = 一次被避免的糟糕发布 × 一年发生多少次 × 本工具能拦下多少。四个输入，每一个都是猜测，
+          因此答案是一个区间：每年 {formatBand(value)}。下方可调，读者可以直接代入自己的数字，而不必跟我们的数字争论。
         </p>
         <RoiStrip />
         <table className="record mkt__assumptions">
-          <caption className="visually-hidden">ROI model inputs, with their basis</caption>
+          <caption className="visually-hidden">ROI 模型的输入项及其依据</caption>
           <thead>
             <tr>
-              <th scope="col">Input</th>
-              <th scope="col">Low</th>
-              <th scope="col">High</th>
-              <th scope="col">Basis</th>
-              <th scope="col">Replaced by</th>
+              <th scope="col">输入项</th>
+              <th scope="col">下限</th>
+              <th scope="col">上限</th>
+              <th scope="col">依据</th>
+              <th scope="col">可被什么替换</th>
             </tr>
           </thead>
           <tbody>
@@ -379,7 +386,9 @@ export function MarketImpactPanel({
                 <td className="u-num">{formatCompact(input.low)}</td>
                 <td className="u-num">{formatCompact(input.high)}</td>
                 <td>
-                  <span className={`mkt__basis mkt__basis--${input.basis}`}>{input.basis}</span>
+                  <span className={`mkt__basis mkt__basis--${input.basis}`}>
+                    {factBasisLabel(input.basis)}
+                  </span>
                 </td>
                 <td className="mkt__input-detail">{input.would_measure_by}</td>
               </tr>
@@ -389,22 +398,23 @@ export function MarketImpactPanel({
       </section>
 
       {/* ----------------------------------------------------------- pricing -- */}
-      <section className="mkt__block" aria-label="Pricing hypothesis">
+      <section className="mkt__block" aria-label="定价假设">
         <div className="mkt__block-head">
-          <h2 className="mkt__block-title">Pricing hypothesis</h2>
+          <h2 className="mkt__block-title">定价假设</h2>
           <SourceTag id="target" />
         </div>
         <p className="mkt__lede">
-          No price on this surface has been quoted to anyone, let alone paid. These are the shapes
-          we intend to test, with the reasoning attached so the reasoning can be attacked instead of
-          the number.
+          这个页面上没有任何一个价格曾被报价给任何人，更不用说被支付过。以下是我们打算测试的形态，
+          并附上推理过程 —— 这样被质疑的可以是推理，而不是那个数字。
         </p>
         <div className="mkt__prices">
           {PRICING.map((rung) => (
             <article className="mkt__price" key={rung.id}>
               <div className="mkt__price-head">
                 <h3 className="mkt__price-name">{rung.name}</h3>
-                <span className={`mkt__basis mkt__basis--${rung.basis}`}>{rung.basis}</span>
+                <span className={`mkt__basis mkt__basis--${rung.basis}`}>
+                  {factBasisLabel(rung.basis)}
+                </span>
               </div>
               <span className="mkt__price-shape">{rung.shape}</span>
               <ul className="mkt__list">
@@ -417,14 +427,14 @@ export function MarketImpactPanel({
           ))}
         </div>
         <p className="mkt__falsifier">
-          <span className="u-micro">Falsifier</span> {PRICING_FALSIFIER}
+          <span className="u-micro">证伪条件</span> {PRICING_FALSIFIER}
         </p>
       </section>
 
       {/* --------------------------------------------------------------- GTM -- */}
-      <section className="mkt__block" aria-label="Go to market">
+      <section className="mkt__block" aria-label="市场进入">
         <div className="mkt__block-head">
-          <h2 className="mkt__block-title">Ninety days, from zero</h2>
+          <h2 className="mkt__block-title">从零开始，九十天</h2>
           <SourceTag id="target" />
         </div>
         <p className="mkt__lede">{GTM_SUCCESS_DEFINITION}</p>
@@ -439,11 +449,11 @@ export function MarketImpactPanel({
                 </div>
               </div>
               <dl className="mkt__stage-body">
-                <dt className="u-micro">Goal</dt>
+                <dt className="u-micro">目标</dt>
                 <dd>{stage.goal}</dd>
-                <dt className="u-micro">Artifact</dt>
+                <dt className="u-micro">交付物</dt>
                 <dd>{stage.artifact}</dd>
-                <dt className="u-micro">Kill condition</dt>
+                <dt className="u-micro">终止条件</dt>
                 <dd className="mkt__kill">{stage.kill}</dd>
               </dl>
             </li>
@@ -452,14 +462,13 @@ export function MarketImpactPanel({
       </section>
 
       {/* -------------------------------------------------------------- moat -- */}
-      <section className="mkt__block" aria-label="Moat">
+      <section className="mkt__block" aria-label="护城河">
         <div className="mkt__block-head">
-          <h2 className="mkt__block-title">The moat, layer by layer</h2>
+          <h2 className="mkt__block-title">护城河，逐层来看</h2>
           <SourceTag id="assumption" />
         </div>
         <p className="mkt__lede">
-          Claiming a single moat would be the easy version. The layers are genuinely different, and
-          one of them is not a defence at all.
+          只宣称一条护城河是省事的版本。这几层确实各不相同，而且其中一层根本算不上防御。
         </p>
         <div className="mkt__moat">
           {MOAT.map((layer) => (
@@ -467,7 +476,7 @@ export function MarketImpactPanel({
               <div className="mkt__moat-head">
                 <h3 className="mkt__moat-name">{layer.name}</h3>
                 <span className={`mkt__strength mkt__strength--${layer.strength}`}>
-                  {layer.strength}
+                  {moatStrengthLabel(layer.strength)}
                 </span>
               </div>
               <p className="mkt__moat-claim">{layer.claim}</p>
@@ -478,45 +487,45 @@ export function MarketImpactPanel({
       </section>
 
       {/* ---------------------------------------------------------- criteria -- */}
-      <section className="mkt__block" aria-label="Competition scorecard">
+      <section className="mkt__block" aria-label="赛道评分表">
         <div className="mkt__block-head">
-          <h2 className="mkt__block-title">Five criteria, 20 points each</h2>
+          <h2 className="mkt__block-title">五个维度，每项 20 分</h2>
           <SourceTag id="assumption" />
         </div>
         <p className="mkt__lede">
-          A team scoring itself is the weakest evidence in the submission. These are our own marks,
-          with the confidence we hold them at, and the exact actions that would move each one.
+          团队给自己打分是整份参赛材料里最弱的证据。以下是我们给自己的分数，附上我们对它的把握程度，
+          以及每一项要怎样才能真正提分。
         </p>
 
         <div className="mkt__attribution">
-          <span className="u-micro">Run attributed to this panel</span>
+          <span className="u-micro">归因到本面板的运行</span>
           <span className="mkt__run">
-            {measured?.runLabel ?? 'none — the panel is rendering on its own'}
+            {measured?.runLabel ?? '无 —— 本面板独立渲染'}
           </span>
           {measured && measured.confirmed !== undefined && (
             <span className="mkt__run-figures">
-              {measured.confirmed ? 'confirmed regression' : 'no verdict recorded'}
+              {measured.confirmed ? '已确认回归' : '无裁决记录'}
               {measured.meanDifference !== undefined &&
-                ` · mean ${measured.meanDifference.toFixed(3)}`}
+                ` · 均值 ${measured.meanDifference.toFixed(3)}`}
               {measured.ciLow !== undefined &&
                 measured.ciHigh !== undefined &&
-                ` · 95% CI ${measured.ciLow.toFixed(3)} to ${measured.ciHigh.toFixed(3)}`}
+                ` · 95% 置信区间 ${measured.ciLow.toFixed(3)} 至 ${measured.ciHigh.toFixed(3)}`}
               {measured.threshold !== undefined &&
-                ` · threshold ${measured.threshold.toFixed(3)}`}
+                ` · 阈值 ${measured.threshold.toFixed(3)}`}
             </span>
           )}
         </div>
 
         <table className="record mkt__criteria">
-          <caption className="visually-hidden">Self-assessed competition scorecard</caption>
+          <caption className="visually-hidden">自评的赛道评分表</caption>
           <thead>
             <tr>
-              <th scope="col">Criterion</th>
-              <th scope="col">Self</th>
-              <th scope="col">Max</th>
-              <th scope="col">Confidence</th>
-              <th scope="col">Target</th>
-              <th scope="col">Gap</th>
+              <th scope="col">评分维度</th>
+              <th scope="col">自评</th>
+              <th scope="col">满分</th>
+              <th scope="col">把握程度</th>
+              <th scope="col">目标</th>
+              <th scope="col">差距</th>
             </tr>
           </thead>
           <tbody>
@@ -529,7 +538,7 @@ export function MarketImpactPanel({
                   <td className="u-num">{criterion.max}</td>
                   <td>
                     <span className={`mkt__confidence mkt__confidence--${criterion.confidence}`}>
-                      {criterion.confidence}
+                      {confidenceLabel(criterion.confidence)}
                     </span>
                   </td>
                   <td className="u-num">{criterion.target}</td>
@@ -538,7 +547,7 @@ export function MarketImpactPanel({
               )
             })}
             <tr>
-              <td className="u-label">Total</td>
+              <td className="u-label">合计</td>
               <td className="u-num mkt__criterion-score">{totalSelfScore()}</td>
               <td className="u-num">{MAX_TOTAL}</td>
               <td />
@@ -559,10 +568,10 @@ export function MarketImpactPanel({
               </summary>
               <div className="mkt__criterion-body">
                 <p className="mkt__note">
-                  <span className="u-micro">Evidence</span> {criterion.evidence}
+                  <span className="u-micro">证据</span> {criterion.evidence}
                 </p>
                 <p className="mkt__note">
-                  <span className="u-micro">Gap</span> {criterion.gap}
+                  <span className="u-micro">差距</span> {criterion.gap}
                 </p>
                 <ol className="mkt__action-list">
                   {criterion.actions.map((action) => (
@@ -571,7 +580,7 @@ export function MarketImpactPanel({
                       <div className="mkt__action-body">
                         <p>{action.what}</p>
                         <p className="mkt__action-verify">
-                          <span className="u-micro">Verified by</span> {action.verification}
+                          <span className="u-micro">验证方式</span> {action.verification}
                         </p>
                       </div>
                     </li>
@@ -584,7 +593,7 @@ export function MarketImpactPanel({
 
         <div className="mkt__ledgers">
           <div className="mkt__ledger">
-            <span className="u-label">Demonstrated, on our own corpus</span>
+            <span className="u-label">已在我们自己的语料上演示</span>
             <ul className="mkt__list">
               {POSITION.demonstrated.map((item) => (
                 <li key={item}>{item}</li>
@@ -592,7 +601,7 @@ export function MarketImpactPanel({
             </ul>
           </div>
           <div className="mkt__ledger mkt__ledger--missing">
-            <span className="u-label">Missing, entirely</span>
+            <span className="u-label">完全缺失</span>
             <ul className="mkt__list">
               {POSITION.missing.map((item) => (
                 <li key={item}>{item}</li>
@@ -603,29 +612,28 @@ export function MarketImpactPanel({
       </section>
 
       {/* --------------------------------------------------------- workspace -- */}
-      <section className="mkt__block" aria-label="Investigation workspace">
+      <section className="mkt__block" aria-label="调查工作区">
         <div className="mkt__block-head">
-          <h2 className="mkt__block-title">The product, on the run beside it</h2>
+          <h2 className="mkt__block-title">产品本身，运行在它旁边</h2>
           <SourceTag id="fixture" />
         </div>
         <p className="mkt__lede">
-          This block is where the host page mounts its own investigation surface. It is injected
-          rather than imported, so this feature can sit beside a workspace without depending on it.
+          这一块是宿主页面挂载它自己的调查界面的位置。它是被注入的，而不是被导入的，
+          因此本功能可以与该工作区并排存在却不依赖它。
         </p>
         {renderWorkspace ? (
           renderWorkspace()
         ) : (
           <p className="mkt__placeholder">
-            No workspace injected. Pass <code>renderWorkspace</code> to mount one here.
+            未注入工作区。传入 <code>renderWorkspace</code> 即可在此挂载一个。
           </p>
         )}
       </section>
 
       <footer className="mkt__footer">
         <p className="mkt__footer-text">
-          {POSITION.headline} Every commercial figure on this surface is an assumption, a target, or
-          a range; every product figure is labelled as measured or as fixture. If a later revision
-          reports traction, the number must name the counterparty, or it does not go in.
+          {POSITION.headline} 这个页面上的每一个商业数字都是假设、目标或区间；每一个产品数字都标注为实测或夹具数据。
+          如果后续版本要报告牵引力，那个数字必须点出具体的合作方，否则就不写进来。
         </p>
       </footer>
     </div>

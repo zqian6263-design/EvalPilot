@@ -21,15 +21,20 @@ import { LiveReportView } from './views/LiveReport'
 import { InvestigationWorkspace } from './InvestigationWorkspace'
 import { MarketImpactPanel } from './features/market'
 import { ReportView } from './views/Report'
+import { PROVENANCE } from './i18n/labels'
 
 export type View = 'console' | 'findings' | 'report' | 'investigation' | 'market'
 
+/**
+ * The view keys are also the URL fragments (`#report`, `#case=22`), so `id` is
+ * never translated. `label` is what the tab prints.
+ */
 const VIEWS: ReadonlyArray<{ id: View; label: string }> = [
-  { id: 'console', label: 'Run console' },
-  { id: 'findings', label: 'Findings' },
-  { id: 'report', label: 'Report' },
-  { id: 'investigation', label: 'Investigation' },
-  { id: 'market', label: 'Market' },
+  { id: 'console', label: '运行控制台' },
+  { id: 'findings', label: '评估发现' },
+  { id: 'report', label: '评估报告' },
+  { id: 'investigation', label: '自动调查' },
+  { id: 'market', label: '市场价值' },
 ]
 
 /**
@@ -175,7 +180,7 @@ export function App(): React.JSX.Element {
       const context = await resolveDemoContext(http)
       if (context === null) {
         // Healthy but not seedable: fixtures are the only honest source here.
-        setLiveNote('The backend answered but could not resolve a demo run; showing fixtures.')
+        setLiveNote(PROVENANCE.backendUnseedable)
         setLive(null)
         return
       }
@@ -214,9 +219,7 @@ export function App(): React.JSX.Element {
         error,
       })
       if (!settled) {
-        setLiveNote(
-          `The run is still ${settledRun.status} after ${RUN_TIMEOUT_MS / 1000}s; showing what it has recorded so far.`,
-        )
+        setLiveNote(PROVENANCE.stillRunning(settledRun.status, RUN_TIMEOUT_MS / 1000))
       }
     } catch (cause) {
       // The backend is not reachable, or stopped mid-run. The console is still
@@ -226,8 +229,8 @@ export function App(): React.JSX.Element {
       setLive(null)
       setLiveNote(
         cause instanceof Error
-          ? `Live run unavailable: ${cause.message}. Showing bundled fixtures.`
-          : 'Live run unavailable. Showing bundled fixtures.',
+          ? PROVENANCE.liveUnavailable(cause.message)
+          : PROVENANCE.liveUnavailableNoReason,
       )
     } finally {
       clearTimeout(timer)
@@ -238,9 +241,7 @@ export function App(): React.JSX.Element {
   const toggleTransport = useCallback((toMock: boolean) => {
     abortRef.current?.abort()
     setLive(null)
-    setLiveNote(
-      toMock ? 'Fixtures selected manually — bundled corpus, not a real run.' : null,
-    )
+    setLiveNote(toMock ? PROVENANCE.fixturesManual : null)
     setTransport(toMock ? new MockTransport() : new HttpTransport())
   }, [])
 
@@ -276,7 +277,7 @@ export function App(): React.JSX.Element {
         runNote={liveNote}
       />
 
-      <nav className="viewbar" aria-label="Console sections">
+      <nav className="viewbar" aria-label="控制台分区">
         <div className="viewbar__keys" role="tablist">
           {VIEWS.map((item) => (
             <button
@@ -296,26 +297,26 @@ export function App(): React.JSX.Element {
           {runtimeStatus && (
             <span className={runtimeStatus.mode === 'live' ? 'u-device' : 'u-micro'}>
               {runtimeStatus.mode === 'live'
-                ? `LIVE LLM · ${runtimeStatus.model ?? 'configured'}`
-                : 'DETERMINISTIC'}
+                ? `实时大模型 · ${runtimeStatus.model ?? '已配置'}`
+                : '确定性模式'}
             </span>
           )}
           {hasLiveRun ? (
             <>
-              <span className="u-micro">Matched</span>
+              <span className="u-micro">匹配场景</span>
               <span className="u-device">{live.evaluation!.counts.cases}</span>
-              <span className="u-micro">Findings</span>
+              <span className="u-micro">发现</span>
               <span className="u-device">{live.evaluation!.counts.findings}</span>
-              <span className="u-micro">Evidence</span>
+              <span className="u-micro">证据</span>
               <span className="u-device">{live.evaluation!.counts.evidence}</span>
             </>
           ) : (
             <>
-              <span className="u-micro">Matched cases</span>
+              <span className="u-micro">匹配场景</span>
               <span className="u-device">{scenario.comparison.matched_cases}</span>
-              <span className="u-micro">Repeats</span>
+              <span className="u-micro">重复采样</span>
               <span className="u-device">{scenario.comparison.repeats}</span>
-              <span className="u-micro">Seed</span>
+              <span className="u-micro">随机种子</span>
               <span className="u-device">20260911</span>
             </>
           )}

@@ -21,10 +21,10 @@ export function Verdict({ scenario }: Props): React.JSX.Element {
   const completedAt = transcript[transcript.length - 1]?.event.created_at ?? at(232)
   const word =
     scenario.verdict === 'regression'
-      ? 'Regression'
+      ? '回归'
       : scenario.verdict === 'improvement'
-        ? 'Improvement'
-        : 'No regression'
+        ? '改进'
+        : '无回归'
 
   const stampClass =
     scenario.verdict === 'regression'
@@ -34,7 +34,7 @@ export function Verdict({ scenario }: Props): React.JSX.Element {
         : 'stamp stamp--clear'
 
   return (
-    <section className="verdict-card" aria-label="Verdict">
+    <section className="verdict-card" aria-label="裁决结论">
       <div className="verdict-card__headline">
         <h2 className={`verdict-card__word verdict-card__word--${
           scenario.verdict === 'regression' ? 'down' : scenario.verdict === 'improvement' ? 'up' : 'clear'
@@ -42,7 +42,7 @@ export function Verdict({ scenario }: Props): React.JSX.Element {
           {word}
         </h2>
         <div className={stampClass} aria-hidden="true">
-          <div className="stamp__word">{word === 'Regression' ? 'Regressed' : word}</div>
+          <div className="stamp__word">{scenario.verdict === 'regression' ? '已回归' : word}</div>
           <div className="stamp__sub">
             {scenario.candidateVersion} vs {scenario.baselineVersion}
           </div>
@@ -53,39 +53,39 @@ export function Verdict({ scenario }: Props): React.JSX.Element {
 
       <div className="comparison">
         <div className="comparison__cell">
-          <span className="u-micro">Matched</span>
+          <span className="u-micro">匹配场景</span>
           <span className="comparison__value">{comparison.matched_cases}</span>
         </div>
         <div className="comparison__cell">
-          <span className="u-micro">Repeats</span>
+          <span className="u-micro">重复采样</span>
           <span className="comparison__value">{comparison.repeats}</span>
         </div>
         <div className="comparison__cell">
-          <span className="u-micro">Regressed</span>
+          <span className="u-micro">稳定回归</span>
           <span className={`comparison__value${comparison.stable_regressions > 0 ? ' comparison__value--alert' : ''}`}>
             {comparison.stable_regressions}
           </span>
         </div>
         <div className="comparison__cell">
-          <span className="u-micro">Noise only</span>
+          <span className="u-micro">仅噪声</span>
           <span className="comparison__value">{comparison.noise_only}</span>
         </div>
         <div className="comparison__cell">
-          <span className="u-micro">Confidence</span>
+          <span className="u-micro">置信度</span>
           <span className="comparison__value">{comparison.regression_confidence.toFixed(2)}</span>
         </div>
       </div>
 
       <dl className="ledger" style={{ borderTop: 'none' }}>
-        <dt className="ledger__key">Run</dt>
+        <dt className="ledger__key">运行 ID</dt>
         <dd className="ledger__val">{RUN_A_ID}</dd>
-        <dt className="ledger__key">Started</dt>
+        <dt className="ledger__key">开始时间</dt>
         <dd className="ledger__val">{formatStamp(at(0))}</dd>
-        <dt className="ledger__key">Completed</dt>
+        <dt className="ledger__key">完成时间</dt>
         <dd className="ledger__val">
           {formatStamp(completedAt)} · {formatClock(completedAt)}
         </dd>
-        <dt className="ledger__key">Change under test</dt>
+        <dt className="ledger__key">受测变更</dt>
         <dd className="ledger__val ledger__val--prose">{scenario.change.summary}</dd>
       </dl>
     </section>

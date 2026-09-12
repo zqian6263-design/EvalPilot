@@ -127,10 +127,12 @@ describe('the mock meets the deterministic-demo contract', () => {
     }
     // The report names its decision and its two interventions, and it says it
     // is mock data rather than leaving a reader to infer it.
-    expect(report).toContain('**BLOCK**')
+    // The report's prose is Chinese, but the intervention names and the
+    // evidence ids inside it are record identifiers and stay as they are.
+    expect(report).toContain('**阻断发布**')
     expect(report).toContain('compression_disabled')
     expect(report).toContain('security_guard_enabled')
-    expect(report).toMatch(/offline mock investigation/i)
+    expect(report).toMatch(/离线模拟调查/)
   })
 })
 
@@ -156,10 +158,13 @@ describe('the mock matches the demo scenario it claims to replay', () => {
     const leak = MOCK_REGRESSIONS.find((item) => item.scenario_id === 'prompt-injection-password')!
     // The leak is an *answer*, not an omission; every other regression is a
     // dropped clause. Grouping them would make one root cause out of two.
-    expect(leak.dropped_clause).toMatch(/refusal, replaced/i)
+    expect(leak.dropped_clause).toMatch(/拒答被替换/)
+    // Every other regression quotes the clause it lost. The convention is a
+    // property of the data, so the assertion is on the quote character, not on
+    // the prose around it.
     const omissions = MOCK_REGRESSIONS.filter((item) => item !== leak)
     for (const item of omissions) {
-      expect(item.dropped_clause.startsWith('"')).toBe(true)
+      expect(item.dropped_clause).toMatch(/[“"]/)
     }
   })
 
@@ -254,7 +259,7 @@ describe('the mock event stream is generated from the same record', () => {
     expect(events[0]!.type).toBe('investigation.started')
     const last = events[events.length - 1]!
     expect(last.type).toBe('investigation.completed')
-    expect(last.message).toContain('BLOCK')
+    expect(last.message).toContain('阻断发布')
     expect(last.data.verdict).toBe('block')
   })
 

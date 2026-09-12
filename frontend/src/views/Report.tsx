@@ -11,6 +11,7 @@ import {
   formatPercent,
   formatStamp,
 } from '../lib/format'
+import { metricLabel, severityLabel } from '../i18n/labels'
 
 interface Props {
   scenario: Scenario
@@ -65,7 +66,7 @@ export function ReportView({ scenario, transport }: Props): React.JSX.Element {
       .catch((cause: unknown) => {
         if (cancelled) return
         setSource('fixtures')
-        setError(cause instanceof Error ? cause.message : 'report request failed')
+        setError(cause instanceof Error ? cause.message : '报告请求失败')
       })
     return () => {
       cancelled = true
@@ -89,75 +90,74 @@ export function ReportView({ scenario, transport }: Props): React.JSX.Element {
       <header className="sheet__masthead">
         <div className="stack" style={{ gap: 'var(--s1)' }}>
           <span className="sheet__doctype">
-            Evaluation report · {scenario.baselineVersion} vs {scenario.candidateVersion}
+            评估报告 · {scenario.baselineVersion} vs {scenario.candidateVersion}
           </span>
           <h1 className="sheet__title">
             {scenario.verdict === 'regression'
-              ? 'Do not ship this candidate'
+              ? '不要发布该候选版本'
               : scenario.verdict === 'improvement'
-                ? 'Ship this candidate'
-                : 'Safe to ship, nothing moved'}
+                ? '可以发布该候选版本'
+                : '可以安全发布，没有任何变化'}
           </h1>
         </div>
         <div className="stack" style={{ gap: 'var(--s1)', textAlign: 'right' }}>
-          <span className="u-micro">Report source</span>
+          <span className="u-micro">报告来源</span>
           <span className="u-device">
-            {source === 'backend' ? 'GET /api/runs/{id}/report' : 'bundled fixtures'}
+            {source === 'backend' ? 'GET /api/runs/{id}/report' : '内置夹具数据'}
           </span>
-          {error && <span className="u-micro">fallback: {error}</span>}
+          {error && <span className="u-micro">回退原因：{error}</span>}
         </div>
       </header>
 
-      <section aria-label="Summary">
+      <section aria-label="摘要">
         <p className="sheet__summary">{report.summary || scenario.summary}</p>
       </section>
 
-      <section aria-label="Report details">
+      <section aria-label="报告详情">
         <dl className="ledger">
-          <dt className="ledger__key">Report id</dt>
+          <dt className="ledger__key">报告 ID</dt>
           <dd className="ledger__val">{report.id}</dd>
-          <dt className="ledger__key">Generated</dt>
+          <dt className="ledger__key">生成时间</dt>
           <dd className="ledger__val">{formatStamp(report.generated_at)}</dd>
-          <dt className="ledger__key">Change under test</dt>
+          <dt className="ledger__key">受测变更</dt>
           <dd className="ledger__val ledger__val--prose">{scenario.change.summary}</dd>
           {scenario.change.settings.map((setting) => (
             <div key={setting.key} style={{ display: 'contents' }}>
               <dt className="ledger__key">{setting.key}</dt>
               <dd className="ledger__val">
                 {setting.baseline} → {setting.candidate}
-                {setting.baseline === setting.candidate ? '  (unchanged)' : ''}
+                {setting.baseline === setting.candidate ? '（未变更）' : ''}
               </dd>
             </div>
           ))}
-          <dt className="ledger__key">Matched cases</dt>
+          <dt className="ledger__key">匹配场景</dt>
           <dd className="ledger__val">
-            {scenario.comparison.matched_cases} cases · {scenario.comparison.repeats} repeats ·{' '}
-            {formatPercent(scenario.comparison.regression_confidence)} regression confidence
+            {scenario.comparison.matched_cases} 个场景 · {scenario.comparison.repeats} 次重复采样 ·{' '}
+            {formatPercent(scenario.comparison.regression_confidence)} 回归置信度
           </dd>
-          <dt className="ledger__key">Verdict</dt>
+          <dt className="ledger__key">裁决</dt>
           <dd className="ledger__val ledger__val--prose">
-            {scenario.comparison.stable_regressions} stable regression(s),{' '}
-            {scenario.comparison.noise_only} single-sample flag(s) that did not reproduce and are
-            excluded.
+            {scenario.comparison.stable_regressions} 个稳定回归，{scenario.comparison.noise_only}{' '}
+            个单次采样标记未能复现，已排除在外。
           </dd>
         </dl>
       </section>
 
-      <section aria-label="Metrics">
+      <section aria-label="指标">
         <div className="block__head">
-          <span className="u-label">Metrics</span>
+          <span className="u-label">指标</span>
           <span className="u-micro">
-            {source === 'backend' ? 'from the backend report' : 'computed from the fixture corpus'}
+            {source === 'backend' ? '来自后端报告' : '由夹具语料计算得出'}
           </span>
         </div>
         <table className="record">
-          <caption className="visually-hidden">Reported metrics, baseline against candidate</caption>
+          <caption className="visually-hidden">报告的指标：基线版本与候选版本对比</caption>
           <thead>
             <tr>
-              <th scope="col">Metric</th>
+              <th scope="col">指标</th>
               <th scope="col">{scenario.baselineVersion}</th>
               <th scope="col">{scenario.candidateVersion}</th>
-              <th scope="col">Change</th>
+              <th scope="col">变化</th>
               <th scope="col">n</th>
             </tr>
           </thead>
@@ -169,7 +169,7 @@ export function ReportView({ scenario, transport }: Props): React.JSX.Element {
                   <tr key={key}>
                     <td>{key}</td>
                     <td colSpan={4} className="u-micro">
-                      not reported by this backend
+                      该后端未报告此项
                     </td>
                   </tr>
                 )
@@ -178,7 +178,7 @@ export function ReportView({ scenario, transport }: Props): React.JSX.Element {
               const worse = raw !== 0 && (metric.direction === 'lower' ? raw > 0 : raw < 0)
               return (
                 <tr key={key}>
-                  <td>{metric.label}</td>
+                  <td>{metricLabel(key, metric.label)}</td>
                   <td className="u-num">{formatMetricValue(metric, metric.baseline)}</td>
                   <td className={`u-num ${worse ? 'record__score--down' : raw !== 0 ? 'record__score--up' : ''}`}>
                     {formatMetricValue(metric, metric.candidate)}
@@ -194,15 +194,15 @@ export function ReportView({ scenario, transport }: Props): React.JSX.Element {
         </table>
       </section>
 
-      <section aria-label="Findings">
+      <section aria-label="评估发现">
         <div className="block__head">
           <span className="u-label">
-            Findings ({findings.length})
+            评估发现（{findings.length}）
           </span>
           <span className="u-micro">
             {SEVERITY_ORDER.map(
               (severity) =>
-                `${findings.filter((f) => f.severity === severity).length} ${severity}`,
+                `${findings.filter((f) => f.severity === severity).length} ${severityLabel(severity)}`,
             ).join(' · ')}
           </span>
         </div>
@@ -211,23 +211,23 @@ export function ReportView({ scenario, transport }: Props): React.JSX.Element {
           <article className="finding" key={finding.id} style={{ marginBottom: 'var(--s3)' }}>
             <div className="finding__rail">
               <span className={`finding__sev finding__sev--${finding.severity}`}>
-                {finding.severity}
+                {severityLabel(finding.severity)}
               </span>
-              <span className="u-micro">conf {finding.confidence.toFixed(2)}</span>
+              <span className="u-micro">置信度 {finding.confidence.toFixed(2)}</span>
             </div>
             <div className="finding__body">
               <h2 className="finding__title">{finding.title}</h2>
               <p className="finding__desc">{finding.description}</p>
               {finding.recommendation && (
                 <div className="finding__rec">
-                  <span className="u-micro">Recommendation</span>
+                  <span className="u-micro">改进建议</span>
                   <p>{finding.recommendation}</p>
                 </div>
               )}
               <div className="finding__evidence">
-                <span className="u-micro">{finding.evidence_ids.length} evidence link(s)</span>
+                <span className="u-micro">{finding.evidence_ids.length} 条证据关联</span>
                 {finding.test_case_id && (
-                  <span className="u-device">case {finding.test_case_id.slice(0, 6)}</span>
+                  <span className="u-device">场景 {finding.test_case_id.slice(0, 6)}</span>
                 )}
               </div>
             </div>
@@ -237,16 +237,16 @@ export function ReportView({ scenario, transport }: Props): React.JSX.Element {
 
       <div className="signoff">
         <div className="signoff__line">
-          <span className="u-micro">Evaluated by</span>
-          <span className="u-device">EvalPilot · deterministic checks + rubric judge</span>
+          <span className="u-micro">评估方</span>
+          <span className="u-device">EvalPilot · 确定性检查 + 评分表裁判</span>
         </div>
         <div className="signoff__line">
-          <span className="u-micro">Reviewer sign-off</span>
+          <span className="u-micro">复核人签署</span>
           <div className="signoff__rule" />
           <span className="u-micro">
             {source === 'backend'
-              ? 'metrics read from the running service'
-              : 'offline demo — fixture data'}
+              ? '指标读自正在运行的服务'
+              : '离线演示 —— 夹具数据'}
           </span>
         </div>
       </div>

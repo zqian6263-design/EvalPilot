@@ -3,6 +3,7 @@ import type { ProgressEvent } from '../api/types'
 import type { ScenarioId } from '../fixtures/scenarios'
 import { timelineFor } from '../fixtures/timeline'
 import { formatClock } from '../lib/format'
+import { eventTypeLabel } from '../i18n/labels'
 
 interface Props {
   scenarioId: ScenarioId
@@ -71,11 +72,11 @@ export function EventIndex({ scenarioId, onJumpToCase, activeCaseNumber }: Props
   ).padStart(2, '0')}`
 
   return (
-    <section className="events" aria-label="Run event stream">
+    <section className="events" aria-label="运行事件流">
       <div className="panel__title">
-        <span className="u-label">Run progress</span>
+        <span className="u-label">运行进度</span>
         <span className="u-micro">
-          {running ? `running · ${shown}/${all.length}` : `complete · ${all.length} events`}
+          {running ? `进行中 · ${shown}/${all.length}` : `已完成 · ${all.length} 条事件`}
         </span>
       </div>
 
@@ -87,7 +88,7 @@ export function EventIndex({ scenarioId, onJumpToCase, activeCaseNumber }: Props
           onClick={() => setPaused((value) => !value)}
           aria-pressed={paused}
         >
-          {paused ? 'Resume' : 'Pause'}
+          {paused ? '继续' : '暂停'}
         </button>
         <button
           type="button"
@@ -99,7 +100,7 @@ export function EventIndex({ scenarioId, onJumpToCase, activeCaseNumber }: Props
           }}
           disabled={!running}
         >
-          Step to end
+          跳到末尾
         </button>
         <span className="u-micro" style={{ marginLeft: 'auto' }}>
           t + {elapsedStamp}
@@ -127,13 +128,13 @@ export function EventIndex({ scenarioId, onJumpToCase, activeCaseNumber }: Props
                   type="button"
                   className="event__key"
                   onClick={() => onJumpToCase(caseNumber)}
-                  title={`Open case ${String(caseNumber).padStart(2, '0')}`}
+                  title={`打开场景 ${String(caseNumber).padStart(2, '0')}`}
                 >
                   {String(caseNumber).padStart(2, '0')}
                 </button>
               )}
               <span className="event__time">{formatClock(entry.event.created_at)}</span>
-              <span className="event__type">{entry.event.type.replace('.', ' · ')}</span>
+              <span className="event__type">{eventTypeLabel(entry.event.type)}</span>
               <span className="event__message">{entry.event.message}</span>
             </li>
           )
@@ -142,8 +143,7 @@ export function EventIndex({ scenarioId, onJumpToCase, activeCaseNumber }: Props
 
       <div className="legend" style={{ borderTop: 'var(--rule-ink)' }}>
         <span className="u-micro">
-          Events replay from the frozen transcript for this scenario. The keyed number on the left
-          jumps the record to that case.
+          事件从该场景的冻结记录中回放。左侧带编号的按键会把记录表跳到对应场景。
         </span>
       </div>
     </section>

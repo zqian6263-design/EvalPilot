@@ -142,7 +142,7 @@ export async function readReport(
     }
     return {
       report: null,
-      error: cause instanceof Error ? cause.message : 'report request failed',
+      error: cause instanceof Error ? cause.message : '报告请求失败',
     }
   }
 }

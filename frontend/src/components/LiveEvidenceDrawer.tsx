@@ -1,6 +1,7 @@
 import type { Evidence } from '../api/types'
 import type { LiveCase } from '../api/evaluation'
 import { formatScore } from '../lib/format'
+import { caseCategoryLabel, caseStatusLabel } from '../i18n/labels'
 
 interface Props {
   /** The case row whose candidate side is open. */
@@ -28,8 +29,8 @@ function EvidenceRow({ item }: { item: Evidence }): React.JSX.Element {
     return (
       <article className="ev">
         <header className="ev__head">
-          <span className="ev__kind">citation</span>
-          <span className="u-micro">{str(payload.title, item.uri ?? 'document')}</span>
+          <span className="ev__kind">引用</span>
+          <span className="u-micro">{str(payload.title, item.uri ?? '文档')}</span>
         </header>
         <div className="ev__body">
           <p className="citation__tick tabular u-device">{item.uri ?? str(payload.doc_id)}</p>
@@ -44,14 +45,14 @@ function EvidenceRow({ item }: { item: Evidence }): React.JSX.Element {
     return (
       <article className="ev">
         <header className="ev__head">
-          <span className="ev__kind">tool trace</span>
+          <span className="ev__kind">工具调用轨迹</span>
           <span className="u-micro">
-            {toolCalls.length} tool call(s) · {item.uri ? 'artifact stored' : 'no artifact'}
+            {toolCalls.length} 次工具调用 · {item.uri ? '已存工件' : '无工件'}
           </span>
         </header>
         <div className="ev__body">
-          <p className="ev__label">Rationale</p>
-          <p>{str(payload.rationale, 'no rationale recorded')}</p>
+          <p className="ev__label">判断理由</p>
+          <p>{str(payload.rationale, '未记录理由')}</p>
           {toolCalls.length > 0 && (
             <pre className="log" tabIndex={0}>
               {JSON.stringify(toolCalls, null, 2)}
@@ -66,8 +67,8 @@ function EvidenceRow({ item }: { item: Evidence }): React.JSX.Element {
     return (
       <article className="ev">
         <header className="ev__head">
-          <span className="ev__kind">{payload.question !== undefined ? 'prompt' : 'text'}</span>
-          <span className="u-micro">{payload.refused === true ? 'refused' : 'answered'}</span>
+          <span className="ev__kind">{payload.question !== undefined ? '提问' : '文本'}</span>
+          <span className="u-micro">{payload.refused === true ? '已拒答' : '已作答'}</span>
         </header>
         <div className="ev__body">
           {payload.question !== undefined && <p className="prompt">{str(payload.question)}</p>}
@@ -81,8 +82,8 @@ function EvidenceRow({ item }: { item: Evidence }): React.JSX.Element {
     return (
       <article className="ev">
         <header className="ev__head">
-          <span className="ev__kind">measured</span>
-          <span className="u-micro">recorded by the executor</span>
+          <span className="ev__kind">实测</span>
+          <span className="u-micro">由执行器记录</span>
         </header>
         <div className="ev__body">
           <div className="scored">
@@ -105,7 +106,7 @@ function EvidenceRow({ item }: { item: Evidence }): React.JSX.Element {
     <article className="ev">
       <header className="ev__head">
         <span className="ev__kind">{item.kind}</span>
-        <span className="u-micro">{item.uri ?? 'no artifact'}</span>
+        <span className="u-micro">{item.uri ?? '无工件'}</span>
       </header>
       <div className="ev__body">
         <pre className="log" tabIndex={0}>
@@ -139,69 +140,69 @@ export function LiveEvidenceDrawer({ row, evidence, onClose }: Props): React.JSX
       <button
         type="button"
         className="drawer__scrim"
-        aria-label="Close the evidence packet"
+        aria-label="关闭证据包"
         onClick={onClose}
       />
       <aside
         className="drawer"
         role="dialog"
         aria-modal="true"
-        aria-label={`Evidence packet for case ${row.n}`}
+        aria-label={`场景 ${row.n} 的证据包`}
       >
         <header className="drawer__head">
           <div className="drawer__title">
             <span className="u-micro">
-              Case {String(row.n).padStart(2, '0')} · {row.category} · difficulty{' '}
+              场景 {String(row.n).padStart(2, '0')} · {caseCategoryLabel(row.category)} · 难度{' '}
               {row.difficulty.toFixed(2)}
             </span>
             <h2 className="drawer__case-title">{row.scenarioId}</h2>
             <span className="u-device">
-              baseline {row.baselineStatus} ({baselineLatency} ms) → candidate{' '}
-              {row.candidateStatus} ({candidateLatency} ms)
+              基线 {caseStatusLabel(row.baselineStatus)}（{baselineLatency} ms）→ 候选{' '}
+              {caseStatusLabel(row.candidateStatus)}（{candidateLatency} ms）
             </span>
           </div>
           <button type="button" className="drawer__close" onClick={onClose} autoFocus>
-            Close
+            关闭
           </button>
         </header>
 
         <div className="drawer__body">
           <p className="u-micro" style={{ lineHeight: 1.6 }}>
-            Question: {str(row.candidate.input?.question, '(not recorded)')}
+            问题：{str(row.candidate.input?.question, '（未记录）')}
           </p>
 
           <article className="ev">
             <header className="ev__head">
-              <span className="ev__kind">answers</span>
-              <span className="u-micro">both versions, as executed</span>
+              <span className="ev__kind">回答</span>
+              <span className="u-micro">两个版本，按实际执行结果</span>
             </header>
             <div className="ev__body">
               <div className="answers">
                 <div className="answer answer--baseline">
                   <div className="answer__head">
-                    <span className="u-label">Baseline</span>
+                    <span className="u-label">基线版本</span>
                     <span className="u-device">
-                      {row.baselineStatus} · {formatScore(baselineLatency / 1000)}s
+                      {caseStatusLabel(row.baselineStatus)} · {formatScore(baselineLatency / 1000)}s
                     </span>
                   </div>
-                  <p className="answer__text">{baselineAnswer || '(no answer recorded)'}</p>
+                  <p className="answer__text">{baselineAnswer || '（未记录回答）'}</p>
                 </div>
                 <div className="answer answer--candidate">
                   <div className="answer__head">
-                    <span className="u-label">Candidate</span>
+                    <span className="u-label">候选版本</span>
                     <span className="u-device">
-                      {row.candidateStatus} · {formatScore(candidateLatency / 1000)}s
+                      {caseStatusLabel(row.candidateStatus)} · {formatScore(candidateLatency / 1000)}s
                     </span>
                   </div>
-                  <p className="answer__text">{candidateAnswer || '(no answer recorded)'}</p>
+                  <p className="answer__text">{candidateAnswer || '（未记录回答）'}</p>
                 </div>
               </div>
             </div>
           </article>
 
           <p className="u-micro">
-            {ordered.length} evidence row(s) recorded for this case ({baseline.length} baseline,{' '}
-            {candidate.length} candidate). The run records no per-case score, so none is shown here.
+            该场景共记录 {ordered.length} 条证据（基线 {baseline.length} 条，候选 {candidate.length}{' '}
+            条）。本次运行不记录逐场景分数，因此这里也不显示。
           </p>
 
           {ordered.map((item) => (
@@ -210,8 +211,7 @@ export function LiveEvidenceDrawer({ row, evidence, onClose }: Props): React.JSX
 
           {ordered.length === 0 && (
             <p className="u-micro">
-              This case has no evidence rows yet. They are written as the executor finishes each
-              version.
+              该场景还没有证据记录。执行器每完成一个版本就会写入一条。
             </p>
           )}
         </div>

@@ -20,6 +20,14 @@ import { HttpInvestigationTransport } from './httpInvestigationTransport'
 import { MockInvestigationTransport } from './mockInvestigationTransport'
 import { defaultObjective, runInvestigation, type InvestigationRun } from './runInvestigation'
 import { StepRow, visibleRows } from './StepRow'
+import {
+  PROVENANCE,
+  counterfactualVerdictLabel,
+  decisionVerdictLabel,
+  investigationStatusLabel,
+  riskLevelLabel,
+  stepStatusLabel,
+} from './i18n/labels'
 // The workspace owns its own stylesheet and pulls it in itself, rather than
 // asking `styles/index.css` to import it. That is what "self-contained" means
 // here: wiring the component into App.tsx is one import and no stylesheet edit,
@@ -107,11 +115,7 @@ async function pickTransport(timeoutMs = 1200): Promise<InvestigationTransport> 
 }
 
 function riskWord(level: RiskLevel): string {
-  return level.toUpperCase()
-}
-
-function humanise(token: string): string {
-  return token.replace(/_/g, ' ')
+  return riskLevelLabel(level)
 }
 
 /**
@@ -206,9 +210,7 @@ export function InvestigationWorkspace({
         setResolvedRunId(target)
       }
       if (!target) {
-        setStartError(
-          'No evaluation run to investigate. Open a run first, or pass runId to the workspace.',
-        )
+        setStartError('没有可调查的评估运行。请先打开一次运行，或向工作区传入 runId。')
         return
       }
 
@@ -222,7 +224,7 @@ export function InvestigationWorkspace({
       })
       setRun(result)
     } catch (cause) {
-      setStartError(cause instanceof Error ? cause.message : 'the investigation could not start')
+      setStartError(cause instanceof Error ? cause.message : '调查无法启动')
     } finally {
       setStarting(false)
     }
@@ -254,17 +256,17 @@ export function InvestigationWorkspace({
   }
 
   return (
-    <div className="inv" aria-label="Autonomous investigation">
+    <div className="inv" aria-label="自主调查">
       {/* ------------------------------------------------------------ intake */}
-      <section className="inv__intake" aria-label="Objective">
+      <section className="inv__intake" aria-label="调查目标">
         <div className="inv__plate">
-          <span className="u-micro">Autonomous release investigation</span>
-          <h1 className="inv__title">Release investigation</h1>
+          <span className="u-micro">自主发布调查</span>
+          <h1 className="inv__title">发布调查</h1>
         </div>
 
         <div className="inv__field">
           <label className="u-label" htmlFor="inv-objective">
-            Release objective
+            发布目标
           </label>
           <textarea
             id="inv-objective"
@@ -283,23 +285,23 @@ export function InvestigationWorkspace({
             onClick={() => void start()}
             disabled={starting || objective.trim().length === 0}
           >
-            {starting ? 'Investigating…' : 'Start autonomous investigation'}
+            {starting ? '调查中…' : '启动自主调查'}
           </button>
 
           <div className="inv__context">
-            <span className="u-micro">Run</span>
+            <span className="u-micro">运行</span>
             <span className="u-device">
-              {resolvedRunId ? resolvedRunId.slice(0, 8) : 'resolved on start'}
+              {resolvedRunId ? resolvedRunId.slice(0, 8) : '启动时解析'}
             </span>
             {runContext?.baselineVersion && (
               <>
-                <span className="u-micro">Baseline</span>
+                <span className="u-micro">基线版本</span>
                 <span className="u-device">{runContext.baselineVersion}</span>
               </>
             )}
             {runContext?.candidateVersion && (
               <>
-                <span className="u-micro">Candidate</span>
+                <span className="u-micro">候选版本</span>
                 <span className="u-device">{runContext.candidateVersion}</span>
               </>
             )}
@@ -312,8 +314,8 @@ export function InvestigationWorkspace({
             <span className="u-micro">{info.label}</span>
             <span className="inv__source-note">
               {source === 'mock'
-                ? 'Every figure in this investigation is seeded mock data, not a real investigation.'
-                : `${info.baseUrl ?? '/api'} · the investigation runs on the service`}
+                ? PROVENANCE.mockInvestigation
+                : PROVENANCE.mockInvestigationLive(info.baseUrl ?? '/api')}
             </span>
           </div>
         )}
@@ -326,20 +328,20 @@ export function InvestigationWorkspace({
       </section>
 
       {investigation && (
-        <section className="inv__statusbar" aria-label="Investigation status">
-          <span className="u-micro">Investigation</span>
+        <section className="inv__statusbar" aria-label="调查状态">
+          <span className="u-micro">调查 ID</span>
           <span className="u-device">{investigation.id.slice(0, 8)}</span>
-          <span className="u-micro">Status</span>
+          <span className="u-micro">状态</span>
           <span className={`inv__status inv__status--${investigation.status}`}>
-            {investigation.status}
+            {investigationStatusLabel(investigation.status)}
           </span>
-          <span className="u-micro">Risk</span>
+          <span className="u-micro">风险</span>
           <span className={`inv__risk inv__risk--${investigation.risk_level}`}>
             {riskWord(investigation.risk_level)}
           </span>
-          {run?.adopted && <span className="u-micro">adopted — already started</span>}
+          {run?.adopted && <span className="u-micro">已接管 —— 此前已启动</span>}
           {run && !run.settled && !isInvestigationTerminal(status) && (
-            <span className="u-micro">still running — showing what it has recorded</span>
+            <span className="u-micro">仍在运行 —— 显示目前已记录的内容</span>
           )}
           {investigation.summary && <span className="inv__summary">{investigation.summary}</span>}
         </section>
@@ -349,13 +351,12 @@ export function InvestigationWorkspace({
         <div className="inv__body">
           <div className="inv__col">
             {/* ------------------------------------------------------- tree */}
-            <section className="panel" aria-label="Investigation timeline">
+            <section className="panel" aria-label="调查时间线">
               <div className="panel__title">
-                <span className="u-label">Timeline</span>
+                <span className="u-label">时间线</span>
                 <span className="u-micro">
-                  {bundle.steps.length} step(s) ·{' '}
-                  {riskSteps(bundle.steps).length} hypothesis
-                  {riskSteps(bundle.steps).length === 1 ? '' : 'es'}
+                  {bundle.steps.length} 个步骤 ·{' '}
+                  {riskSteps(bundle.steps).length} 条风险假设
                 </span>
               </div>
               <ol className="inv__tree">
@@ -372,7 +373,7 @@ export function InvestigationWorkspace({
               </ol>
               {bundle.steps.length === 0 && (
                 <p className="u-micro inv__pad">
-                  The investigation has not recorded a step yet. They appear here as it plans.
+                  调查尚未记录任何步骤。随着它开始规划，步骤会显示在这里。
                 </p>
               )}
             </section>
@@ -388,12 +389,12 @@ export function InvestigationWorkspace({
             <DecisionCard bundle={bundle} />
 
             {/* -------------------------------------------- counterfactuals */}
-            <section className="panel" aria-label="Counterfactual root causes">
+            <section className="panel" aria-label="反事实根因">
               <div className="panel__title">
-                <span className="u-label">Counterfactual replays</span>
+                <span className="u-label">反事实重放</span>
                 <span className="u-micro">
-                  {bundle.counterfactuals.length} experiment(s) ·{' '}
-                  {rootCauseEvidenceIds(bundle.counterfactuals).length} evidence link(s)
+                  {bundle.counterfactuals.length} 次实验 ·{' '}
+                  {rootCauseEvidenceIds(bundle.counterfactuals).length} 条证据关联
                 </span>
               </div>
               <div className="cf">
@@ -405,17 +406,16 @@ export function InvestigationWorkspace({
                         <h3 className="cf__scenario u-device">{group.scenario_id}</h3>
                         {best?.intervention ? (
                           <span className="cf__break-even">
-                            <span className="u-micro">would restore</span>
+                            <span className="u-micro">可恢复至</span>
                             <span className="cf__break-even-value u-device">
                               {best.restores.toFixed(2)}
                             </span>
                             <span className="cf__break-even-note">
-                              {best.intervention} · +{(best.marginPoints / 100).toFixed(2)} ahead of
-                              the next intervention
+                              {best.intervention} · 领先次优干预 {(best.marginPoints / 100).toFixed(2)}
                             </span>
                           </span>
                         ) : (
-                          <span className="u-micro">no single intervention leads</span>
+                          <span className="u-micro">没有单一干预起主导作用</span>
                         )}
                       </header>
 
@@ -425,12 +425,12 @@ export function InvestigationWorkspace({
 
                       <details className="cf__why">
                         <summary className="u-micro">
-                          Rationale ({group.experiments.length})
+                          判断理由（{group.experiments.length}）
                         </summary>
                         {group.experiments.map((experiment) => (
                           <p className="cf__rationale" key={`${experiment.id}-why`}>
                             <span className={`cf__verdict cf__verdict--${experiment.verdict}`}>
-                              {humanise(experiment.verdict)}
+                              {counterfactualVerdictLabel(experiment.verdict)}
                             </span>{' '}
                             {experiment.rationale}
                           </p>
@@ -440,8 +440,7 @@ export function InvestigationWorkspace({
                 })}
                 {bundle.counterfactuals.length === 0 && (
                   <p className="u-micro inv__pad">
-                    No replay has been run yet. Each replay reruns one scenario with a single
-                    setting changed and measures the difference against the candidate's own score.
+                    尚未运行任何重放。每次重放会用单项设置变更重跑一个场景，并与候选版本自身的原始得分比较差值。
                   </p>
                 )}
               </div>
@@ -472,10 +471,10 @@ function StepDetail({ step }: { step: InvestigationStep }): React.JSX.Element {
   const failures = typeof data.failures === 'number' ? data.failures : null
 
   return (
-    <section className="panel" aria-label="Step detail">
+    <section className="panel" aria-label="步骤详情">
       <div className="panel__title">
-        <span className="u-label">Step {String(step.sequence).padStart(2, '0')}</span>
-        <span className={`inv__status inv__status--${step.status}`}>{step.status}</span>
+        <span className="u-label">步骤 {String(step.sequence).padStart(2, '0')}</span>
+        <span className={`inv__status inv__status--${step.status}`}>{stepStatusLabel(step.status)}</span>
       </div>
       <div className="inv__pad stack" style={{ gap: 'var(--s3)' }}>
         <h3 className="step__detail-title">{step.title}</h3>
@@ -483,7 +482,7 @@ function StepDetail({ step }: { step: InvestigationStep }): React.JSX.Element {
 
         {tool && (
           <div className="action">
-            <span className="action__tag">action</span>
+            <span className="action__tag">动作</span>
             <div className="action__body">
               <span className="u-label">{tool}</span>
               {args && (
@@ -499,7 +498,7 @@ function StepDetail({ step }: { step: InvestigationStep }): React.JSX.Element {
               {artifact && <span className="action__artifact u-device">{artifact}</span>}
               {(runs !== null || failures !== null) && (
                 <span className="u-micro">
-                  {runs ?? 0} run(s) · {failures ?? 0} failure(s)
+                  {runs ?? 0} 次运行 · {failures ?? 0} 次失败
                 </span>
               )}
             </div>
@@ -508,7 +507,7 @@ function StepDetail({ step }: { step: InvestigationStep }): React.JSX.Element {
 
         {step.evidence_ids.length > 0 && (
           <div className="step__evidence">
-            <span className="u-micro">{step.evidence_ids.length} evidence link(s)</span>
+            <span className="u-micro">{step.evidence_ids.length} 条证据关联</span>
             <ul className="evlinks">
               {step.evidence_ids.map((id) => (
                 <li className="evlink u-device" key={id}>
@@ -537,17 +536,17 @@ function ExperimentRow({
       <div className="cf__row-head">
         <span className="cf__intervention u-device">{experiment.intervention}</span>
         <span className={`cf__verdict cf__verdict--${experiment.verdict}`}>
-          {humanise(experiment.verdict)}
+          {counterfactualVerdictLabel(experiment.verdict)}
         </span>
       </div>
 
       <div className="cf__scores">
         <div className="cf__score">
-          <span className="u-micro">Before</span>
+          <span className="u-micro">重放前</span>
           <span className="cf__score-value u-device">{experiment.original_score.toFixed(2)}</span>
         </div>
         <div className="cf__score">
-          <span className="u-micro">After</span>
+          <span className="u-micro">重放后</span>
           <span
             className={`cf__score-value u-device${improved ? ' cf__score-value--up' : flat ? '' : ' cf__score-value--down'}`}
           >
@@ -570,7 +569,7 @@ function ExperimentRow({
             {improved ? '+' : experiment.delta < 0 ? '−' : ''}
             {Math.abs(experiment.delta).toFixed(2)}
           </span>
-          <span className="u-micro">conf {experiment.confidence.toFixed(2)}</span>
+          <span className="u-micro">置信度 {experiment.confidence.toFixed(2)}</span>
         </div>
       </div>
 
@@ -597,10 +596,10 @@ function MemoryPanel({
   const memoryStep = bundle.steps.find((step) => step.kind === 'memory')
 
   return (
-    <section className="panel" aria-label="Recalled incidents">
+    <section className="panel" aria-label="召回的历史事故">
       <div className="panel__title">
-        <span className="u-label">Recalled incidents</span>
-        <span className="u-micro">{bundle.memory_matches.length} match(es)</span>
+        <span className="u-label">召回的历史事故</span>
+        <span className="u-micro">{bundle.memory_matches.length} 条匹配</span>
       </div>
       <div className="memory">
         {bundle.memory_matches.map((match) => (
@@ -608,7 +607,7 @@ function MemoryPanel({
             <header className="memory__head">
               <span className="memory__id u-device">{match.incident_id}</span>
               <div className="memory__score">
-                <span className="u-micro">match</span>
+                <span className="u-micro">相似度</span>
                 <span className="memory__score-value u-device">{match.score.toFixed(2)}</span>
               </div>
             </header>
@@ -624,8 +623,7 @@ function MemoryPanel({
         ))}
         {bundle.memory_matches.length === 0 && (
           <p className="u-micro inv__pad">
-            No historical incident matched this failure shape yet. Matches appear here as the
-            investigation recalls.
+            目前没有历史事故匹配到该故障形态。随着调查进行召回，匹配结果会显示在这里。
           </p>
         )}
         {memoryStep && (
@@ -634,7 +632,7 @@ function MemoryPanel({
             className="memory__step-link"
             onClick={() => onSelectStep(memoryStep.id)}
           >
-            Open the recall step ({String(memoryStep.sequence).padStart(2, '0')})
+            打开召回步骤（{String(memoryStep.sequence).padStart(2, '0')}）
           </button>
         )}
       </div>
@@ -646,14 +644,13 @@ function DecisionCard({ bundle }: { bundle: InvestigationBundle }): React.JSX.El
   const decision = bundle.decision
   if (!decision) {
     return (
-      <section className="panel" aria-label="Release decision">
+      <section className="panel" aria-label="发布裁决">
         <div className="panel__title">
-          <span className="u-label">Release decision</span>
-          <span className="u-micro">pending</span>
+          <span className="u-label">发布裁决</span>
+          <span className="u-micro">待定</span>
         </div>
         <p className="u-micro inv__pad">
-          The investigation has not reached a decision. The card appears once it does — a decision
-          is printed only when the replays behind it have finished.
+          调查尚未得出结论。得出结论后此卡片才会出现 —— 只有支撑结论的重放全部完成，裁决才会被打印出来。
         </p>
       </section>
     )
@@ -665,32 +662,33 @@ function DecisionCard({ bundle }: { bundle: InvestigationBundle }): React.JSX.El
       : decision.verdict === 'review'
         ? 'stamp stamp--better'
         : 'stamp stamp--clear'
-  const stampWord = decision.verdict === 'block' ? 'Block' : decision.verdict === 'review' ? 'Review' : 'Allow'
+  const stampWord =
+    decision.verdict === 'block' ? '阻断' : decision.verdict === 'review' ? '复核' : '放行'
 
   return (
-    <section className="panel" aria-label="Release decision">
+    <section className="panel" aria-label="发布裁决">
       <div className="panel__title">
-        <span className="u-label">Release decision</span>
+        <span className="u-label">发布裁决</span>
         <span className={`inv__risk inv__risk--${decision.risk_level}`}>
-          {riskWord(decision.risk_level)} risk
+          {riskWord(decision.risk_level)}
         </span>
       </div>
 
       <div className="inv__pad stack" style={{ gap: 'var(--s3)' }}>
         <div className="decision__headline">
           <h2 className={`decision__word decision__word--${decision.verdict}`}>
-            {decision.verdict}
+            {decisionVerdictLabel(decision.verdict)}
           </h2>
           <div className={stampClass} aria-hidden="true">
             <div className="stamp__word">{stampWord}</div>
-            <div className="stamp__sub">conf {decision.confidence.toFixed(2)}</div>
+            <div className="stamp__sub">置信度 {decision.confidence.toFixed(2)}</div>
           </div>
         </div>
 
         <p className="decision__summary">{decision.summary}</p>
 
         <div>
-          <span className="u-micro">Recommended actions</span>
+          <span className="u-micro">建议操作</span>
           <ol className="decision__actions">
             {decision.recommended_actions.map((action) => (
               <li className="decision__action" key={action}>
@@ -702,7 +700,7 @@ function DecisionCard({ bundle }: { bundle: InvestigationBundle }): React.JSX.El
 
         <div>
           <span className="u-micro">
-            Blocking evidence ({decision.blocking_findings.length})
+            阻断性证据（{decision.blocking_findings.length}）
           </span>
           <ul className="evlinks">
             {decision.blocking_findings.map((id) => (
@@ -722,11 +720,11 @@ function EvidencePanel({ bundle }: { bundle: InvestigationBundle }): React.JSX.E
   const rootIds = new Set(rootCauseEvidenceIds(bundle.counterfactuals))
 
   return (
-    <section className="panel" aria-label="Evidence">
+    <section className="panel" aria-label="证据">
       <div className="panel__title">
-        <span className="u-label">Evidence</span>
+        <span className="u-label">证据</span>
         <span className="u-micro">
-          {ids.length} referenced · {rootIds.size} behind a root cause
+          引用 {ids.length} 条 · 支撑根因的 {rootIds.size} 条
         </span>
       </div>
       <div className="inv__pad">
@@ -742,7 +740,7 @@ function EvidencePanel({ bundle }: { bundle: InvestigationBundle }): React.JSX.E
         </ul>
         {ids.length === 0 && (
           <p className="u-micro">
-            Nothing has cited evidence yet. A finding may not claim a root cause without one.
+            尚无任何结论引用证据。没有证据的发现不得声称找到根因。
           </p>
         )}
       </div>
@@ -779,21 +777,21 @@ function ReportBar({
       anchor.remove()
       URL.revokeObjectURL(objectUrl)
       setState('done')
-      setNote(`${markdown.split('\n').length} lines written`)
+      setNote(`已写入 ${markdown.split('\n').length} 行`)
     } catch (cause) {
       setState('error')
-      setNote(cause instanceof Error ? cause.message : 'the report could not be read')
+      setNote(cause instanceof Error ? cause.message : '报告无法读取')
     }
   }
 
   return (
     <div className="inv__report">
       <div className="stack" style={{ gap: 'var(--s1)' }}>
-        <span className="u-micro">Export</span>
+        <span className="u-micro">导出</span>
         <span className="stack" style={{ gap: 0 }}>
-          <span className="u-label">Markdown report</span>
+          <span className="u-label">Markdown 报告</span>
           <span className="inv__report-url u-device">
-            {url || 'no endpoint — the mock report is generated locally'}
+            {url || '无端点 —— 模拟报告在本地生成'}
           </span>
         </span>
       </div>
@@ -805,7 +803,7 @@ function ReportBar({
           onClick={() => void download()}
           disabled={!transport || !investigationId || state === 'reading'}
         >
-          {state === 'reading' ? 'Reading…' : 'Download report.md'}
+          {state === 'reading' ? '读取中…' : '下载 report.md'}
         </button>
       </div>
     </div>
