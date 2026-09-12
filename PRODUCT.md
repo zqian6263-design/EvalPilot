@@ -1,88 +1,82 @@
 # Product
 
-<!-- impeccable:product-schema 1 -->
-
 ## Platform
 
-web
-
-## Stack
-
-Delegated. React + TypeScript + Vite, per the repository collaboration contract in `CLAUDE.md`. No separate stack question was asked: the contract already fixes the frontend stack, and `docs/INTERFACES.md` fixes the API contract this surface consumes. *(Inferred: no interview round was possible — see Provenance.)*
-
-## Users
-
-*(Inferred from `docs/SPEC.md`; not directly confirmed in an interview.)*
-
-- **AI product and platform teams** shipping LLM applications, who must decide whether a model / prompt / retrieval / tool change is safe to ship.
-- **Research groups** maintaining reproducible model or agent evaluation, who need auditable comparisons rather than vibes.
-- **QA and data teams** responsible for release quality, who own the go / no-go call and must defend it to someone else.
-
-The operating moment is a release decision under time pressure: a candidate version exists, the team believes it is an improvement, and nobody can currently prove whether quality moved.
+Web application with a local FastAPI backend and a React + TypeScript + Vite
+frontend.
 
 ## Product Purpose
 
-EvalPilot is an autonomous regression-evaluation digital employee: it ingests a project brief and a version change, plans normal / boundary / adversarial test cases, executes them through allowed tools, captures evidence, scores the results, and emits an evidence-backed report on whether a real regression occurred.
+EvalPilot is an autonomous regression-evaluation digital employee for AI
+applications. It compares a baseline and a candidate version over matched
+scenarios, separates a real regression from sampling noise and a harder test
+set, investigates confirmed failures with counterfactual replay, and produces
+an evidence-backed release decision.
 
-Success means a reviewer can answer *"did this version change break something, and how do you know?"* without reading raw logs. `docs/SPEC.md` fixes the MVP success bar: end-to-end run from the UI without manual intervention, >= 10 seeded cases across 2 versions, every finding carrying evidence links and evaluator rationale, and reproducible detection across repeated runs.
+The operating question is:
 
-## Positioning
+> Did this version change break something, and how do we know?
 
-The causal-evaluation layer. Matched cases, repeated samples, and controlled comparison let EvalPilot separate three things that raw before/after score deltas conflate: a real regression, a genuinely harder test set, and sampling noise. A neighboring eval tool that only reports aggregate score deltas cannot truthfully copy this, because the claim rests on the comparison design rather than on the metric.
+## Users
 
-## Operating Context
+- AI product and platform teams deciding whether an LLM application is safe to
+  ship.
+- QA and evaluation teams responsible for a defensible release decision.
+- Research groups that need reproducible comparison rather than a single score.
 
-- **Surface under evaluation:** enterprise knowledge-base QA / customer-support assistants. This is the fixed MVP scenario (`docs/SPEC.md`), not a general-purpose eval platform.
-- **Compared entities:** a baseline version and a candidate version of the same assistant — model, prompt, retrieval configuration, tools, or workflow.
-- **Runtime:** a local demo for a competition submission; the backend is FastAPI on `127.0.0.1:8000` with a Vite dev proxy in front. Submission deadline 2026-09-19.
-- **Ritual:** one-click seeded demo, live run progress, evidence inspection, verdict, report. The demo is watched by judges in real time, so the surface must hold up when someone else is driving it.
-- **Artifacts:** text, screenshots, logs, citations, traces, metrics — and an evaluator rationale attached to every finding.
+The first commercial scenario is enterprise knowledge-base QA and customer
+support.
 
-## Capabilities and Constraints
+## Current Capabilities
 
-**In scope for this surface:**
+- One-click deterministic demo and an optional live-LLM mode.
+- Baseline vs candidate evaluation over 26 matched scenarios with 18 controls.
+- Deterministic checks plus an injectable rubric-judge seam.
+- Paired comparison with confidence interval, effect size, and explicit verdict.
+- Evidence-linked findings with severity, rationale, and recommendation.
+- Autonomous investigation: risk hypotheses, historical incident recall,
+  follow-up probes, counterfactual replay, and release decision.
+- `BLOCK / REVIEW / ALLOW` release decision with downloadable Markdown report.
+- Chinese-first professional light interface.
 
-- One-click seeded demo entry; no manual setup before the demo runs.
-- Baseline vs candidate metric comparison with an explicit, defensible verdict.
-- Run progress timeline / event stream rendered live.
-- Test case list with category, difficulty, status, and per-version scores.
-- Evidence drawer: text, screenshot placeholders, citations, logs, evaluator rationale.
-- Findings and generated report with severity and recommendations.
-- A Vite dev proxy to `http://127.0.0.1:8000` and an API adapter against the frozen `/api` contract.
-- A deterministic mock fallback, so the console is demonstrable with the backend offline.
+## Implemented Tool Surface
 
-**Terminology is fixed** by `docs/INTERFACES.md` and must not be renamed here: `Run`, `TestCase`, `Evidence`, `Finding`, `Report`; categories `normal | boundary | adversarial | regression`; statuses `queued | planning | executing | evaluating | completed | failed | cancelled`; case statuses `pending | running | passed | failed | error`; evidence kinds `text | screenshot | log | citation | trace | metric`; severities `info | low | medium | high | critical`.
+The current runtime registers exactly:
 
-**Hard constraints:**
+- `kb_search` — deterministic in-process knowledge-base search.
+- `http_get` — allowlisted HTTP retrieval with timeout and size limits.
+- `file_read` — read-only file access within configured roots.
 
-- `docs/INTERFACES.md` and `docs/SPEC.md` are the frozen source of truth. The frontend changes no shared doc and no backend file.
-- No API keys in Git; `.env.example` only.
-- Timestamps are UTC ISO-8601; IDs are UUID strings.
-- Dependencies stay practical — the demo must build and run on a judge's machine.
-- Desktop-first: the demo is presented on a large screen, and it must degrade to a sane narrow layout rather than break.
+The Python sandbox tool is present as a gated placeholder but has no execution
+implementation. Browser execution is roadmap work, not a current capability.
 
-**Undecided:** visual world, palette, typography, motion. Deliberately not fixed here.
+## LLM Integration
 
-## Evidence on Hand
+The deterministic demo works without network access or an API key. Live mode
+uses an OpenAI-compatible provider; the current verified product runtime is
+DeepSeek V4 Pro.
 
-Real and citable:
+The model may:
 
-- `docs/SPEC.md`, `docs/INTERFACES.md`, `docs/ROADMAP.md`, `README.md`, `CLAUDE.md` — the product and interface contract.
-- The frozen event payload shape and HTTP API list in `docs/INTERFACES.md`.
+- propose risk hypotheses;
+- explain measured findings and counterfactuals;
+- draft recommendations and report narrative.
 
-**Absences future work must not fabricate:**
+The model may not override measured scores, evidence ids, counterfactual
+verdicts, risk level, or the release decision. Invalid output or transport
+failure falls back to deterministic behaviour with an explicit reason.
 
-- There is no real backend response, no captured HTTP trace, and no real LLM-judge output in this worktree yet. Every number, screenshot, citation, and rationale shown in the demo console is **seeded mock data**, and the UI must label it as such whenever it is running on the mock transport.
-- There are no real customer names, testimonials, or benchmark results, and none may be invented.
+## Evidence Model
 
-## Product Principles
+Runs persist test cases, evidence, findings, and reports. Supported evidence
+kinds are `text`, `screenshot`, `log`, `citation`, `trace`, and `metric`.
+The current deterministic demo emits structured text, citation, trace, and
+metric evidence; screenshot capture is a schema capability and roadmap item,
+not a claim about the current executor.
 
-1. **Evidence before verdict.** No conclusion is rendered anywhere in the UI without a path to the input, output, trace, and rationale behind it.
-2. **Separate regression from noise.** The UI must show *why* a delta is trusted — matched cases, repeat samples, controlled comparison — not just that a number moved.
-3. **Honest state.** Mock data is labelled mock data; a run that is still executing never renders as finished; an unknown is shown as unknown rather than defaulted to green.
-4. **Demo-grade resilience.** The console is fully demonstrable with the backend offline. Never show a dead end to someone watching.
-5. **Density with hierarchy.** This is an Operate surface for reviewers: information-dense, scannable, and calm — but the verdict is legible from across a demo room.
+## Constraints
 
-## Provenance
-
-This file was written by an implementation agent, not through an `init` interview: the session's tool surface has no interactive question tool, and the brief supplied explicit standing authorization to build. Every section above is either quoted from a frozen repository doc (which is real evidence) or marked *(Inferred)*. The **Users** and **Stack** sections are the two inferences worth re-confirming with the product owner; Platform (`web`) is fixed by the repository contract.
+- No API key is required for the reproducible demo.
+- Raw scenario ids, evidence ids, model ids, and status enums remain unchanged.
+- LLM output is explanatory; measured evaluation is authoritative.
+- Public claims must match the implemented tool surface in this document.

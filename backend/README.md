@@ -1,9 +1,10 @@
 # EvalPilot Backend
 
 FastAPI service that plans, executes, evaluates, and reports on regression runs,
-and then investigates a completed run autonomously. The MVP is **fully
-deterministic and offline**: no LLM, no API key, and no network access are
-required to complete a run or an investigation.
+and then investigates a completed run autonomously. The default demo is fully
+deterministic and offline: no LLM, no API key, and no network access are
+required. An optional live-LLM mode uses an OpenAI-compatible provider for
+planning and explanation, while measured evaluation remains authoritative.
 
 - Contract (source of truth): [`../docs/INTERFACES.md`](../docs/INTERFACES.md)
 - Investigation contract: [`../docs/V2_INTERFACES.md`](../docs/V2_INTERFACES.md)

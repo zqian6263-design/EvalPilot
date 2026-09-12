@@ -19,7 +19,7 @@ EvalPilot is a digital quality employee with a closed loop:
 1. Read the product brief and version change.
 2. Build a risk map.
 3. Generate normal, boundary, and adversarial tests.
-4. Execute through API, browser, file, and optional sandboxed tools.
+4. Execute through the implemented tool surface: knowledge-base search, allowlisted HTTP, and read-only file access.
 5. Capture text, screenshots, citations, logs, metrics, and traces.
 6. Combine deterministic checks with rubric-based LLM judging.
 7. Compare matched cases across versions using repeated samples.

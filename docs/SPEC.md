@@ -1,5 +1,11 @@
 # Product Specification
 
+> **Implementation status (2026-09-12).** The working runtime implements
+> `kb_search`, allowlisted `http_get`, and read-only `file_read`. Browser
+> execution and the sandboxed Python tool are roadmap capabilities, not part of
+> the current competition demo. Public material must distinguish implemented
+> tools from planned tools.
+
 ## One-line positioning
 
 EvalPilot is an autonomous regression-evaluation digital employee for AI products and research teams.
