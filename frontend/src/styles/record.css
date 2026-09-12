@@ -1,10 +1,26 @@
 /* ============================================================================
-   The record — the case table and its evidence drawer.
+   The record — the case table, its filters, and the evidence drawer.
+
+   The table is a readout: tabular numerals, a ruled head, a selected row
+   marked by an edge. The drawer is a plate that slides over the record without
+   navigating away, so a reviewer checking a claim keeps their place.
    ========================================================================= */
 
 .record-wrap {
   min-width: 0;
   flex: 1;
+}
+
+/* The case table has an intrinsic minimum width — its score, change and status
+   columns are single tokens that must never wrap, or the row reads as two rows.
+   Below the width where that minimum fits, the wrapper scrolls it sideways for
+   the same reason the chart scrolls: a squeezed table is an unreadable table,
+   and compressing it would make a case's numbers land under a different case's
+   label. */
+@media (max-width: 900px) {
+  .record-wrap {
+    overflow-x: auto;
+  }
 }
 
 .record__title-cell {
@@ -20,22 +36,25 @@
 
 .record__num {
   width: 1%;
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .record td.u-num,
 .record th.u-num {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .record__case-no {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-label);
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
+/* A movement is stated twice: once in the ink, once in the sign. The two
+   always agree, so the value survives a monochrome screen or a colour-blind
+   reviewer. */
 .record__score--down {
   color: var(--candidate);
   font-weight: 700;
@@ -47,7 +66,7 @@
 }
 
 .record__delta {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -60,7 +79,9 @@
   color: var(--baseline);
 }
 
-/* The whole row is the control; the button resets the browser's defaults. */
+/* The whole row is the control; the button resets the browser's defaults.
+   The affordance is a rule that lights under the title, not an underline in
+   the text, so a dense table does not read as a wall of links. */
 .record__open {
   border: 0;
   background: transparent;
@@ -69,17 +90,17 @@
   color: inherit;
   text-align: left;
   cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: var(--graphite);
-  text-underline-offset: 2px;
+  border-bottom: 1px solid var(--graphite-faint);
+  transition: border-color var(--snap), color var(--snap);
 }
 
 .record__open:hover {
-  text-decoration-color: var(--candidate);
+  color: var(--signal);
+  border-bottom-color: var(--signal);
 }
 
 .record__open:focus-visible {
-  outline: 2px solid var(--candidate);
+  outline: 2px solid var(--signal-bright);
   outline-offset: 2px;
 }
 
@@ -90,9 +111,9 @@
   align-items: center;
   gap: var(--s4);
   padding: var(--s2) var(--s3);
-  border-bottom: var(--rule);
+  border-bottom: var(--rule-line);
   flex-wrap: wrap;
-  background: var(--ground);
+  background: var(--ground-lit);
 }
 
 .filters__group {
@@ -112,34 +133,38 @@
 
 .drawer__case-title {
   font-size: var(--size-lead);
-  letter-spacing: 0.02em;
+  letter-spacing: var(--track-head);
+  color: var(--ink);
 }
 
 .drawer__close {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-body);
-  border: var(--rule);
+  border: 1px solid var(--signal-edge);
+  border-radius: var(--radius-ctl);
   background: transparent;
-  color: var(--ink);
+  color: var(--signal);
   padding: var(--s1) var(--s2);
   cursor: pointer;
   flex: none;
+  transition:
+    background var(--snap),
+    color var(--snap);
 }
 
 .drawer__close:hover {
-  background: var(--ink);
+  background: var(--signal);
   color: var(--ground);
 }
 
 .drawer__close:focus-visible {
-  outline: 2px solid var(--candidate);
-  outline-offset: 1px;
+  outline: 2px solid var(--signal-bright);
+  outline-offset: 2px;
 }
 
 /* ------------------------------------------------------- evidence item ---- */
 
 .ev {
-  border: var(--rule);
   background: var(--ground);
 }
 
@@ -149,17 +174,17 @@
   justify-content: space-between;
   gap: var(--s3);
   padding: var(--s1) var(--s2);
-  border-bottom: var(--rule);
+  border-bottom: var(--rule-line);
   background: var(--ground-shade);
 }
 
 .ev__kind {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--signal);
 }
 
 .ev__body {
@@ -170,18 +195,25 @@
 }
 
 .ev__label {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 /* ------------------------------------------------------------- prompt ----- */
 
+/* A quoted passage, marked in the margin the way a printed edition marks a
+   block quote. This is the one place a thicker side rule is right, because the
+   rule *is* the quotation mark: it is not an accent stuck on a card, it is the
+   typographic convention for lifted text, and removing it would leave the
+   prompt and the evaluator's reasoning indistinguishable from the console's
+   own prose. */
 .prompt {
-  border-left: 3px solid var(--graphite);
+  /* impeccable-disable-next-line side-tab -- a block-quote rule, not a card accent */
+  border-left: 3px solid var(--signal-deep);
   padding: var(--s1) 0 var(--s1) var(--s3);
   font-size: var(--size-lead);
   color: var(--ink);
@@ -193,7 +225,9 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
-  border: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-ctl);
+  overflow: hidden;
 }
 
 @media (max-width: 720px) {
@@ -205,19 +239,22 @@
 .answer {
   padding: var(--s2) var(--s3);
   min-width: 0;
+  background: var(--ground);
 }
 
 .answer + .answer {
-  border-left: 1px solid var(--graphite-faint);
+  border-left: 1px solid var(--rule-soft);
 }
 
 @media (max-width: 720px) {
   .answer + .answer {
     border-left: 0;
-    border-top: var(--rule-faint);
+    border-top: var(--rule-line-faint);
   }
 }
 
+/* Each channel is headed by its own rule in its own ink, so which answer is
+   which survives the loss of every colour on the page. */
 .answer__head {
   display: flex;
   align-items: baseline;
@@ -225,7 +262,7 @@
   gap: var(--s2);
   padding-bottom: var(--s1);
   margin-bottom: var(--s2);
-  border-bottom: 2px solid var(--graphite-faint);
+  border-bottom: 2px solid var(--graphite);
 }
 
 .answer--baseline .answer__head {
@@ -244,6 +281,7 @@
 
 .answer__text strong {
   font-weight: 700;
+  color: var(--ink);
 }
 
 /* --------------------------------------------------------- point list ----- */
@@ -260,15 +298,18 @@
   gap: var(--s3);
   align-items: baseline;
   padding: var(--s1) 0;
-  border-bottom: var(--rule-faint);
+  border-bottom: var(--rule-line-faint);
 }
 
 .point:last-child {
   border-bottom: 0;
 }
 
+/* "stated" and "missing" are the readings. Missing is struck and drawn in the
+   departure ink; stated is set flat in the readout ink and carries no ink at
+   all, because a correct answer is not news. */
 .point__mark {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
@@ -277,7 +318,7 @@
 }
 
 .point__mark--stated {
-  color: var(--ink);
+  color: var(--ink-soft);
 }
 
 .point__mark--missing {
@@ -309,18 +350,20 @@
 }
 
 .citation {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-micro);
   color: var(--ink-soft);
   padding: var(--s1) 0;
-  border-bottom: var(--rule-faint);
+  border-bottom: var(--rule-line-faint);
   display: flex;
   gap: var(--s2);
   align-items: baseline;
 }
 
+/* An absent citation is a gap in the record, not a low score, so it reads
+   quieter than a present one and says so in words beside it. */
 .citation--absent {
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .citation__tick {
@@ -329,9 +372,10 @@
 
 /* -------------------------------------------------- screenshot placeholder - */
 
+/* A ruled frame, so an empty slot reads as an unpopulated instrument bay and
+   not as an image that failed to load. */
 .shot {
   position: relative;
-  border: var(--rule);
   background: var(--ground-shade);
   aspect-ratio: 16 / 9;
   display: flex;
@@ -342,8 +386,6 @@
   overflow: hidden;
 }
 
-/* A ruled frame, so an empty slot reads as a printed placeholder and not as
-   an image that failed to load. */
 .shot::before {
   content: '';
   position: absolute;
@@ -353,7 +395,7 @@
 }
 
 .shot__tag {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-label);
   font-weight: 600;
   letter-spacing: var(--track-label);
@@ -363,9 +405,9 @@
 }
 
 .shot__ref {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-micro);
-  color: var(--graphite);
+  color: var(--ink-faint);
   z-index: 1;
   text-align: center;
   padding-inline: var(--s4);
@@ -387,16 +429,17 @@
 /* ---------------------------------------------------------------- log ------ */
 
 .log {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-micro);
   line-height: 1.7;
-  background: var(--ground-lit);
-  border: var(--rule-faint);
+  background: var(--chassis);
+  border: 1px solid var(--chassis-edge);
+  border-radius: var(--radius-ctl);
   padding: var(--s2);
   margin: 0;
   overflow-x: auto;
   white-space: pre;
-  color: var(--ink-soft);
+  color: var(--ink-lamp);
 }
 
 /* ------------------------------------------------------------- checks ------ */
@@ -407,7 +450,7 @@
   gap: var(--s3);
   align-items: center;
   padding: var(--s2) 0;
-  border-bottom: var(--rule-faint);
+  border-bottom: var(--rule-line-faint);
 }
 
 .check:last-child {
@@ -415,11 +458,12 @@
 }
 
 .check__label {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-label);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  color: var(--ink);
 }
 
 .check__detail {
@@ -428,29 +472,35 @@
 }
 
 .check__value {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-variant-numeric: tabular-nums;
   text-align: right;
+  color: var(--ink);
 }
 
 /* ------------------------------------------------------------ rationale ---- */
 
+/* The evaluator's own reasoning, quoted: the same margin rule as `.prompt`,
+   because it is the same kind of object — a passage lifted out of a longer
+   document and reproduced verbatim. */
 .rationale {
-  border-left: 3px solid var(--graphite);
+  /* impeccable-disable-next-line side-tab -- a block-quote rule, not a card accent */
+  border-left: 3px solid var(--signal-deep);
   padding-left: var(--s3);
   display: flex;
   flex-direction: column;
   gap: var(--s2);
   font-size: var(--size-body);
+  color: var(--ink-soft);
 }
 
 .rationale__note {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 /* ------------------------------------------------------------- scored ------ */
@@ -469,7 +519,109 @@
 }
 
 .scored__value {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-variant-numeric: tabular-nums;
   text-align: right;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------- events ------ */
+
+/* The event index: the run's log, keyed by row. A finding entry is marked in
+   its own ink and a completion in the signal's, but the entry's *type word* is
+   always printed beside it, so the index reads as a record without colour. */
+.events {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.events__list {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.event {
+  display: grid;
+  grid-template-columns: 30px 62px 1fr;
+  gap: var(--s2);
+  align-items: baseline;
+  padding: var(--s2) var(--s3);
+  border-bottom: var(--rule-line-faint);
+  font-size: var(--size-body);
+}
+
+.event:hover {
+  background: var(--ground-raise);
+}
+
+/* The key: a keyed page address the reviewer can jump to. */
+.event__key {
+  font-family: var(--face-readout);
+  font-size: var(--size-micro);
+  color: var(--ink-faint);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-ctl);
+  padding: 0 2px;
+  text-align: center;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background var(--snap),
+    color var(--snap);
+}
+
+.event__key--none {
+  border-color: transparent;
+  cursor: default;
+}
+
+.event__key:hover {
+  background: var(--signal);
+  color: var(--ground);
+  border-color: var(--signal);
+}
+
+.event__key:focus-visible {
+  outline: 2px solid var(--signal-bright);
+  outline-offset: 2px;
+}
+
+.event__time {
+  font-family: var(--face-readout);
+  font-size: var(--size-micro);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.event__type {
+  font-family: var(--face-panel);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.event__message {
+  grid-column: 3;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.event--finding .event__type {
+  color: var(--candidate);
+}
+
+.event--complete .event__type {
+  color: var(--signal);
+}
+
+.event--complete .event__message {
+  font-weight: 700;
 }

@@ -1,5 +1,8 @@
 /* ============================================================================
-   Run header — the machine's identification plate.
+   Run header, the machine's identification plate, and the run console.
+
+   Plate material — the angular cut, the lit top edge, the base shadow — lives
+   in hud.css. What is set here is arrangement, colour and state.
    ========================================================================= */
 
 .header {
@@ -8,7 +11,8 @@
   justify-content: space-between;
   gap: var(--s5);
   padding: var(--s3) var(--s5);
-  background: var(--ground);
+  background-image: linear-gradient(180deg, var(--ground-lit), var(--ground));
+  border-bottom: var(--rule-line);
   flex-wrap: wrap;
 }
 
@@ -21,8 +25,9 @@
 
 .header__name {
   font-size: var(--size-head);
-  letter-spacing: 0.04em;
+  letter-spacing: var(--track-head);
   text-transform: uppercase;
+  color: var(--ink);
 }
 
 .header__meta {
@@ -46,6 +51,10 @@
 
 /* ------------------------------------------------------------ provenance -- */
 
+/* The provenance bar is the run's honesty strip: it names where every figure
+   below it came from. It is a dark chassis because it is the machine talking,
+   not the record. The lamp is square: it is a state indictor, not a status
+   dot, and its shape never implies a soft reading. */
 .provenance {
   display: flex;
   align-items: center;
@@ -53,7 +62,8 @@
   padding: var(--s1) var(--s5);
   background: var(--chassis);
   color: var(--chassis-label);
-  border-bottom: 2px solid var(--chassis-edge);
+  border-block: 1px solid var(--chassis-edge);
+  box-shadow: inset 0 -1px 0 rgba(52, 216, 234, 0.2);
 }
 
 .provenance__lamp {
@@ -64,21 +74,25 @@
 }
 
 .provenance__lamp--live {
-  background: var(--baseline);
+  background: var(--signal);
+  border-color: var(--signal-bright);
+  box-shadow: var(--glow-signal-soft);
 }
 
+/* Fixture data is not live data and never looks like it. */
 .provenance__lamp--mock {
-  background: var(--candidate);
+  background: var(--violet);
+  border-color: var(--violet);
 }
 
 .provenance__note {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-micro);
-  color: var(--graphite-faint);
+  color: var(--ink-lamp);
 }
 
 /* ============================================================================
-   View selector — the machine's function keys.
+   View selector, the machine's function keys.
    ========================================================================= */
 
 .viewbar {
@@ -88,8 +102,8 @@
   gap: var(--s5);
   padding: 0 var(--s5);
   background: var(--ground-shade);
-  border-top: var(--rule-ink);
-  border-bottom: var(--rule-ink);
+  border-bottom: var(--rule-line);
+  box-shadow: inset 0 -1px 0 rgba(52, 216, 234, 0.14);
   flex-wrap: wrap;
 }
 
@@ -98,38 +112,44 @@
 }
 
 .viewbar__key {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-label);
   font-weight: 600;
   letter-spacing: var(--track-label);
   text-transform: uppercase;
   padding: var(--s3) var(--s4);
   border: 0;
-  border-right: var(--rule);
+  border-right: var(--rule-line);
   background: transparent;
-  color: var(--ink-soft);
+  color: var(--ink-faint);
   cursor: pointer;
   position: relative;
+  transition:
+    background var(--snap),
+    color var(--snap);
 }
 
 .viewbar__key:first-child {
-  border-left: var(--rule);
+  border-left: var(--rule-line);
 }
 
 .viewbar__key:hover {
-  background: var(--ground);
+  background: var(--ground-raise);
   color: var(--ink);
 }
 
-/* The pressed key sits down into the panel by one pixel. No glow. */
+/* The active key is a lit edge, not a fill: a signal rule under the key and a
+   soft light spilling up from it. The key still reads as a key. */
 .viewbar__key[aria-current='page'] {
-  background: var(--ground);
-  color: var(--ink);
-  box-shadow: inset 0 -2px 0 var(--candidate), inset 0 1px 0 var(--ink);
+  background: var(--ground-lit);
+  color: var(--signal);
+  box-shadow:
+    inset 0 -2px 0 var(--signal),
+    inset 0 -14px 14px -12px rgba(52, 216, 234, 0.5);
 }
 
 .viewbar__key:focus-visible {
-  outline: 2px solid var(--candidate);
+  outline: 2px solid var(--signal-bright);
   outline-offset: -3px;
 }
 
@@ -141,7 +161,7 @@
 }
 
 /* ============================================================================
-   Console — the tape and the record.
+   Console — the field and its trace, beside the readouts.
    ========================================================================= */
 
 .console {
@@ -159,7 +179,7 @@
 
 .console__tape {
   min-width: 0;
-  border-right: var(--rule-ink);
+  border-right: var(--rule-line);
   display: flex;
   flex-direction: column;
   gap: var(--s4);
@@ -181,10 +201,105 @@
 
   .console__tape {
     border-right: 0;
-    border-bottom: var(--rule-ink);
+    border-bottom: var(--rule-line);
   }
 
   .console__side {
     border-left: 0;
+  }
+}
+
+/* ============================================================================
+   Banners — the offline notice and the contract gaps.
+
+   A notice is a standing condition, not an alert: it is the machine telling
+   the operator what it is running on. It stays a bar, so it never reads as a
+   card competing with the record beneath it.
+   ========================================================================= */
+
+.notice {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: var(--s2) var(--s5);
+  border-bottom: var(--rule-line);
+  background: var(--ground-shade);
+  font-size: var(--size-body);
+  flex-wrap: wrap;
+  color: var(--ink-soft);
+}
+
+.notice--alert {
+  background: var(--ground-shade);
+  box-shadow:
+    inset 3px 0 0 var(--candidate),
+    inset 0 -1px 0 rgba(255, 95, 87, 0.28);
+}
+
+.notice--live {
+  background: var(--ground-shade);
+  box-shadow:
+    inset 3px 0 0 var(--signal),
+    inset 0 -1px 0 rgba(52, 216, 234, 0.28);
+}
+
+/* The tag is the loudest small object in the console: a filled slab reading
+   as a machine label rather than a badge. Shape carries the meaning, so the
+   word does not have to carry it alone. */
+.notice__tag {
+  font-family: var(--face-panel);
+  font-size: var(--size-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  background: var(--signal);
+  color: var(--ground);
+  padding: 1px var(--s2);
+  flex: none;
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 0 100%);
+}
+
+.notice--alert .notice__tag {
+  background: var(--candidate);
+}
+
+/* ============================================================================
+   Narrow screens.
+
+   The key bank is the one part of the chrome that can push the whole document
+   wider than the viewport, and a document wider than the viewport slides every
+   other region sideways with it. Below the width where five keys fit, the bank
+   wraps onto a second row rather than overflowing: a nav that is reachable in
+   two rows beats one that is complete but half off-screen.
+   ========================================================================= */
+
+@media (max-width: 720px) {
+  .viewbar {
+    padding-inline: 0;
+    gap: var(--s2);
+  }
+
+  .viewbar__keys {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .viewbar__key {
+    flex: 1 1 auto;
+    padding-inline: var(--s2);
+    text-align: center;
+  }
+
+  .viewbar__key:first-child {
+    border-left: 0;
+  }
+
+  .viewbar__tools {
+    padding-inline: var(--s3);
+    flex-wrap: wrap;
+  }
+
+  .header {
+    align-items: flex-start;
   }
 }

@@ -150,7 +150,7 @@ function RoiStrip(): JSX.Element {
               x2={x(tick)}
               y1={16}
               y2={112}
-              stroke="var(--graphite-faint)"
+              stroke="var(--mkt-grid)"
               strokeWidth="1"
             />
             <text x={x(tick)} y={126} textAnchor="middle" className="mkt__axis-label">
@@ -165,8 +165,8 @@ function RoiStrip(): JSX.Element {
           y={20}
           width={Math.max(x(value.high) - x(value.low), 2)}
           height={34}
-          fill="var(--band)"
-          stroke="var(--band-edge)"
+          fill="var(--mkt-band)"
+          stroke="var(--mkt-band-edge)"
           strokeWidth="1"
         />
         {/* An open marker for the midpoint: computed, and explicitly not a claim. */}
@@ -175,7 +175,7 @@ function RoiStrip(): JSX.Element {
           x2={x(midpoint)}
           y1={14}
           y2={60}
-          stroke="var(--graphite)"
+          stroke="var(--mkt-grid-ink)"
           strokeWidth="1"
           strokeDasharray="3 3"
         />
@@ -183,8 +183,8 @@ function RoiStrip(): JSX.Element {
           cx={x(midpoint)}
           cy={37}
           r={4}
-          fill="var(--ground)"
-          stroke="var(--graphite)"
+          fill="var(--mkt-empty)"
+          stroke="var(--mkt-grid-ink)"
           strokeWidth="1"
         />
         <text x={x(midpoint) + 8} y={41} className="mkt__axis-label">
@@ -197,7 +197,7 @@ function RoiStrip(): JSX.Element {
           y={74}
           width={Math.max(x(cost.high) - x(cost.low), 2)}
           height={20}
-          fill="var(--baseline)"
+          fill="var(--mkt-cost)"
         />
         <text x={x(cost.low)} y={108} className="mkt__axis-label">
           本工具的建模成本

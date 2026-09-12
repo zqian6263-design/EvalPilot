@@ -161,7 +161,7 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
                 x2={W - PAD_R}
                 y1={yAt(value)}
                 y2={yAt(value)}
-                stroke={value === 0 || value === 1 ? 'var(--graphite)' : 'var(--graphite-faint)'}
+                stroke={value === 0 || value === 1 ? 'var(--plot-grid)' : 'var(--plot-grid-faint)'}
                 strokeWidth="1"
               />
             ))}
@@ -173,7 +173,7 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
                   x2={xAt(i + 1, count)}
                   y1={PAD_T}
                   y2={PAD_T + PLOT_H}
-                  stroke="var(--graphite-faint)"
+                  stroke="var(--plot-grid-faint)"
                   strokeWidth="1"
                   strokeDasharray={i % 6 === 0 ? undefined : '2 3'}
                 />
@@ -202,8 +202,8 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
               y={bandTop}
               width={PLOT_W}
               height={Math.max(bandBottom - bandTop, 1)}
-              fill="var(--band)"
-              stroke="var(--band-edge)"
+              fill="var(--plot-band)"
+              stroke="var(--plot-band-edge)"
               strokeWidth="1"
             />
 
@@ -212,7 +212,7 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
               <path
                 d={pathFor(baselineValues, count)}
                 fill="none"
-                stroke="var(--baseline)"
+                stroke="var(--plot-baseline)"
                 strokeWidth="2"
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -221,11 +221,10 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
               <path
                 d={pathFor(candidateValues, count)}
                 fill="none"
-                stroke="var(--graphite)"
+                stroke="var(--plot-candidate-dim)"
                 strokeWidth="1.5"
                 strokeLinejoin="round"
                 strokeLinecap="round"
-                opacity="0.7"
               />
               {/* ...full ink where it departs. */}
               {departures.map((segment, index) => (
@@ -233,7 +232,7 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
                   key={index}
                   d={segment}
                   fill="none"
-                  stroke="var(--candidate)"
+                  stroke="var(--plot-candidate)"
                   strokeWidth="3"
                   strokeLinejoin="round"
                   strokeLinecap="round"
@@ -254,14 +253,14 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
                     cx={x}
                     cy={yAt(baselineValues[i]!)}
                     r={selected ? 3.5 : 2}
-                    fill="var(--baseline)"
+                    fill="var(--plot-baseline)"
                   />
                   <circle
                     cx={x}
                     cy={yAt(candidateValues[i]!)}
                     r={selected ? 4 : 2.5}
-                    fill={outside ? 'var(--candidate)' : 'var(--ground)'}
-                    stroke={outside ? 'var(--candidate)' : 'var(--graphite)'}
+                    fill={outside ? 'var(--plot-candidate)' : 'var(--plot-empty)'}
+                    stroke={outside ? 'var(--plot-candidate)' : 'var(--plot-baseline-dim)'}
                     strokeWidth={outside ? 2 : 1}
                   />
                 </g>
@@ -278,7 +277,7 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
                   x2={xAt(departureIndex, count)}
                   y1={PAD_T - 22}
                   y2={PAD_T + PLOT_H}
-                  stroke="var(--candidate)"
+                  stroke="var(--plot-candidate)"
                   strokeWidth="1"
                   strokeDasharray="4 3"
                 />

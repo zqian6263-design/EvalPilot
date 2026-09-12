@@ -1,11 +1,9 @@
 /* ============================================================================
    The market surface.
 
-   Same world as the rest of the console: chart paper and a machine, three inks
-   and one graphite, hairlines only, no radius and no shadow. It is a *market*
-   record rather than a measurement, so it borrows the report's sheet (a
-   masthead, ruled ledgers, a sign-off) and the tape's strip chart instead of
-   inventing a fourth vocabulary — and it inherits two rules from DESIGN.md
+   Same world as the rest of the console, and it borrows the report's sheet (a
+   masthead, ruled ledgers, a sign-off) and the tape's strip chart rather than
+   inventing a fourth vocabulary — and it inherits two rules from tokens.css
    without restating them at every rule: every colour and size resolves to a
    token (a literal here is a defect), and status is never carried by colour
    alone — each one is a word in a bordered chip.
@@ -15,9 +13,9 @@
    way to report progress before revenue is to point at a rung, and a
    percentage bar cannot express "a shipped product is not a pilot".
 
-   The masthead is on the chassis, not on the paper. Every other surface in the
-   console reports a measurement; this one reports that there isn't one, and a
-   machine-plate header says so before a word is read.
+   The masthead is the loudest plate on the console and the only one wearing
+   the departure ink, because every other surface reports a measurement and
+   this one reports that there isn't one. It says so before a word is read.
    ========================================================================= */
 
 .mkt {
@@ -27,16 +25,27 @@
   display: flex;
   flex-direction: column;
   gap: var(--s5);
+
+  /* The strip chart's own colours, declared here for the same reason the tape
+     declares its own: they are a measurement's channels and nothing outside a
+     plot may use them. */
+  --mkt-grid: rgba(52, 216, 234, 0.07);
+  --mkt-grid-ink: rgba(52, 216, 234, 0.13);
+  --mkt-band: rgba(176, 140, 255, 0.12);
+  --mkt-band-edge: rgba(176, 140, 255, 0.4);
+  --mkt-cost: #5b9cff;
+  --mkt-empty: #05080f;
 }
 
 /* ---------------------------------------------------------------- warning -- */
 
 /* Not decoration. The disclaimer has to be met before the claims, so it is set
-   as an alert block with a hazard rule in the margin. */
+   as the masthead itself and carries the departure ink in a hazard rule. */
 .mkt__masthead {
   order: 0;
-  border: 2px solid var(--candidate);
-  background: var(--ground-lit);
+  border-color: var(--candidate);
+  border-width: 2px;
+  background: linear-gradient(180deg, rgba(255, 95, 87, 0.06), var(--ground-lit));
   padding: var(--s4) var(--s5);
   display: flex;
   align-items: flex-start;
@@ -59,14 +68,14 @@
 
 .mkt__title {
   font-size: var(--size-verdict);
-  letter-spacing: 0.03em;
+  letter-spacing: var(--track-head);
   text-transform: uppercase;
   line-height: 1;
   color: var(--candidate);
 }
 
 .mkt__score {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-verdict);
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -75,33 +84,35 @@
 
 .mkt__score-denom {
   font-size: var(--size-lead);
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 /* ------------------------------------------------------------- disclosure -- */
 
+/* The standing caveat, marked the way this console marks every standing
+   condition: its own plate, lit along the top edge in the ink that names it. */
 .mkt__disclosure {
   order: 6;
   display: flex;
   align-items: flex-start;
   gap: var(--s3);
   padding: var(--s3) var(--s4);
-  border: var(--rule-ink);
-  border-left-width: 3px;
-  background: var(--ground-shade);
+  border: 1px solid var(--amber);
+  background: linear-gradient(180deg, rgba(242, 163, 60, 0.09), var(--ground-shade));
+  box-shadow: inset 0 1px 0 var(--amber);
 }
 
 .mkt__disclosure-text {
   font-size: var(--size-lead);
   line-height: 1.5;
   max-width: 92ch;
+  color: var(--ink);
 }
 
 /* ----------------------------------------------------------------- blocks -- */
 
 .mkt__block {
   order: 2;
-  border: var(--rule);
   background: var(--ground-lit);
   display: flex;
   flex-direction: column;
@@ -125,14 +136,15 @@
   justify-content: space-between;
   gap: var(--s4);
   padding: var(--s2) var(--s4);
-  border-bottom: var(--rule-ink);
+  border-bottom: var(--rule-line);
 }
 
 .mkt__block-title {
   font-size: var(--size-head);
-  letter-spacing: 0.03em;
+  letter-spacing: var(--track-head);
   text-transform: uppercase;
   line-height: 1.1;
+  color: var(--ink);
 }
 
 .mkt__lede {
@@ -163,21 +175,24 @@
 
 /* "Measured", "Target", "Assumption", "No data". Every block carries one, and
    the word is the whole point: a number on this surface is meaningless without
-   it. `none` is dashed because an absence of data is an absence of a mark. */
+   it. The four are separated by border weight and style as well as ink —
+   measured is a 2px solid, no-data is dashed, because an absence of data is an
+   absence of a mark. */
 .mkt__tag {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
   padding: 1px var(--s2);
   border: 1px solid currentColor;
+  border-radius: var(--radius-ctl);
   white-space: nowrap;
   flex: none;
 }
 
 .mkt__tag--measured {
-  color: var(--baseline);
+  color: var(--signal);
   border-width: 2px;
 }
 
@@ -186,15 +201,15 @@
 }
 
 .mkt__tag--target {
-  color: var(--ink);
+  color: var(--baseline);
 }
 
 .mkt__tag--assumption {
-  color: var(--candidate);
+  color: var(--amber);
 }
 
 .mkt__tag--none {
-  color: var(--graphite);
+  color: var(--ink-faint);
   border-style: dashed;
 }
 
@@ -203,7 +218,6 @@
 .mkt__counts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  border-block: var(--rule);
   border-top: 0;
 }
 
@@ -212,8 +226,8 @@
   flex-direction: column;
   gap: var(--s1);
   padding: var(--s3);
-  border-right: var(--rule-faint);
-  border-bottom: var(--rule-faint);
+  border-right: var(--rule-line-faint);
+  border-bottom: var(--rule-line-faint);
   min-width: 0;
 }
 
@@ -221,13 +235,13 @@
   border-right: 0;
 }
 
-/* The dash is the interface. It is set at display size in the device face so
+/* The dash is the interface. It is set at display size in the readout face so
    it reads as a deliberate refusal to print a number, not as a missing value. */
 .mkt__count-value {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-verdict);
   line-height: 1;
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .mkt__count-note {
@@ -249,7 +263,7 @@
 .mkt__rung {
   position: relative;
   padding: var(--s2) 0 var(--s2) var(--s5);
-  border-left: var(--rule);
+  border-left: var(--rule-line);
   margin-left: var(--s3);
 }
 
@@ -262,25 +276,25 @@
   position: absolute;
   left: -8px;
   top: var(--s2);
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-label);
   line-height: 1;
   background: var(--ground-lit);
-  color: var(--graphite);
+  color: var(--ink-faint);
   padding-inline: 2px;
 }
 
 .mkt__rung--passed .mkt__rung-mark {
-  color: var(--baseline);
+  color: var(--signal);
 }
 
 .mkt__rung--current .mkt__rung-mark {
-  color: var(--candidate);
+  color: var(--amber);
   padding-inline: 0;
 }
 
 .mkt__rung--ahead .mkt__rung-mark {
-  color: var(--graphite-faint);
+  color: var(--ink-faint);
 }
 
 .mkt__rung-head {
@@ -291,12 +305,12 @@
 }
 
 .mkt__rung-label {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-lead);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .mkt__rung--passed .mkt__rung-label {
@@ -304,27 +318,34 @@
 }
 
 .mkt__rung--current .mkt__rung-label {
-  color: var(--candidate);
+  color: var(--ink);
 }
 
 .mkt__rung--ahead .mkt__rung-label {
-  color: var(--graphite-faint);
+  color: var(--ink-faint);
 }
 
+/* The rung's state is always printed as its own word, so the ladder is
+   climbable by a reader who sees none of its ink. */
 .mkt__rung-state {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
-  color: var(--graphite);
+  color: var(--ink-soft);
   border: 1px solid currentColor;
+  border-radius: var(--radius-ctl);
   padding: 0 3px;
 }
 
 .mkt__rung--current .mkt__rung-state {
-  color: var(--candidate);
+  color: var(--amber);
   border-width: 2px;
+}
+
+.mkt__rung--ahead .mkt__rung-state {
+  border-style: dashed;
 }
 
 .mkt__rung-def {
@@ -338,16 +359,18 @@
 .mkt__rung-requires {
   font-size: var(--size-body);
   line-height: 1.5;
+  color: var(--ink);
   margin-top: var(--s2);
   padding-left: var(--s3);
-  border-left: 2px solid var(--ink);
+  border-left: 1px solid var(--signal-edge);
   max-width: 88ch;
 }
 
-/* The current rung inverts, so "where we are" is legible from across a room
-   without reading the label. */
+/* Where we are now is the loudest rung: lit from its own left edge, the way
+   the armed scenario is, so it reads from across the room without the label. */
 .mkt__rung--current {
-  background: var(--ground-shade);
+  background: linear-gradient(90deg, rgba(242, 163, 60, 0.09), transparent 60%);
+  box-shadow: inset 2px 0 0 var(--amber);
 }
 
 /* -------------------------------------------------------------------- ROI -- */
@@ -363,10 +386,10 @@
 }
 
 .mkt__axis-label {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
-  fill: var(--graphite);
+  fill: var(--ink-faint);
 }
 
 .mkt__band {
@@ -374,7 +397,6 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0;
   margin: var(--s3) 0 0;
-  border: var(--rule);
   background: var(--ground);
 }
 
@@ -383,7 +405,7 @@
   flex-direction: column;
   gap: var(--s1);
   padding: var(--s2) var(--s3);
-  border-right: var(--rule-faint);
+  border-right: var(--rule-line-faint);
   min-width: 0;
 }
 
@@ -392,14 +414,15 @@
 }
 
 .mkt__band-value {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-lead);
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
+  color: var(--ink);
 }
 
 .mkt__band-value--band {
-  color: var(--baseline);
+  color: var(--violet);
   font-weight: 700;
 }
 
@@ -407,8 +430,11 @@
   color: var(--ink);
 }
 
+/* Unresolved is the correct reading of this model and it is stated as a
+   finding, not as an error: the word carries it, and the rule under the word
+   makes the reading unmissable without a fill. */
 .mkt__verdict {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-lead);
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -416,17 +442,15 @@
   line-height: 1.1;
 }
 
-/* Unresolved is the correct reading of this model and it is stated as a
-   finding, not as an error. */
 .mkt__verdict--unresolved {
-  color: var(--candidate);
+  color: var(--amber);
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
 
 .mkt__verdict--narrow {
-  color: var(--baseline);
+  color: var(--signal);
 }
 
 /* --------------------------------------------------------------- the table -- */
@@ -435,16 +459,17 @@
    that `record` does not already define is set here. */
 .mkt__assumptions {
   margin: var(--s3) var(--s4) var(--s4);
-  border-top: var(--rule-ink);
+  border-top: var(--rule-line);
 }
 
 .mkt__input-label {
   display: block;
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-label);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  color: var(--ink);
 }
 
 .mkt__input-detail {
@@ -457,19 +482,23 @@
   max-width: 44ch;
 }
 
+/* The basis of a figure is the thing a reader must be able to check before
+   believing it, so it is never quiet: each basis is a word in a border whose
+   weight and style separate hypothesis from measurement. */
 .mkt__basis {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
   border: 1px solid currentColor;
+  border-radius: var(--radius-ctl);
   padding: 0 3px;
   white-space: nowrap;
 }
 
 .mkt__basis--assumption {
-  color: var(--candidate);
+  color: var(--amber);
 }
 
 .mkt__basis--target {
@@ -477,17 +506,15 @@
 }
 
 .mkt__basis--hypothesis {
-  color: var(--candidate);
+  color: var(--amber);
   border-width: 2px;
+  border-style: dashed;
 }
 
-.mkt__basis--measured {
-  color: var(--baseline);
-}
-
+.mkt__basis--measured,
 .mkt__basis--quoted,
 .mkt__basis--paid {
-  color: var(--baseline);
+  color: var(--signal);
   border-width: 2px;
 }
 
@@ -498,7 +525,6 @@
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 0;
   margin: var(--s3) var(--s4);
-  border: var(--rule);
 }
 
 .mkt__price {
@@ -506,7 +532,7 @@
   flex-direction: column;
   gap: var(--s2);
   padding: var(--s3);
-  border-right: var(--rule-faint);
+  border-right: var(--rule-line-faint);
   background: var(--ground);
   min-width: 0;
 }
@@ -524,16 +550,17 @@
 
 .mkt__price-name {
   font-size: var(--size-lead);
-  letter-spacing: 0.03em;
+  letter-spacing: var(--track-head);
   text-transform: uppercase;
+  color: var(--ink);
 }
 
 .mkt__price-shape {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-lead);
   font-variant-numeric: tabular-nums;
   color: var(--ink);
-  border-block: var(--rule-faint);
+  border-block: var(--rule-line-faint);
   padding-block: var(--s2);
 }
 
@@ -551,18 +578,21 @@
 
 .mkt__list li {
   padding-left: var(--s3);
-  border-left: var(--rule-faint);
+  border-left: var(--rule-line-faint);
 }
 
+/* The one claim on this surface that is designed to be argued with, so it is
+   ruled off from the prose around it and given the readout ink — a
+   self-contained statement, not a footnote. */
 .mkt__falsifier {
   margin: var(--s1) var(--s4) var(--s4);
   padding: var(--s3);
-  border: var(--rule-ink);
-  border-left-width: 3px;
+  border: 1px solid var(--amber);
   font-size: var(--size-body);
   line-height: 1.55;
   color: var(--ink);
-  background: var(--ground-shade);
+  background: linear-gradient(180deg, rgba(242, 163, 60, 0.07), var(--ground-shade));
+  box-shadow: inset 0 1px 0 var(--amber);
 }
 
 /* --------------------------------------------------------------------- GTM -- */
@@ -575,12 +605,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 0;
-  border: var(--rule);
 }
 
 .mkt__stage {
   padding: var(--s3);
-  border-right: var(--rule-faint);
+  border-right: var(--rule-line-faint);
   background: var(--ground);
   min-width: 0;
   display: flex;
@@ -598,12 +627,14 @@
   gap: var(--s3);
 }
 
+/* The stage number is the order the stages happen in, which is information the
+   reader needs — not a decorative sequence label. */
 .mkt__stage-n {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-verdict);
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  color: var(--candidate);
+  color: var(--signal);
 }
 
 .mkt__stage-plate {
@@ -614,11 +645,12 @@
 }
 
 .mkt__stage-name {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-lead);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  color: var(--ink);
 }
 
 .mkt__stage-body {
@@ -626,7 +658,7 @@
   grid-template-columns: 1fr;
   gap: 2px;
   margin: 0;
-  border-top: var(--rule-faint);
+  border-top: var(--rule-line-faint);
   padding-top: var(--s2);
 }
 
@@ -642,10 +674,10 @@
 }
 
 /* A kill condition is the part of a plan that costs something to write, so it
-   is marked as a decision rather than run in with the rest. */
+   is marked as a decision: a signal rule in the margin and full readout ink. */
 .mkt__kill {
   color: var(--ink);
-  border-left: 2px solid var(--candidate);
+  border-left: 1px solid var(--signal);
   padding-left: var(--s2);
 }
 
@@ -656,12 +688,11 @@
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 0;
   margin: var(--s3) var(--s4) var(--s4);
-  border: var(--rule);
 }
 
 .mkt__moat-layer {
   padding: var(--s3);
-  border-right: var(--rule-faint);
+  border-right: var(--rule-line-faint);
   background: var(--ground);
   display: flex;
   flex-direction: column;
@@ -683,30 +714,33 @@
 
 .mkt__moat-name {
   font-size: var(--size-lead);
-  letter-spacing: 0.03em;
+  letter-spacing: var(--track-head);
   text-transform: uppercase;
+  color: var(--ink);
 }
 
 .mkt__moat-claim {
   font-size: var(--size-body);
   line-height: 1.55;
+  color: var(--ink-soft);
 }
 
 /* Strength is a word in a border. `none` is dashed, because there is nothing
    there — the honest reading of the mechanism layer. */
 .mkt__strength {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
   border: 1px solid currentColor;
+  border-radius: var(--radius-ctl);
   padding: 0 3px;
   white-space: nowrap;
 }
 
 .mkt__strength--none {
-  color: var(--graphite);
+  color: var(--ink-faint);
   border-style: dashed;
 }
 
@@ -720,7 +754,7 @@
 }
 
 .mkt__strength--strong {
-  color: var(--baseline);
+  color: var(--signal);
   border-width: 2px;
 }
 
@@ -734,17 +768,18 @@
   margin: var(--s3) var(--s4) 0;
   padding: var(--s2) var(--s3);
   background: var(--ground-shade);
-  border: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-ctl);
 }
 
 .mkt__run {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-label);
   color: var(--ink);
 }
 
 .mkt__run-figures {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-micro);
   font-variant-numeric: tabular-nums;
   color: var(--ink-soft);
@@ -752,29 +787,33 @@
 
 .mkt__criteria {
   margin: var(--s3) var(--s4) 0;
-  border-top: var(--rule-ink);
+  border-top: var(--rule-line);
 }
 
 /* The self-score is the number a judge will argue with, so it is set at the
-   body size in the device face and never enlarged. */
+   body size in the readout face and never enlarged. */
 .mkt__criterion-score {
   font-size: var(--size-lead);
   font-weight: 700;
+  color: var(--ink);
 }
 
+/* Confidence is a reading about a reading, so it is always the word; the
+   border style separates a settled estimate from one that is still moving. */
 .mkt__confidence {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
   border: 1px solid currentColor;
+  border-radius: var(--radius-ctl);
   padding: 0 3px;
   white-space: nowrap;
 }
 
 .mkt__confidence--high {
-  color: var(--baseline);
+  color: var(--signal);
   border-width: 2px;
 }
 
@@ -783,7 +822,8 @@
 }
 
 .mkt__confidence--low {
-  color: var(--candidate);
+  color: var(--amber);
+  border-style: dashed;
 }
 
 .mkt__confidence--very-low {
@@ -793,7 +833,7 @@
 }
 
 .mkt__gap {
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 /* A gap of five points or more is the criterion that is actually at risk. */
@@ -807,11 +847,10 @@
   flex-direction: column;
   gap: 0;
   margin: var(--s3) var(--s4) var(--s4);
-  border: var(--rule);
 }
 
 .mkt__criterion {
-  border-bottom: var(--rule-faint);
+  border-bottom: var(--rule-line-faint);
   background: var(--ground);
 }
 
@@ -828,17 +867,22 @@
   flex-wrap: wrap;
 }
 
+.mkt__criterion-summary:hover .mkt__criterion-name {
+  color: var(--signal);
+}
+
 .mkt__criterion-summary:focus-visible {
-  outline: 2px solid var(--candidate);
+  outline: 2px solid var(--signal-bright);
   outline-offset: -2px;
 }
 
 .mkt__criterion-name {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-label);
   font-weight: 600;
   letter-spacing: var(--track-label);
   text-transform: uppercase;
+  color: var(--ink);
 }
 
 .mkt__criterion-question {
@@ -850,7 +894,7 @@
 
 .mkt__criterion-body {
   padding: 0 var(--s3) var(--s3);
-  border-top: var(--rule-faint);
+  border-top: var(--rule-line-faint);
   display: flex;
   flex-direction: column;
 }
@@ -869,7 +913,7 @@
   grid-template-columns: 44px 1fr;
   gap: var(--s3);
   padding-bottom: var(--s2);
-  border-bottom: var(--rule-faint);
+  border-bottom: var(--rule-line-faint);
 }
 
 .mkt__action:last-child {
@@ -877,9 +921,9 @@
 }
 
 .mkt__action-id {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-micro);
-  color: var(--candidate);
+  color: var(--signal);
   padding-top: 2px;
 }
 
@@ -889,6 +933,7 @@
   gap: var(--s1);
   font-size: var(--size-body);
   line-height: 1.5;
+  color: var(--ink);
   min-width: 0;
 }
 
@@ -896,7 +941,7 @@
    so it is ruled off from the action itself. */
 .mkt__action-verify {
   color: var(--ink-soft);
-  border-left: 2px solid var(--graphite-faint);
+  border-left: 1px solid var(--signal-edge);
   padding-left: var(--s2);
 }
 
@@ -905,7 +950,6 @@
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 0;
   margin: 0 var(--s4) var(--s4);
-  border: var(--rule);
 }
 
 .mkt__ledger {
@@ -913,7 +957,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s2);
-  border-right: var(--rule-faint);
+  border-right: var(--rule-line-faint);
   background: var(--ground-lit);
   min-width: 0;
 }
@@ -922,6 +966,8 @@
   border-right: 0;
 }
 
+/* What is missing from the plan is the reading that matters most, so it is
+   drawn in the departure ink and dashed — it is an absence, and it says so. */
 .mkt__ledger--missing {
   background: var(--ground-shade);
 }
@@ -936,12 +982,13 @@
   margin: var(--s3) var(--s4) var(--s4);
   padding: var(--s4);
   border: 1px dashed var(--graphite);
+  border-radius: var(--radius-ctl);
   color: var(--ink-soft);
   font-size: var(--size-body);
 }
 
 .mkt__placeholder code {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-label);
   color: var(--ink);
 }
@@ -949,7 +996,7 @@
 /* ----------------------------------------------------------------- footer -- */
 
 .mkt__footer {
-  border-top: 2px solid var(--ink);
+  border-top: 1px solid var(--signal-edge);
   padding-top: var(--s3);
 }
 
@@ -983,7 +1030,7 @@
   .mkt__band-item,
   .mkt__ledger {
     border-right: 0;
-    border-bottom: var(--rule-faint);
+    border-bottom: var(--rule-line-faint);
   }
 
   .mkt__count:last-child,
@@ -998,6 +1045,13 @@
   .mkt__assumptions,
   .mkt__criteria {
     margin-inline: var(--s3);
+    /* The same rule as the case table: these are `.record` tables whose columns
+       are single unbreakable tokens, so their intrinsic minimum exceeds a
+       phone's width. Scrolling the table itself — rather than a wrapper it does
+       not have — keeps the rows intact instead of reflowing a figure under the
+       wrong column label. */
+    display: block;
+    overflow-x: auto;
   }
 }
 

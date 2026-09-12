@@ -1,0 +1,273 @@
+/* ============================================================================
+   The HUD material system.
+
+   This file owns the *material* of the console: the coordinate field the whole
+   surface sits on, the scan film over everything, and the chrome of a plate
+   (its angular cut, its luminous top edge, its depth). Composition lives in
+   the page stylesheets; they set arrangement and colour and never re-declare a
+   plate's chrome.
+
+   Everything here is CSS-only and consumes no DOM: every element it dresses
+   already exists in the markup, and no class name is invented.
+
+   The field is a *flat coordinate plane* — the same graticule the run tape's
+   own chart is drawn on, seen square on and locked to the viewport. A true
+   perspective floor was tried and cut: a mask is painted in element space and
+   cannot be projected, so a projective ground would either cost a texture
+   (banned here) or ship as a flat grid wearing a horizon it did not earn. The
+   square instrument is the honest one.
+   ========================================================================= */
+
+/* ------------------------------------------------------------- the field -- */
+
+/* The room. A horizontal rule cadence with a vertical at four times the
+   period, so the eye reads a coordinate plane and not graph paper. Fixed
+   attachment: a long record scrolls *under* a stationary plane, which is what
+   makes it read as the instrument's own graticule rather than as a page
+   background. */
+body {
+  background-color: var(--ground);
+  background-image:
+    linear-gradient(var(--hud-line-x) 1px, transparent 1px),
+    linear-gradient(90deg, var(--hud-line-y) 1px, transparent 1px);
+  background-size: var(--hud-cell) var(--hud-cell), calc(var(--hud-cell) * 4) var(--hud-cell);
+  background-attachment: fixed;
+}
+
+/* Keeps the field behind every plate while still letting it show through the
+   many transparent ones. */
+.shell {
+  position: relative;
+  z-index: 0;
+}
+
+/* ------------------------------------------------------------- scan film -- */
+
+/**
+ * The scan film: one dark line every --hud-scan pixels, over the entire
+ * viewport including the drawer and the scrim. It is deliberately far too
+ * faint to read as a stripe — at this alpha it registers only as the absence
+ * of flatness, and it never touches the contrast of a glyph.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  /* Lower and sparser than the surface rules, so it reads as the screen's own
+     film rather than as a second grid competing with the field. */
+  background-image: repeating-linear-gradient(
+    180deg,
+    rgba(3, 6, 12, 0.3) 0 1px,
+    transparent 1px var(--hud-scan)
+  );
+}
+
+/* ------------------------------------------------------ the instrument ---- */
+
+/* Dark bars — the chassis, the status strip, the provenance line — carry a
+   single hairline of signal along their lower edge. It is the one place a
+   glow is allowed, because it is the edge of a lit object, not a halo around
+   text. */
+.header,
+.viewbar,
+.provenance,
+.inv__statusbar,
+.tape__chassis {
+  position: relative;
+}
+
+/* --------------------------------------------------------------- plates --- */
+
+/**
+ * Every plate in the console — the tape's paper, the record block, a metric
+ * panel, an evidence item, a finding, a market block — is one object: a
+ * hard-cornered slab with a single diagonal cut at its top-right, a top edge
+ * that catches the room's light, and a base shadow that sits it *on* the field
+ * rather than floating it above it.
+
+ * The cut is one corner, not two, because a plate can stack directly against
+ * another plate (the investigation's column of panels does exactly that) and
+ * two opposing notches read as a gap between slabs where there is none.
+ */
+.block,
+.panel,
+.ev,
+.action,
+.shot,
+.finding,
+.ledger-strip,
+.seam,
+.scenario__options,
+.entry,
+.inv__source,
+.tape__paper,
+.mkt__block,
+.mkt__masthead,
+.mkt__disclosure,
+.mkt__falsifier,
+.mkt__actions,
+.mkt__prices,
+.mkt__stages,
+.mkt__moat,
+.mkt__ledgers,
+.mkt__band,
+.mkt__counts,
+.mkt__assumptions,
+.mkt__criteria {
+  clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%);
+}
+
+/* The luminous edge, expressed as a border-image so it follows every edge the
+   clip leaves behind: signal at the top, fading to the aid hairline by a
+   quarter of the way down, and to nothing under the slab. */
+.block,
+.panel,
+.ev,
+.action,
+.shot,
+.finding,
+.ledger-strip,
+.tape__paper,
+.inv__source,
+.mkt__block,
+.mkt__masthead,
+.mkt__actions,
+.mkt__prices,
+.mkt__stages,
+.mkt__moat,
+.mkt__ledgers,
+.mkt__band,
+.mkt__counts,
+.mkt__criteria {
+  border: 1px solid var(--rule);
+  border-image: linear-gradient(
+      180deg,
+      var(--signal-edge) 0%,
+      var(--rule) 26%,
+      var(--rule) 74%,
+      rgba(0, 0, 0, 0.65) 100%
+    )
+    1;
+  /* The hard 0-blur offset traces the chamfer the clip just cut. Nothing else
+     in the world is allowed a zero-blur shadow; this one is a drawn edge. */
+  filter: drop-shadow(-1px 1px 0 var(--signal-edge));
+  box-shadow: var(--elev-1);
+}
+
+/* A plate with a head strip (a `.block__head`, a `.panel__title`, a chassis
+   bar) already separates itself; it does not also need the top luminance
+   competing with the strip's own rule. */
+.tape__paper {
+  box-shadow: var(--elev-2);
+}
+
+/* -------------------------------------------------------- ruled heads ----- */
+
+/* Head strips are a lit shelf: a shade-to-plate vertical gradient and a single
+   signal rule beneath, so the top of every table announces itself from across
+   the room without a fill. */
+.block__head,
+.panel__title,
+.drawer__head,
+.cf__head {
+  background-image: linear-gradient(180deg, var(--ground-shade), var(--ground-lit));
+  box-shadow: inset 0 -1px 0 rgba(52, 216, 234, 0.16);
+}
+
+/* --------------------------------------------------------- bracket pair --- */
+
+/**
+ * Two corner brackets, reserved for the one plate that arms something — the
+ * demo entry. A bracket is drawn as a background pair rather than a
+ * pseudo-element so the plate keeps both its pseudos free, and it is the only
+ * element in the console allowed to look like a target.
+ */
+.entry {
+  background-image:
+    linear-gradient(var(--signal), var(--signal)),
+    linear-gradient(var(--signal), var(--signal)),
+    linear-gradient(var(--signal), var(--signal)),
+    linear-gradient(var(--signal), var(--signal));
+  background-repeat: no-repeat;
+  background-size: 14px 1px, 1px 14px, 14px 1px, 1px 14px;
+  background-position: 0 0, 0 0, 100% 100%, 100% 100%;
+}
+
+/* ------------------------------------------------------- the sweep rule --- */
+
+/**
+ * The run's own heartbeat. A hairline that crosses the title plate once every
+ * --hud-rule-sweep, then waits. It is the single authored motion in the
+ * console: it says the instrument is powered, it never moves data, and it is
+ * gone entirely under prefers-reduced-motion.
+ */
+.header::after {
+  content: '';
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  width: 100%;
+  height: 1px;
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(52, 216, 234, 0.85) 50%,
+    transparent 100%
+  );
+  transform: translate3d(-50%, 0, 0);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .header::after {
+    animation: hud-sweep var(--hud-rule-sweep) linear infinite;
+  }
+}
+
+@keyframes hud-sweep {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.55;
+  }
+  72% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate3d(50%, 0, 0);
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------ printing ---- */
+
+@media print {
+  /* Paper is not a screen. The field, the bearing display and the scan film
+     are all light, and paper has none of it. */
+  body {
+    background-image: none;
+  }
+
+  body::before,
+  .header::after {
+    display: none;
+  }
+
+  .block,
+  .panel,
+  .ev,
+  .action,
+  .shot,
+  .finding,
+  .ledger-strip,
+  .tape__paper {
+    clip-path: none;
+    filter: none;
+    box-shadow: none;
+  }
+}

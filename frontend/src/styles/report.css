@@ -1,5 +1,11 @@
 /* ============================================================================
-   The report — a printed sheet, plus the machine's control panel.
+   The report sheet, the findings view, and the run's event index.
+
+   A report is a printed record, so it keeps the printed form it had — a
+   masthead, a generated summary, a ruled ledger, tables, findings, a sign-off
+   strip. What changed is the stock it is printed on: a plate on the field,
+   with the machine's own readout face for every value and a signal rule where
+   the incumbent world used a hard ink one.
    ========================================================================= */
 
 .sheet {
@@ -17,62 +23,66 @@
   justify-content: space-between;
   gap: var(--s5);
   padding-bottom: var(--s3);
-  border-bottom: 2px solid var(--ink);
+  border-bottom: 1px solid var(--signal-edge);
   flex-wrap: wrap;
 }
 
 .sheet__doctype {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .sheet__title {
   font-size: var(--size-verdict);
-  letter-spacing: 0.03em;
+  letter-spacing: var(--track-head);
   text-transform: uppercase;
   line-height: 1.05;
+  color: var(--ink);
 }
 
 .sheet__summary {
   font-size: var(--size-lead);
   line-height: 1.55;
   max-width: 78ch;
+  color: var(--ink-soft);
 }
 
 /* A definition list printed as a form: label left, value right, ruled rows. */
 .ledger {
   display: grid;
   grid-template-columns: minmax(140px, 200px) 1fr;
-  border-top: var(--rule);
+  border-top: var(--rule-line);
 }
 
 .ledger__key {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--ink-faint);
   padding: var(--s2) var(--s3) var(--s2) 0;
-  border-bottom: var(--rule-faint);
+  border-bottom: var(--rule-line-faint);
 }
 
 .ledger__val {
   padding: var(--s2) 0;
-  border-bottom: var(--rule-faint);
-  font-family: var(--face-device);
+  border-bottom: var(--rule-line-faint);
+  font-family: var(--face-readout);
   font-size: var(--size-label);
   font-variant-numeric: tabular-nums;
+  color: var(--ink);
   word-break: break-word;
 }
 
 .ledger__val--prose {
   font-family: var(--face-body);
   font-size: var(--size-body);
+  color: var(--ink-soft);
 }
 
 /* -------------------------------------------------------------- findings --- */
@@ -81,7 +91,6 @@
   display: grid;
   grid-template-columns: 96px 1fr;
   gap: 0;
-  border: var(--rule);
   background: var(--ground-lit);
 }
 
@@ -92,7 +101,7 @@
 }
 
 .finding__rail {
-  border-right: var(--rule);
+  border-right: var(--rule-line);
   padding: var(--s3);
   display: flex;
   flex-direction: column;
@@ -103,15 +112,18 @@
 @media (max-width: 720px) {
   .finding__rail {
     border-right: 0;
-    border-bottom: var(--rule);
+    border-bottom: var(--rule-line);
     flex-direction: row;
     align-items: baseline;
     flex-wrap: wrap;
   }
 }
 
+/* Severity is the word, and the word's own typography is what carries it: the
+   heaviest reading is underlined as well as inked, the lightest is set at body
+   weight and lower contrast. The rail is a column of words, never a red bar. */
 .finding__sev {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-lead);
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -131,7 +143,7 @@
 }
 
 .finding__sev--medium {
-  color: var(--ink);
+  color: var(--amber);
 }
 
 .finding__sev--low {
@@ -139,7 +151,7 @@
 }
 
 .finding__sev--info {
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .finding__body {
@@ -152,7 +164,8 @@
 
 .finding__title {
   font-size: var(--size-lead);
-  letter-spacing: 0.02em;
+  letter-spacing: var(--track-head);
+  color: var(--ink);
 }
 
 .finding__desc {
@@ -162,9 +175,10 @@
 }
 
 .finding__rec {
-  border-top: var(--rule-ink);
+  border-top: var(--rule-line-ink);
   padding-top: var(--s2);
   font-size: var(--size-body);
+  color: var(--ink);
   display: flex;
   flex-direction: column;
   gap: var(--s1);
@@ -175,17 +189,19 @@
   gap: var(--s2);
   flex-wrap: wrap;
   padding-top: var(--s1);
-  border-top: var(--rule-faint);
+  border-top: var(--rule-line-faint);
 }
 
 /* ------------------------------------------------------------- sign-off ---- */
 
+/* The strip that closes the record. An initialled line, not a decorative
+   flourish: it is the last thing on the page because the page is evidence. */
 .signoff {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--s5);
-  border-top: 2px solid var(--ink);
+  border-top: 1px solid var(--signal-edge);
   padding-top: var(--s3);
   flex-wrap: wrap;
 }
@@ -198,7 +214,7 @@
 }
 
 .signoff__rule {
-  border-bottom: 1px solid var(--ink);
+  border-bottom: 1px solid var(--graphite);
   height: 26px;
 }
 
@@ -209,13 +225,12 @@
 .ledger-strip {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  border: var(--rule);
   background: var(--ground-lit);
 }
 
 .ledger-strip__cell {
   padding: var(--s2) var(--s3);
-  border-right: var(--rule-faint);
+  border-right: var(--rule-line-faint);
   display: flex;
   flex-direction: column;
   gap: var(--s1);
@@ -226,10 +241,11 @@
 }
 
 .ledger-strip__value {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-head);
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  color: var(--ink);
 }
 
 .ledger-strip__value--alert {
@@ -238,11 +254,14 @@
 
 /* ============================================================================
    The demo entry — one rocker switch and one large key, under a guard.
+
+   The plate material (its cut, its edge, its brackets) is hud.css's. This is
+   the one surface in the console that arms something, which is why it is the
+   one surface wearing a target's brackets.
    ========================================================================= */
 
 .entry {
   padding: var(--s3) var(--s4);
-  border-top: var(--rule-ink);
   background: var(--ground-lit);
   display: flex;
   align-items: center;
@@ -279,7 +298,7 @@
   flex-direction: column;
   gap: var(--s2);
   padding: var(--s3) var(--s4);
-  border-bottom: var(--rule-ink);
+  border-bottom: var(--rule-line);
   background: var(--ground);
 }
 
@@ -287,12 +306,13 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0;
-  border: var(--rule);
+  border: 1px solid var(--rule);
+  background: var(--ground-lit);
 }
 
 .scenario__option {
   padding: var(--s3);
-  border-right: var(--rule-faint);
+  border-right: var(--rule-line-faint);
   background: var(--ground-lit);
   text-align: left;
   border-top: 0;
@@ -304,6 +324,10 @@
   gap: var(--s1);
   font: inherit;
   color: inherit;
+  transition:
+    background var(--snap),
+    color var(--snap),
+    box-shadow var(--snap);
 }
 
 .scenario__option:last-child {
@@ -311,25 +335,32 @@
 }
 
 .scenario__option:hover {
-  background: var(--ground-shade);
+  background: var(--ground-raise);
 }
 
+/* The armed scenario is lit from its own left edge, so which one is loaded is
+   readable from across the room and does not depend on the label being read. */
 .scenario__option[aria-pressed='true'] {
-  background: var(--ink);
-  color: var(--ground);
+  background: var(--ground-raise);
+  color: var(--ink);
+  box-shadow: inset 3px 0 0 var(--signal);
+}
+
+.scenario__option[aria-pressed='true'] .scenario__name {
+  color: var(--signal);
 }
 
 .scenario__option[aria-pressed='true'] .scenario__note {
-  color: var(--graphite-faint);
+  color: var(--ink-soft);
 }
 
 .scenario__option:focus-visible {
-  outline: 2px solid var(--candidate);
+  outline: 2px solid var(--signal-bright);
   outline-offset: -3px;
 }
 
 .scenario__name {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-label);
   font-weight: 600;
   letter-spacing: var(--track-label);
@@ -354,7 +385,7 @@
 
 .verdict-card {
   padding: var(--s4);
-  border-bottom: var(--rule-ink);
+  border-bottom: var(--rule-line);
   display: flex;
   flex-direction: column;
   gap: var(--s3);
@@ -370,9 +401,10 @@
 
 .verdict-card__word {
   font-size: var(--size-verdict);
-  letter-spacing: 0.03em;
+  letter-spacing: var(--track-head);
   text-transform: uppercase;
   line-height: 1;
+  color: var(--ink);
 }
 
 .verdict-card__word--down {
@@ -397,7 +429,7 @@
   grid-template-columns: 1fr;
   gap: var(--s1);
   padding: var(--s2) var(--s4);
-  border-bottom: var(--rule-faint);
+  border-bottom: var(--rule-line-faint);
 }
 
 .metric:last-child {
@@ -412,17 +444,18 @@
 }
 
 .metric__name {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-label);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  color: var(--ink);
 }
 
 .metric__n {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-micro);
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .metric__values {
@@ -438,19 +471,20 @@
 }
 
 .metric__version {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .metric__value {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-lead);
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
+  color: var(--ink);
 }
 
 .metric__value--baseline {
@@ -468,7 +502,7 @@
 }
 
 .metric__delta {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-label);
   font-variant-numeric: tabular-nums;
 }
@@ -482,7 +516,7 @@
 }
 
 .metric__delta--flat {
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 /* --------------------------------------------------------- comparison ------ */
@@ -501,10 +535,11 @@
 }
 
 .comparison__value {
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-head);
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  color: var(--ink);
 }
 
 .comparison__value--alert {
@@ -512,140 +547,7 @@
 }
 
 /* ============================================================================
-   Event index — the tick margin, keyed directly by number.
-   ========================================================================= */
-
-.events {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  flex: 1;
-}
-
-.events__list {
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.event {
-  display: grid;
-  grid-template-columns: 30px 62px 1fr;
-  gap: var(--s2);
-  align-items: baseline;
-  padding: var(--s2) var(--s3);
-  border-bottom: var(--rule-faint);
-  font-size: var(--size-body);
-}
-
-.event:hover {
-  background: var(--ground);
-}
-
-/* The key: a keyed page address the reviewer can jump to. */
-.event__key {
-  font-family: var(--face-device);
-  font-size: var(--size-micro);
-  color: var(--graphite);
-  border: var(--rule-faint);
-  padding: 0 2px;
-  text-align: center;
-  background: transparent;
-  cursor: pointer;
-}
-
-.event__key--none {
-  border-color: transparent;
-  cursor: default;
-}
-
-.event__key:hover {
-  background: var(--ink);
-  color: var(--ground);
-  border-color: var(--ink);
-}
-
-.event__key:focus-visible {
-  outline: 2px solid var(--candidate);
-  outline-offset: 1px;
-}
-
-.event__time {
-  font-family: var(--face-device);
-  font-size: var(--size-micro);
-  color: var(--ink-soft);
-  font-variant-numeric: tabular-nums;
-}
-
-.event__type {
-  font-family: var(--face-label);
-  font-size: var(--size-micro);
-  font-weight: 600;
-  letter-spacing: var(--track-micro);
-  text-transform: uppercase;
-  color: var(--graphite);
-}
-
-.event__message {
-  grid-column: 3;
-  color: var(--ink);
-  line-height: 1.45;
-}
-
-.event--finding .event__type {
-  color: var(--candidate);
-}
-
-.event--complete .event__type {
-  color: var(--baseline);
-}
-
-.event--complete .event__message {
-  font-weight: 700;
-}
-
-/* ============================================================================
-   Banners — offline notice, contract gaps.
-   ========================================================================= */
-
-.notice {
-  display: flex;
-  align-items: baseline;
-  gap: var(--s3);
-  padding: var(--s2) var(--s5);
-  border-bottom: var(--rule);
-  background: var(--ground-shade);
-  font-size: var(--size-body);
-  flex-wrap: wrap;
-}
-
-.notice--alert {
-  border: 1px solid var(--candidate);
-  border-inline: 0;
-  background: var(--ground-shade);
-}
-
-.notice__tag {
-  font-family: var(--face-label);
-  font-size: var(--size-micro);
-  font-weight: 600;
-  letter-spacing: var(--track-micro);
-  text-transform: uppercase;
-  background: var(--ink);
-  color: var(--ground);
-  padding: 1px var(--s1);
-  flex: none;
-}
-
-.notice--alert .notice__tag {
-  background: var(--candidate);
-}
-
-/* ============================================================================
-   Narrow screens: the tape scrolls sideways rather than being redrawn.
+   Narrow screens: the field scrolls sideways rather than being redrawn.
    The chart keeps its aspect; a squeezed chart is a lying chart.
    ========================================================================= */
 
