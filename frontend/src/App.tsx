@@ -82,6 +82,10 @@ interface Route {
   view: View
   caseNumber: number | null
   scenarioId: ScenarioId
+  /** `#console&run=<id>` — open an existing run without creating another one. */
+  runId: string | null
+  /** `#investigation&investigation=<id>` — replay an existing investigation. */
+  investigationId: string | null
   /** `#console&demo` — probe the backend and open a run without a click. */
   autoDemo: boolean
 }
@@ -95,8 +99,11 @@ function readRoute(): Route {
   const caseNumber = Number.isInteger(rawCase) && rawCase > 0 ? rawCase : null
   const scenario =
     SCENARIOS.find((item) => item.id === params.get('scenario'))?.id ?? DEFAULT_SCENARIO_ID
+  const runId = params.get('run')
+  const investigationId = params.get('inv')
+  const autoDemo = params.has('demo') && !runId && !investigationId
 
-  return { view, caseNumber, scenarioId: scenario, autoDemo: params.has('demo') }
+  return { view, caseNumber, scenarioId: scenario, runId, investigationId, autoDemo }
 }
 
 function writeRoute(route: Partial<Route>): void {
@@ -105,6 +112,8 @@ function writeRoute(route: Partial<Route>): void {
   params.set(next.view, '')
   if (next.scenarioId !== DEFAULT_SCENARIO_ID) params.set('scenario', next.scenarioId)
   if (next.caseNumber !== null) params.set('case', String(next.caseNumber))
+  if (next.runId) params.set('run', next.runId)
+  if (next.investigationId) params.set('inv', next.investigationId)
   if (next.autoDemo) params.set('demo', '')
   window.location.hash = params.toString()
 }
@@ -246,6 +255,57 @@ export function App(): React.JSX.Element {
   }, [])
 
   /**
+   * `#console&run=<id>` opens an existing run by id.
+   *
+   * This is the deterministic counterpart to the one-click demo: a presenter or
+   * reviewer can reopen the exact run shown on a slide without waiting for a
+   * fresh evaluation. The report is still read from the service; nothing is
+   * substituted from fixtures.
+   */
+  useEffect(() => {
+    const runId = route.runId
+    if (!runId) return
+
+    let cancelled = false
+    const http = new HttpTransport()
+    setTransport(http)
+    setLiveNote(null)
+
+    void (async () => {
+      try {
+        const detail = await http.getRun(runId)
+        const { report, error } = await readReport(http, runId)
+        if (cancelled) return
+        setLive({
+          run: detail,
+          status: detail.status,
+          evaluation: buildLiveEvaluation({
+            detail,
+            report,
+            findings: report?.findings ?? [],
+          }),
+          reportGeneratedAt: report?.generated_at ?? null,
+          reportId: report?.id ?? null,
+          settled: true,
+          error,
+        })
+      } catch (cause) {
+        if (cancelled) return
+        setTransport(new MockTransport())
+        setLive(null)
+        setLiveNote(
+          cause instanceof Error
+            ? `无法打开运行 ${runId}：${cause.message}`
+            : `无法打开运行 ${runId}`,
+        )
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [route.runId])
+  /**
    * `#console&demo` opens a live run without a click.
    *
    * The button is the demo's entry point for a person; this is its entry point
@@ -352,6 +412,7 @@ export function App(): React.JSX.Element {
             {route.view === 'investigation' && (
               <InvestigationWorkspace
                 runId={live.run.id}
+                investigationId={route.investigationId ?? undefined}
                 autoStart={route.autoDemo}
                 runContext={{
                   baselineVersion: live.run.baseline_version,

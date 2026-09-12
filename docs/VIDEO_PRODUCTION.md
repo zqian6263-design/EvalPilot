@@ -103,6 +103,13 @@ Narration:
 
 > EvalPilot 把 AI 发布从经验判断变成可复现的证据决策。它不是另一个问答机器人，而是一名能够接管发布质量检查、定位根因并交付结论的 AI 数字员工。
 
+## Reproducible deep links
+
+- Existing run: `#console&run=<run-id>`
+- Existing live investigation: `#investigation&run=<run-id>&inv=<investigation-id>`
+
+These links open recorded service data and do not create a new run.
+
 ## Recording rules
 
 - Prefer a pre-warmed completed run for the main console sequence.

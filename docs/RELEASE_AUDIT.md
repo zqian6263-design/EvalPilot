@@ -5,58 +5,74 @@ Purpose: freeze a defensible demo build before recording the competition video.
 
 ## Decision
 
-The product is engineering-complete enough to enter a short release-gate pass.
-It is **not** feature-complete, but no additional product breadth is required
-before recording. The next work must remove demo risks and align every public
-claim with what a judge can verify.
+The product is engineering-complete enough to enter the final pre-recording
+freeze. The remaining work is presentation and external market evidence, not
+additional product breadth.
+
+## Gate status
+
+| Gate | Status | Evidence |
+|---|---|---|
+| Frontend tests | Pass | 152/152 |
+| TypeScript | Pass | `npm run typecheck` |
+| Production build | Pass | `npm run build` |
+| Backend tests | Pass | full pytest suite |
+| Real HTTP E2E | Pass | 31/31 |
+| Autonomous investigation E2E | Pass | V2 E2E |
+| Clean worktree install/start/E2E | Pass | separate checkout `EvalPilot-clean`, ports 8100/5273, 31/31 |
+| Live DeepSeek runtime | Pass | persisted LLM steps and report rationale |
+| Deliberate live failure fallback | Pass | invalid key -> HTTP 401 -> 2 fallback steps -> BLOCK/CRITICAL |
+| Public claims aligned | Pass | current tool surface documented as kb_search/http_get/file_read |
+| Reproducible run/investigation deep links | Pass | #console&run=<id> and #investigation&run=<id>&inv=<id> open recorded service data in seconds |
+| Video recording path | Pending | script exists; recording not yet produced |
 
 ## Verified now
 
-- Frontend: 152 tests pass.
-- Frontend: TypeScript check passes; production build passes.
-- Backend: full pytest suite passes.
-- Real HTTP end-to-end: 31/31 checks pass.
-- Autonomous investigation end-to-end: passes.
-- DeepSeek V4 Pro live runtime: verified with persisted LLM-backed steps,
-  measured counterfactual results, and a model rationale in the report.
-- Current runtime tools: `kb_search`, `http_get`, `file_read`.
+- The current runtime registers exactly `kb_search`, `http_get`, and `file_read`.
+- The Python sandbox is a disabled placeholder with no execution implementation.
+- Browser execution is roadmap work and is no longer presented as implemented.
 - Deterministic/offline mode remains available without an API key.
-- The UI labels deterministic and live sources and does not let the model
-  override measured verdicts.
+- Live mode uses DeepSeek V4 Pro and falls back with an explicit reason on
+  transport failure.
+- LLM output cannot override measured scores, counterfactuals, risk, or decision.
 
-## Release blockers
+## Clean-worktree acceptance record
 
-### P0-1: Public claims exceed the implemented product
+A detached worktree was created at `D:\z工程文件\EvalPilot-clean` from the
+release-gate commit. It created its own Python virtual environment and npm
+dependencies, started on alternate ports, and completed:
 
-`PRODUCT.md`, `COMPETITION_PITCH.md`, and `SPEC.md` still describe browser or
-sandboxed Python execution as part of the working demo. The current runtime does
-not register a browser or Python tool. Public material must say:
+```text
+E2E OK - 31 checks passed.
+```
 
-- implemented: knowledge-base search, allowlisted HTTP, file read;
-- roadmap: browser execution and sandboxed code.
+Screenshot artifact:
 
-### P0-2: Stale self-assessment
+```text
+D:\z工程文件\EvalPilot-clean\.runtime\clean-machine-console.png
+```
 
-`COMPETITION_SCORECARD.md` still reports 67/100, 150 tests, a broken typecheck,
-and live mode as unexercised. Those statements are no longer true. A judge must
-not receive contradictory submission materials.
+This is still the same physical machine, so it proves path/dependency
+independence but not a second physical host.
 
-### P0-3: Video path not frozen
+## Fallback rehearsal record
 
-The recording must use one deterministic main path plus a clearly visible live
-LLM badge. Pre-recorded live model output is acceptable only when its artifact
-is real and the video states that it is a recorded live run.
+An invalid DeepSeek key was configured deliberately. The investigation
+completed, recorded two fallback steps, and preserved the measured decision:
 
-### P0-4: Clean-machine proof missing
+```text
+fallback_reason: hypotheses call failed:
+  LLMTransportError: LLM endpoint api.deepseek.com returned HTTP 401
+decision: block
+risk: critical
+```
 
-The product has not yet been exercised from a clean checkout on a second
-machine. Before recording, run the setup and acceptance scripts from a fresh
-shell and record the transcript.
+## Remaining before recording
 
-### P0-5: Live fallback needs one negative-path rehearsal
-
-Record one deliberate live failure showing the deterministic fallback and its
-visible reason. This protects the live demo against network or API instability.
+- Freeze the exact demo run id and numbers used in the video.
+- Record the 2-3 minute video with the live model badge visible.
+- Verify the public upload plays in a logged-out browser.
+- Submit an updated team description and detailed product description.
 
 ## Non-blocking improvements after the video
 
@@ -67,23 +83,3 @@ visible reason. This protects the live demo against network or API instability.
 - Additional model providers.
 - Human calibration of the LLM judge.
 - Multi-tenant authentication and permissions.
-
-## Recording gate
-
-Record only when all answers are yes:
-
-- `#console&demo` reaches a live run and the final verdict without manual repair.
-- `#investigation&demo` reaches BLOCK and exposes the counterfactual evidence.
-- The report downloads successfully.
-- The runtime badge is visible and truthful.
-- Offline mode still completes the full demo.
-- The demo fits a 2-3 minute narrative after editing.
-- No public document claims a tool or result that the repository cannot prove.
-
-## Next actions
-
-1. Correct the stale product and competition documents.
-2. Run the clean-machine acceptance checklist.
-3. Rehearse the live failure fallback.
-4. Freeze the demo build and record the video.
-5. Perform real market interviews in parallel; do not fabricate traction.

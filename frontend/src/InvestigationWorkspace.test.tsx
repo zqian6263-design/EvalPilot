@@ -10,6 +10,7 @@ import {
   stepKindLabel,
 } from './i18n/labels'
 import { MOCK_RECALLED_INCIDENT_ID } from './i18n/mockScript'
+import { MOCK_INVESTIGATION_ID } from './mockInvestigation'
 
 /**
  * The workspace's own tests. They pin the three things a rendering assertion
@@ -80,6 +81,22 @@ describe('InvestigationWorkspace — intake', () => {
     expect(screen.getByRole('button', { name: /启动自主调查/ })).toBeEnabled()
   })
 
+  it('reopens an existing investigation without creating a new one', async () => {
+    const transport = new MockInvestigationTransport()
+    transport.setStage(5)
+    const create = vi.spyOn(transport, 'createInvestigation')
+
+    render(
+      <InvestigationWorkspace
+        transport={transport}
+        runId={RUN_ID}
+        investigationId={MOCK_INVESTIGATION_ID}
+      />,
+    )
+
+    await waitFor(() => expect(document.querySelector('.decision__word')).not.toBeNull())
+    expect(create).not.toHaveBeenCalled()
+  })
   it('names its data source, so a mock is never read as a real investigation', () => {
     render(<InvestigationWorkspace transport={new MockInvestigationTransport()} runId={RUN_ID} />)
     expect(screen.getByText(/确定性模拟调查/)).toBeInTheDocument()

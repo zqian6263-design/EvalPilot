@@ -69,6 +69,8 @@ export interface InvestigationWorkspaceProps {
    * is what makes the offline mock demonstrable with no props at all.
    */
   runId?: string | undefined
+  /** Existing investigation to reopen without creating a new one. */
+  investigationId?: string | undefined
   /** Called once when the workspace needs a run id and was not given one. */
   resolveRunId?: (() => Promise<string | null>) | undefined
   /** Versions and case count, for the prefilled objective and the plate. */
@@ -144,6 +146,7 @@ function riskWord(level: RiskLevel): string {
  */
 export function InvestigationWorkspace({
   runId,
+  investigationId,
   resolveRunId,
   runContext,
   defaultObjectiveText,
@@ -261,6 +264,35 @@ export function InvestigationWorkspace({
   }
 
 
+  useEffect(() => {
+    if (!investigationId || !transport) return
+
+    let cancelled = false
+    setRun(null)
+    setStartError(null)
+
+    void transport
+      .getInvestigation(investigationId)
+      .then((bundle) => {
+        if (cancelled) return
+        setResolvedRunId(bundle.investigation.run_id)
+        setRun({
+          investigation: bundle.investigation,
+          bundle,
+          settled: true,
+          adopted: true,
+          error: null,
+        })
+      })
+      .catch((cause) => {
+        if (cancelled) return
+        setStartError(cause instanceof Error ? cause.message : '无法打开已有调查')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [investigationId, transport])
   useEffect(() => {
     if (!autoStart || !resolvedRunId || autoStartedRunIdRef.current === resolvedRunId) return
     autoStartedRunIdRef.current = resolvedRunId
