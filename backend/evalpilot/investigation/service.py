@@ -2116,7 +2116,9 @@ def render_markdown(
     hypotheses = [
         step
         for step in steps
-        if step.kind is InvestigationStepKind.RISK and step.title != ROOT_TITLE
+        if step.kind is InvestigationStepKind.RISK
+        and step.title != ROOT_TITLE
+        and not (step.data.get("source") == "llm" and step.data.get("fallback"))
     ]
     for index, step in enumerate(hypotheses, start=1):
         lines += [f"## Risk hypothesis H{index} -- {step.title}", "", step.detail, ""]

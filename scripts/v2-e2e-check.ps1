@@ -2,7 +2,7 @@
 param(
     [int]$BackendPort = 8000,
     [int]$FrontendPort = 5173,
-    [int]$TimeoutSeconds = 120
+    [int]$TimeoutSeconds = 480
 )
 
 $ErrorActionPreference = 'Stop'
