@@ -66,22 +66,25 @@ _MOVED_SEVERITY = Severity.MEDIUM
 
 _RECOMMENDATIONS: dict[str, str] = {
     "format": (
-        "The candidate answer violates a constraint this scenario asserts — it either "
-        "dropped a required fact or disclosed something it must not. Diff the retrieval "
-        "and answer-template changes between the two versions for this scenario's "
-        "source documents."
+        "候选答案违反该场景声明的约束：要么丢失了必答事实，要么披露了禁止输出的内容。"
+        "请对比两个版本在该场景来源文档上的检索与答案模板变更。"
     ),
     "facts": (
-        "Restore the dropped knowledge-base content, or update the answer template so "
-        "the required operational detail survives the change."
+        "恢复被删除的知识库内容，或调整答案模板，确保变更后仍保留关键业务信息。"
     ),
     "refusal": (
-        "Restore the out-of-scope refusal policy in the system prompt and re-run this "
-        "scenario before release."
+        "在系统提示词中恢复越界拒答策略，并在发布前重新运行该场景。"
     ),
 }
 
 _SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+_SEVERITY_LABELS = {
+    "critical": "严重",
+    "high": "高",
+    "medium": "中",
+    "low": "低",
+    "info": "提示",
+}
 
 
 def count_by_severity(findings: list[Finding]) -> dict[str, int]:
@@ -311,23 +314,18 @@ def _scenario_rationale(
     delta: float | None,
 ) -> str:
     if baseline is None or candidate is None:
-        return "Scenario was not scored on both versions, so no comparison is available."
+        return "该场景未在两个版本上同时评分，无法比较。"
     if delta is None or delta == 0:
         return (
-            f"Baseline {baseline:.2f} and candidate {candidate:.2f} score identically: "
-            "this scenario is a control and did not move."
+            f"基线与候选版本得分均为 {baseline:.2f}/{candidate:.2f}："
+            "该场景是对照组，没有发生移动。"
         )
-    return f"Candidate scored {candidate:.2f} against a baseline of {baseline:.2f}."
+    return f"候选版本得分 {candidate:.2f}，基线得分 {baseline:.2f}。"
 
 
 def _failed_check_labels(evaluation: CaseEvaluation) -> tuple[str, ...]:
     """Names of the checks that failed on either version, in suite order."""
     return tuple(kind.value for kind in evaluation.failing_checks)
-
-
-def _failure_detail(evaluation: CaseEvaluation) -> str:
-    """The evaluator's own words for why the scenario lost points."""
-    return " ".join(gap.rationale for gap in evaluation.missing_evidence)
 
 
 # --------------------------------------------------------------------------
@@ -376,13 +374,11 @@ def _findings(
 
         if delta < 0:
             severity = _drop_severity(delta)
-            title = f"Regression in '{evaluation.case_id}'"
-            detail = _failure_detail(evaluation)
+            title = f"场景“{evaluation.case_id}”出现回归"
             description = (
-                f"The candidate scored {candidate:.2f} on '{evaluation.case_id}' "
-                f"where the baseline scored {baseline:.2f} (delta {delta:+.2f}). "
-                f"Failing check(s): {', '.join(failed) if failed else 'none recorded'}. "
-                f"{detail} "
+                f"候选版本在“{evaluation.case_id}”上得分 {candidate:.2f}，"
+                f"基线得分 {baseline:.2f}（差值 {delta:+.2f}）。"
+                f"未通过的检查：{', '.join(failed) if failed else '未记录'}。"
                 f"{_scenario_rationale(evaluation, baseline, candidate, delta)}"
             ).strip()
             # A deterministic check failure is reproducible, so confidence is
@@ -391,13 +387,12 @@ def _findings(
             confidence = 1.0 if baseline >= 1.0 else 0.8
         else:
             severity = Severity.LOW
-            title = f"Scenario '{evaluation.case_id}' fails on both versions"
+            title = f"场景“{evaluation.case_id}”在两个版本上均未通过"
             description = (
-                f"'{evaluation.case_id}' scores {candidate:.2f} on the candidate and "
-                f"{baseline:.2f} on the baseline, so the failure is not attributable to "
-                "this change. It still cannot discriminate between versions until it "
-                "passes somewhere. "
-                f"Failing check(s): {', '.join(failed) if failed else 'none recorded'}."
+                f"“{evaluation.case_id}”在候选版本得分 {candidate:.2f}，"
+                f"基线得分 {baseline:.2f}，因此该失败不能归因于本次变更。"
+                "在任一版本通过前，它都无法区分版本差异。"
+                f"未通过的检查：{', '.join(failed) if failed else '未记录'}。"
             )
             confidence = 1.0
 
@@ -420,10 +415,7 @@ def _findings(
 
 def _recommendation(delta: float, failed: tuple[str, ...]) -> str:
     if delta >= 0:
-        return (
-            "Fix the underlying defect on both versions before using this scenario as a "
-            "regression control; until it passes somewhere it contributes no signal."
-        )
+        return "先修复两个版本共同存在的缺陷，再将该场景用作回归对照；在任一版本通过前，它不提供回归信号。"
     return _RECOMMENDATIONS.get(
         failed[0] if failed else "facts", _RECOMMENDATIONS["facts"]
     )
@@ -546,10 +538,7 @@ def summarize(
     matched = comparison.sample_size
 
     if matched == 0:
-        return (
-            "No scenarios were matched across both versions, so no regression "
-            "verdict is available."
-        )
+        return "两个版本之间没有匹配到任何场景，因此无法给出回归结论。"
 
     moved = [v for v in verdicts if v.delta is not None and v.delta < 0]
     controls = [v for v in verdicts if v.delta == 0 and v.candidate_score == 1.0]
@@ -563,31 +552,26 @@ def summarize(
     ]
 
     parts = [
-        f"Compared {matched} matched scenario(s) between {baseline_version} and "
-        f"{candidate_version}. "
+        f"已在 {baseline_version} 与 {candidate_version} 之间比较 {matched} 个匹配场景。"
     ]
 
     if direction is ComparisonDirection.REGRESSION:
         parts.append(
-            f"The candidate regressed: the mean score fell "
-            f"{abs(comparison.mean_difference):.3f} (95% CI {comparison.ci_lower:.3f} "
-            f"to {comparison.ci_upper:.3f}), entirely below the "
-            f"-{comparison.threshold:.3f} threshold. "
+            f"候选版本出现回归：平均分下降 {abs(comparison.mean_difference):.3f}"
+            f"（95% 置信区间 {comparison.ci_lower:.3f} 至 {comparison.ci_upper:.3f}），"
+            f"整个区间均低于 -{comparison.threshold:.3f} 的回归阈值。"
         )
     elif direction is ComparisonDirection.IMPROVEMENT:
         parts.append(
-            f"The candidate improved: the mean score rose "
-            f"{comparison.mean_difference:.3f} (95% CI {comparison.ci_lower:.3f} to "
-            f"{comparison.ci_upper:.3f}), entirely above the "
-            f"+{comparison.threshold:.3f} threshold. "
+            f"候选版本有所改进：平均分上升 {comparison.mean_difference:.3f}"
+            f"（95% 置信区间 {comparison.ci_lower:.3f} 至 {comparison.ci_upper:.3f}），"
+            f"整个区间均高于 +{comparison.threshold:.3f} 的改进阈值。"
         )
     else:
         parts.append(
-            f"The aggregate comparison is inconclusive: the mean score changed by "
-            f"{comparison.mean_difference:+.3f} (95% CI {comparison.ci_lower:.3f} to "
-            f"{comparison.ci_upper:.3f}), which does not clear the "
-            f"±{comparison.threshold:.3f} threshold at {comparison.confidence:.0%} "
-            "confidence. "
+            f"总体比较尚不确定：平均分变化 {comparison.mean_difference:+.3f}"
+            f"（95% 置信区间 {comparison.ci_lower:.3f} 至 {comparison.ci_upper:.3f}），"
+            f"在 {comparison.confidence:.0%} 置信度下未跨越 ±{comparison.threshold:.3f} 阈值。"
         )
 
     if moved:
@@ -596,27 +580,24 @@ def summarize(
             for v in moved
         )
         parts.append(
-            f"{len(moved)} scenario(s) regressed against their own baseline: {named}. "
+            f"{len(moved)} 个场景相对自身基线发生回归：{named}。"
         )
 
     if controls:
         parts.append(
-            f"{len(controls)} control scenario(s) scored identically on both versions, "
-            "which is what makes any difference attributable to the version change "
-            "rather than to a harder test set. "
+            f"{len(controls)} 个对照场景在两个版本上得分完全一致，"
+            "因此任何差异都可归因于版本变更，而不是更换了更难的测试集。"
         )
 
     if direction is ComparisonDirection.INCONCLUSIVE and moved:
         parts.append(
-            "Treat those as localized failures with evidence, not as a resolved "
-            "regression: a change this size across this many matched cases is too "
-            "small for the interval to separate from noise. "
+            "应将这些场景视为有证据支持的局部故障，而不是已经确认的总体回归："
+            "在当前离线样本量下，这一变化幅度仍不足以与噪声区分。"
         )
 
     if failed_both:
         parts.append(
-            f"{len(failed_both)} scenario(s) fail on both versions and cannot "
-            "discriminate between them. "
+            f"{len(failed_both)} 个场景在两个版本上均未通过，无法用于区分版本差异。"
         )
 
     severity_counts = metrics.get("findings_by_severity", {})
@@ -625,9 +606,12 @@ def summarize(
             severity_counts.items(), key=lambda item: _SEVERITY_ORDER.get(item[0], 9)
         )
         parts.append(
-            "Findings: "
-            + ", ".join(f"{count} {severity}" for severity, count in ordered)
-            + ". "
+            "发现："
+            + "、".join(
+                f"{_SEVERITY_LABELS.get(severity, severity)} {count}"
+                for severity, count in ordered
+            )
+            + "。"
         )
 
     return "".join(parts)

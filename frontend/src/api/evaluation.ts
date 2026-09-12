@@ -296,7 +296,10 @@ export function buildLiveEvaluation({ detail, report, findings }: BuildArgs): Li
       evidence: detail.evidence_count,
       findings: detail.finding_count,
       events: detail.event_count,
-      cases: detail.test_cases.length,
+      // The UI calls a matched scenario a case. `test_cases` contains one
+      // row per version, so using its raw length would double the denominator
+      // while the table and the report both count paired scenarios.
+      cases: rows.length,
     },
     metrics,
     missingMetricIds: metrics.filter((row) => row.value === null).map((row) => row.id),

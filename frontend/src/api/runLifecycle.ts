@@ -14,6 +14,16 @@ import { ApiError } from './transport'
 import type { DemoContext, Report, Run, RunStatus } from './types'
 
 /** Statuses after which a run will not change again. */
+const RUN_STATUS_LABELS: Record<RunStatus, string> = {
+  queued: '排队中',
+  planning: '规划中',
+  executing: '执行中',
+  evaluating: '评估中',
+  completed: '已完成',
+  failed: '失败',
+  cancelled: '已取消',
+}
+
 const TERMINAL: ReadonlySet<RunStatus> = new Set<RunStatus>([
   'completed',
   'failed',
@@ -57,8 +67,8 @@ export async function ensureRunStarted({
       run: target,
       started: false,
       note: isTerminal(target.status)
-        ? `run is ${target.status}; opening its recorded results`
-        : `run is already ${target.status}; not starting it again`,
+        ? `运行状态为“${RUN_STATUS_LABELS[target.status]}”（${target.status}），正在打开已记录结果`
+        : `运行已在“${RUN_STATUS_LABELS[target.status]}”（${target.status}），不会重复启动`,
     }
   }
 

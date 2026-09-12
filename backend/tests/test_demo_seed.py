@@ -95,8 +95,8 @@ def test_report_summary_explains_the_regression(client: TestClient) -> None:
     report = client.get(f"/api/runs/{run.id}/report").json()
     summary = report["summary"]
 
-    assert "regressed" in summary
-    assert "control" in summary
+    assert "回归" in summary
+    assert "对照场景" in summary
     # Every regressed scenario is named so the reader does not need raw logs.
     for scenario_id in report["metrics"]["regressed_scenarios"]:
         assert scenario_id in summary

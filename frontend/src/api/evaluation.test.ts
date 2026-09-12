@@ -195,7 +195,7 @@ describe('buildLiveEvaluation never invents a metric', () => {
   it('carries the backend verdict and counts through unchanged', () => {
     const evaluation = buildLiveEvaluation({ detail, report, findings: [] })
     expect(evaluation.verdict).toBe('regression')
-    expect(evaluation.counts).toEqual({ evidence: 78, findings: 3, events: 66, cases: 2 })
+    expect(evaluation.counts).toEqual({ evidence: 78, findings: 3, events: 66, cases: 1 })
     expect(evaluation.cases[0]!.regressed).toBe(true)
   })
 

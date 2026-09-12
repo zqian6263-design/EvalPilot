@@ -36,6 +36,7 @@ import { MOCK_RECALLED_INCIDENT_ID } from './i18n/mockScript'
 afterEach(cleanup)
 
 const RUN_ID = 'a4f1c8e2-7d35-4b90-8e21-5f6a9c3d0b47'
+const NEXT_RUN_ID = 'b7e2d4a9-1c86-4f30-9b52-8d0e6f1a2c34'
 
 /**
  * Drive the workspace to a finished investigation, in real time.
@@ -89,6 +90,37 @@ describe('InvestigationWorkspace — intake', () => {
     render(<InvestigationWorkspace transport={new MockInvestigationTransport()} runId={RUN_ID} />)
     await userEvent.clear(screen.getByLabelText(/发布目标/))
     expect(screen.getByRole('button', { name: /启动自主调查/ })).toBeDisabled()
+  })
+  it('auto-starts a fresh investigation when the host switches runs', async () => {
+    const transport = new MockInvestigationTransport()
+    const create = vi.spyOn(transport, 'createInvestigation')
+    const { rerender } = render(
+      <InvestigationWorkspace transport={transport} runId={RUN_ID} autoStart />,
+    )
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(1))
+    expect(create.mock.calls[0]![0].run_id).toBe(RUN_ID)
+
+    rerender(
+      <InvestigationWorkspace transport={transport} runId={NEXT_RUN_ID} autoStart />,
+    )
+
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(2))
+    expect(create.mock.calls[1]![0].run_id).toBe(NEXT_RUN_ID)
+  })
+  it('clears the previous investigation when the host switches to another run', async () => {
+    const transport = new MockInvestigationTransport()
+    const { rerender } = render(
+      <InvestigationWorkspace transport={transport} runId={RUN_ID} />,
+    )
+    await userEvent.click(screen.getByRole('button', { name: /启动自主调查/ }))
+    await waitFor(() => expect(transport.currentStage).toBe(5), { timeout: 10_000 })
+    await waitFor(() => expect(document.querySelector('.decision__word')).not.toBeNull())
+
+    rerender(<InvestigationWorkspace transport={transport} runId={NEXT_RUN_ID} />)
+
+    await waitFor(() => expect(document.querySelector('.decision__word')).toBeNull())
+    expect(screen.getByText(NEXT_RUN_ID.slice(0, 8))).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /启动自主调查/ })).toBeEnabled()
   })
 })
 

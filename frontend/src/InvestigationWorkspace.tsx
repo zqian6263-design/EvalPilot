@@ -18,7 +18,12 @@ import {
 import { MOCK_RUN_ID } from './mockInvestigation'
 import { HttpInvestigationTransport } from './httpInvestigationTransport'
 import { MockInvestigationTransport } from './mockInvestigationTransport'
-import { defaultObjective, runInvestigation, type InvestigationRun } from './runInvestigation'
+import {
+  AbortedError,
+  defaultObjective,
+  runInvestigation,
+  type InvestigationRun,
+} from './runInvestigation'
 import { StepRow, visibleRows } from './StepRow'
 import {
   PROVENANCE,
@@ -160,14 +165,31 @@ export function InvestigationWorkspace({
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
   const abortRef = useRef<AbortController | null>(null)
-  const autoStartedRef = useRef(false)
+  const autoStartedRunIdRef = useRef<string | null>(null)
+  const lastHostRunIdRef = useRef<string | null>(runId ?? null)
 
   useEffect(() => () => abortRef.current?.abort(), [])
 
-  // The host may resolve the live run after this component first mounts.
-  // Adopt that id instead of keeping the empty initial state forever.
+  // A workspace belongs to exactly one evaluation run. If the host switches
+  // runs while this component stays mounted, every record from the previous
+  // run must leave the screen with it: keeping a finished decision beside the
+  // new run id would make two independent records look like one evidence
+  // chain. Abort the in-flight read as well, and prevent its late update from
+  // repainting the workspace after the switch.
   useEffect(() => {
-    if (runId) setResolvedRunId(runId)
+    const nextHostRunId = runId ?? null
+    if (lastHostRunIdRef.current === nextHostRunId) return
+    lastHostRunIdRef.current = nextHostRunId
+
+    abortRef.current?.abort()
+    abortRef.current = null
+    setResolvedRunId(nextHostRunId ?? '')
+    setObjective(defaultObjectiveText ?? defaultObjective(runContext ?? {}))
+    setRun(null)
+    setStarting(false)
+    setStartError(null)
+    setSelectedStepId(null)
+    setCollapsed(new Set())
   }, [runId])
 
   useEffect(() => {
@@ -191,6 +213,7 @@ export function InvestigationWorkspace({
     setStarting(true)
     setStartError(null)
 
+    abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
 
@@ -219,21 +242,28 @@ export function InvestigationWorkspace({
         transport,
         objective,
         runId: target,
-        onUpdate: (update) => setRun(update),
+        onUpdate: (update) => {
+          if (!controller.signal.aborted) setRun(update)
+        },
         signal: controller.signal,
       })
-      setRun(result)
+      if (!controller.signal.aborted) setRun(result)
     } catch (cause) {
-      setStartError(cause instanceof Error ? cause.message : '调查无法启动')
+      if (!controller.signal.aborted && !(cause instanceof AbortedError)) {
+        setStartError(cause instanceof Error ? cause.message : '调查无法启动')
+      }
     } finally {
-      setStarting(false)
+      if (abortRef.current === controller) {
+        abortRef.current = null
+        setStarting(false)
+      }
     }
   }
 
 
   useEffect(() => {
-    if (!autoStart || !resolvedRunId || autoStartedRef.current) return
-    autoStartedRef.current = true
+    if (!autoStart || !resolvedRunId || autoStartedRunIdRef.current === resolvedRunId) return
+    autoStartedRunIdRef.current = resolvedRunId
     void start()
   }, [autoStart, resolvedRunId, start])
 

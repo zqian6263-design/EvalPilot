@@ -281,8 +281,15 @@ if ($report -and $detail) {
         ($null -ne $metrics.regression_detected) 'metrics.regression_detected missing'
     Check 'a regression is detected in the seeded demo' ($metrics.regression_detected -eq $true) `
         "regression_detected=$($metrics.regression_detected)"
+    $summaryNamesEveryScenario = $true
+    foreach ($scenario in @($metrics.regressed_scenarios)) {
+        if ($report.summary -notmatch [regex]::Escape([string]$scenario)) {
+            $summaryNamesEveryScenario = $false
+            break
+        }
+    }
     Check 'the summary names the regressed scenarios' `
-        ($report.summary -match 'regressed') "summary=$($report.summary)"
+        ($summaryNamesEveryScenario -and $report.summary -match '回归') "summary=$($report.summary)"
 
     # The reported pass rate must match the case statuses it was computed from.
     # If these disagree, one of the two is lying and the console would show it.

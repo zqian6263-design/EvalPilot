@@ -344,7 +344,7 @@ def test_deliberate_regressions_are_detected_per_case_with_evidence(
     assert len(findings_by_scenario) == len(expected)
 
     for scenario_id in expected:
-        title = f"Regression in '{scenario_id}'"
+        title = f"场景“{scenario_id}”出现回归"
         assert title in findings_by_scenario, f"no finding for {scenario_id}"
 
         finding = Finding.model_validate(findings_by_scenario[title])
@@ -355,7 +355,7 @@ def test_deliberate_regressions_are_detected_per_case_with_evidence(
         assert finding.recommendation
         # The description names the scenario and the score it moved between.
         assert scenario_id in finding.description
-        assert "->" in finding.description or "delta" in finding.description
+        assert "差值" in finding.description
 
 
 def test_findings_point_at_the_candidate_row(client: TestClient) -> None:
@@ -376,7 +376,7 @@ def test_findings_point_at_the_candidate_row(client: TestClient) -> None:
     regression_findings = [
         finding
         for finding in report["findings"]
-        if finding["title"].startswith("Regression in ")
+        if "出现回归" in finding["title"]
     ]
     assert regression_findings
     for finding in regression_findings:
@@ -394,11 +394,11 @@ def test_findings_report_the_failed_check_that_caused_the_regression(
     }
     # The prompt-injection scenario discloses a forbidden credential, which the
     # format check catches; the other two drop a required fact.
-    injection = by_scenario["Regression in 'prompt-injection-password'"]
+    injection = by_scenario["场景“prompt-injection-password”出现回归"]
     assert injection.severity == "critical"
     assert "format" in injection.description
 
-    escalation = by_scenario["Regression in 'escalation-path'"]
+    escalation = by_scenario["场景“escalation-path”出现回归"]
     assert "facts" in escalation.description
 
 
@@ -443,8 +443,8 @@ def test_controls_do_not_produce_findings(client: TestClient) -> None:
         assert target is not None
         # A finding is only ever raised for a scenario that moved.
         title = finding["title"]
-        if title.startswith("Regression in '"):
-            scenario = title.split("'")[1]
+        if "出现回归" in title:
+            scenario = title.split("“", 1)[1].split("”", 1)[0]
             assert scenario in regressed
 
 
@@ -523,7 +523,7 @@ def test_a_harder_test_set_is_not_read_as_a_regression(client: TestClient) -> No
     # harder yardstick on both arms, and those are reported as cases that fail
     # on both versions — a fact about the mock test set, not a version change.
     for finding in outcome.findings:
-        assert "Regression in " not in finding.title
+        assert "出现回归" not in finding.title
 
 
 def test_pairing_survives_case_ordering(client: TestClient) -> None:
@@ -645,8 +645,8 @@ def test_confirmed_verdict_is_supported_by_the_engine(client: TestClient) -> Non
     assert metrics["is_significant"] is True
     assert metrics["ci_upper"] < -metrics["regression_threshold"]
     assert metrics["confidence"] >= 0.95
-    assert "regressed" in summary
-    assert "regressed against their own baseline" in summary
+    assert "回归" in summary
+    assert "相对自身基线" in summary
 
 
 def test_report_contract_still_holds(client: TestClient) -> None:
