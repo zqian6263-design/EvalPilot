@@ -1,16 +1,15 @@
 /* ============================================================================
    The investigation workspace.
 
-   Same world as the rest of the console: chart paper and a machine, three inks
-   and one graphite, hairlines only, no radius and no shadow. The investigation
-   is a *record of a procedure* rather than a chart of two traces, so it
-   borrows the tape's chassis bar and the report's ledger rather than inventing
-   a third vocabulary.
+   Same world as the rest of the console. The investigation is a *record of a
+   procedure* rather than a chart of two traces, so it borrows the tape's
+   chassis bar and the report's ledger rather than inventing a third
+   vocabulary — and it is the surface where the console's own logic is most
+   visible, because a procedure is exactly what a mission console runs.
 
-   Two rules from DESIGN.md govern everything below and are not repeated at each
-   rule: every colour and size resolves to a token (a literal here is a defect),
-   and status is never carried by colour alone — each one is a labelled chip with
-   a border style.
+   Two rules from tokens.css govern everything below and are not repeated at
+   each rule: every colour and size resolves to a token (a literal here is a
+   defect), and status is never carried by colour alone.
    ========================================================================= */
 
 .inv {
@@ -23,7 +22,7 @@
 
 .inv__intake {
   padding: var(--s4) var(--s5);
-  border-bottom: var(--rule-ink);
+  border-bottom: var(--rule-line);
   background: var(--ground-lit);
   display: flex;
   flex-direction: column;
@@ -38,8 +37,9 @@
 
 .inv__title {
   font-size: var(--size-head);
-  letter-spacing: 0.04em;
+  letter-spacing: var(--track-head);
   text-transform: uppercase;
+  color: var(--ink);
 }
 
 .inv__field {
@@ -48,29 +48,33 @@
   gap: var(--s2);
 }
 
-/* The objective is the one free-text field on the surface, and it is set in the
-   body face: it is human-printed information, not a machine value. */
+/* The objective is the one free-text field on the surface, and it is set in
+   the body face: it is human-printed information, not a machine value. */
 .inv__objective {
   width: 100%;
   max-width: 92ch;
   resize: vertical;
   padding: var(--s3);
-  border: var(--rule-ink);
+  border: 1px solid var(--signal-edge);
+  border-radius: var(--radius-ctl);
   background: var(--ground);
   color: var(--ink);
   font-family: var(--face-body);
   font-size: var(--size-lead);
   line-height: 1.5;
+  caret-color: var(--signal);
+  transition: border-color var(--snap), box-shadow var(--snap);
 }
 
 .inv__objective:focus-visible {
-  outline: 2px solid var(--candidate);
+  outline: 2px solid var(--signal-bright);
   outline-offset: 1px;
+  border-color: var(--signal-bright);
 }
 
 .inv__objective:disabled {
-  color: var(--ink-soft);
-  border-color: var(--graphite);
+  color: var(--ink-faint);
+  border-color: var(--rule);
 }
 
 .inv__controls {
@@ -93,30 +97,33 @@
 
 /* The same device the header's provenance bar uses, at the section's scale: a
    lamp, a label, and a sentence saying where the numbers came from. It is not
-   decoration — an offline investigation must never be mistaken for a real one. */
+   decoration — an offline investigation must never be mistaken for a real one,
+   so the lamp is square, filled, and named in words beside itself. */
 .inv__source {
   display: flex;
   align-items: center;
   gap: var(--s3);
   padding: var(--s2) var(--s3);
   background: var(--ground-shade);
-  border: var(--rule);
   flex-wrap: wrap;
 }
 
 .inv__lamp {
   width: 9px;
   height: 9px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--chassis-label);
   flex: none;
 }
 
 .inv__source--http .inv__lamp {
-  background: var(--baseline);
+  background: var(--signal);
+  border-color: var(--signal-bright);
+  box-shadow: var(--glow-signal-soft);
 }
 
 .inv__source--mock .inv__lamp {
-  background: var(--candidate);
+  background: var(--violet);
+  border-color: var(--violet);
 }
 
 .inv__source-note {
@@ -125,12 +132,18 @@
   color: var(--ink-soft);
 }
 
+/* A failed start is stated the way every other condition in this console is:
+   a lit edge on the plate's own perimeter, not a coloured tab stuck to its
+   side. The console draws emphasis on the *top* edge everywhere else, and a
+   callout is not a good enough reason to invent a second convention. */
 .inv__error {
   border: 1px solid var(--candidate);
-  border-left-width: 3px;
+  border-radius: var(--radius-ctl);
   padding: var(--s2) var(--s3);
   color: var(--candidate);
   font-size: var(--size-body);
+  background: linear-gradient(180deg, rgba(255, 95, 87, 0.1), rgba(255, 95, 87, 0.03));
+  box-shadow: inset 0 1px 0 var(--candidate);
 }
 
 /* ------------------------------------------------------------ status bar -- */
@@ -142,39 +155,45 @@
   padding: var(--s2) var(--s5);
   background: var(--chassis);
   color: var(--chassis-label);
-  border-bottom: 2px solid var(--chassis-edge);
+  border-bottom: 1px solid var(--chassis-edge);
+  box-shadow: inset 0 -1px 0 rgba(52, 216, 234, 0.2);
   flex-wrap: wrap;
 }
 
 .inv__statusbar .u-micro {
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .inv__statusbar .u-device {
-  color: var(--chassis-label);
+  color: var(--ink-lamp);
 }
 
 .inv__summary {
   font-family: var(--face-body);
   font-size: var(--size-body);
-  color: var(--chassis-label);
+  color: var(--ink-lamp);
   flex: 1 1 340px;
   min-width: 0;
 }
 
+/* A run status and a risk level are both readings. The word is the reading;
+   the border says how loud it is — solid for a settled state, 2px for a bad
+   one, dashed for one that is still moving or is an absence. Nothing here
+   depends on the ink being seen. */
 .inv__status,
 .inv__risk {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
   padding: 1px var(--s1);
   border: 1px solid currentColor;
+  border-radius: var(--radius-ctl);
 }
 
 .inv__status--completed {
-  color: var(--baseline);
+  color: var(--signal);
 }
 
 .inv__status--failed {
@@ -182,17 +201,18 @@
   border-width: 2px;
 }
 
+/* A run in flight is drawn dashed, because it is moving. */
 .inv__status--running,
 .inv__status--investigating,
 .inv__status--replaying,
 .inv__status--deciding,
 .inv__status--planning {
-  color: var(--chassis-label);
+  color: var(--ink-lamp);
   border-style: dashed;
 }
 
 .inv__status--queued {
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .inv__risk--critical {
@@ -205,11 +225,11 @@
 }
 
 .inv__risk--medium {
-  color: var(--chassis-label);
+  color: var(--amber);
 }
 
 .inv__risk--low {
-  color: var(--graphite);
+  color: var(--ink-faint);
   border-style: dashed;
 }
 
@@ -229,7 +249,7 @@
 }
 
 .inv__col:first-child {
-  border-right: var(--rule-ink);
+  border-right: var(--rule-line);
 }
 
 .inv__col--side {
@@ -238,7 +258,14 @@
 
 .inv__col > .panel {
   border: 0;
-  border-bottom: var(--rule);
+  border-bottom: var(--rule-line);
+  border-radius: 0;
+  /* Stacked track-by-track: the plate chrome would draw a cut and an edge for
+     every panel in the column and read as a stack of chips, so the column
+     keeps its own single frame and the panels inside it are just sections. */
+  clip-path: none;
+  filter: none;
+  box-shadow: none;
 }
 
 .inv__col--side > .panel {
@@ -256,7 +283,7 @@
 
   .inv__col:first-child {
     border-right: 0;
-    border-bottom: var(--rule-ink);
+    border-bottom: var(--rule-line);
   }
 }
 
@@ -271,7 +298,7 @@
 }
 
 .step {
-  border-bottom: var(--rule-faint);
+  border-bottom: var(--rule-line-faint);
 }
 
 .step__row {
@@ -289,29 +316,32 @@
   height: 18px;
   line-height: 1;
   padding: 0;
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-label);
-  border: var(--rule-faint);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-ctl);
   background: var(--ground);
-  color: var(--ink-soft);
+  color: var(--ink-faint);
   cursor: pointer;
-  transition: background var(--snap), color var(--snap);
+  transition:
+    background var(--snap),
+    color var(--snap);
 }
 
 .step__twist:hover {
-  background: var(--ink);
+  background: var(--signal);
   color: var(--ground);
-  border-color: var(--ink);
+  border-color: var(--signal);
 }
 
 .step__twist:focus-visible {
-  outline: 2px solid var(--candidate);
-  outline-offset: 1px;
+  outline: 2px solid var(--signal-bright);
+  outline-offset: 2px;
 }
 
 .step__twist--none {
   border-color: transparent;
-  color: var(--graphite);
+  color: var(--ink-faint);
   cursor: default;
 }
 
@@ -331,54 +361,56 @@
 }
 
 .step__open:hover .step__title {
-  text-decoration: underline;
-  text-decoration-color: var(--candidate);
-  text-underline-offset: 2px;
+  color: var(--signal);
 }
 
 .step__open:focus-visible {
-  outline: 2px solid var(--candidate);
+  outline: 2px solid var(--signal-bright);
   outline-offset: -2px;
 }
 
 .step__seq {
   flex: none;
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 /* The kind is what makes a step a structured action rather than a thought: it
-   is always one of the seven the contract names. */
+   is always one of the seven the contract names, and it is always printed as
+   the word. The kinds are separated by ink and border weight, never by ink
+   alone — a reader who cannot see the palette still reads the word. */
 .step__kind {
   flex: none;
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
   color: var(--ink-soft);
-  border: var(--rule-faint);
+  border: 1px solid var(--graphite);
+  border-radius: var(--radius-ctl);
   padding: 0 3px;
 }
 
 .step[data-kind='risk'] .step__kind {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-
-.step[data-kind='probe'] .step__kind {
-  border-color: var(--baseline);
-  color: var(--baseline);
-}
-
-.step[data-kind='counterfactual'] .step__kind {
   border-color: var(--candidate);
   color: var(--candidate);
 }
 
+.step[data-kind='probe'] .step__kind {
+  border-color: var(--violet);
+  color: var(--violet);
+}
+
+.step[data-kind='counterfactual'] .step__kind {
+  border-color: var(--amber);
+  color: var(--amber);
+  border-style: dashed;
+}
+
 .step[data-kind='decision'] .step__kind {
-  border-color: var(--ink);
+  border-color: var(--signal);
   border-width: 2px;
-  color: var(--ink);
+  color: var(--signal);
 }
 
 .step__title {
@@ -386,35 +418,37 @@
   min-width: 0;
   font-size: var(--size-body);
   line-height: 1.4;
+  color: var(--ink);
 }
 
 .step__targets {
   flex: none;
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .step__status {
   flex: none;
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
   padding: 1px var(--s1);
   border: 1px solid var(--graphite);
+  border-radius: var(--radius-ctl);
   color: var(--ink-soft);
   white-space: nowrap;
 }
 
 .step__status--done {
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--signal);
+  color: var(--signal);
 }
 
 .step__status--running {
-  border-color: var(--baseline);
+  border-color: var(--violet);
   border-style: dashed;
-  color: var(--baseline);
+  color: var(--violet);
 }
 
 .step__status--failed {
@@ -424,22 +458,23 @@
 }
 
 .step__status--pending {
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .step__time {
   flex: none;
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .step__row--on {
-  background: var(--ground-shade);
-  box-shadow: inset 3px 0 0 var(--candidate);
+  background: var(--ground-raise);
+  box-shadow: inset 3px 0 0 var(--signal);
 }
 
 .step__detail-title {
   font-size: var(--size-lead);
-  letter-spacing: 0.02em;
+  letter-spacing: var(--track-head);
+  color: var(--ink);
 }
 
 .step__detail-body {
@@ -452,7 +487,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s2);
-  border-top: var(--rule-ink);
+  border-top: var(--rule-line-ink);
   padding-top: var(--s2);
 }
 
@@ -460,23 +495,25 @@
 
 /* A tool call printed as a form: name, arguments, artefact. This is the
    contract's "structured actions, not hidden reasoning" made visible — there is
-   no field here a transcript could occupy. */
+   no field here a transcript could occupy. The tag rail is the tool channel's
+   own ink, so a probe is distinguishable from a decision at a glance and by
+   its word. */
 .action {
   display: grid;
   grid-template-columns: 62px 1fr;
   gap: var(--s3);
-  border: var(--rule);
   background: var(--ground-shade);
 }
 
 .action__tag {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
-  background: var(--ink);
-  color: var(--ground);
+  background: var(--violet-tint);
+  color: var(--violet);
+  border-right: 1px solid var(--violet);
   padding: var(--s2);
   text-align: center;
 }
@@ -498,7 +535,7 @@
 }
 
 .action__args dt {
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .action__args dd {
@@ -508,7 +545,7 @@
 }
 
 .action__artifact {
-  color: var(--baseline);
+  color: var(--signal);
   word-break: break-all;
 }
 
@@ -532,10 +569,15 @@
   margin-top: var(--s2);
 }
 
+/* An evidence address is a citation. The one that actually supports the
+   finding is marked with a heavier border and the word "root cause" is
+   printed in the decision block beside it — the ink is the third signal, not
+   the first. */
 .evlink {
   font-size: var(--size-micro);
   color: var(--ink-soft);
-  border: var(--rule-faint);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-ctl);
   padding: 1px var(--s2);
   word-break: break-all;
 }
@@ -555,7 +597,7 @@
 
 .memory__item {
   padding: var(--s3);
-  border-bottom: var(--rule-faint);
+  border-bottom: var(--rule-line-faint);
   display: flex;
   flex-direction: column;
   gap: var(--s2);
@@ -570,6 +612,7 @@
 
 .memory__id {
   font-weight: 700;
+  color: var(--ink);
 }
 
 .memory__score {
@@ -581,7 +624,7 @@
 .memory__score-value {
   font-size: var(--size-lead);
   line-height: 1;
-  color: var(--baseline);
+  color: var(--signal);
 }
 
 .memory__reason {
@@ -599,27 +642,30 @@
 .memory__step-link {
   margin: var(--s3);
   align-self: flex-start;
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-label);
   font-weight: 600;
   letter-spacing: var(--track-label);
   text-transform: uppercase;
   padding: var(--s2) var(--s3);
-  border: var(--rule);
+  border: 1px solid var(--signal-edge);
+  border-radius: var(--radius-ctl);
   background: transparent;
-  color: var(--ink);
+  color: var(--signal);
   cursor: pointer;
-  transition: background var(--snap), color var(--snap);
+  transition:
+    background var(--snap),
+    color var(--snap);
 }
 
 .memory__step-link:hover {
-  background: var(--ink);
+  background: var(--signal);
   color: var(--ground);
 }
 
 .memory__step-link:focus-visible {
-  outline: 2px solid var(--candidate);
-  outline-offset: 1px;
+  outline: 2px solid var(--signal-bright);
+  outline-offset: 2px;
 }
 
 /* ------------------------------------------------------- counterfactuals -- */
@@ -630,7 +676,7 @@
 }
 
 .cf__group {
-  border-bottom: var(--rule-ink);
+  border-bottom: var(--rule-line);
 }
 
 .cf__group:last-child {
@@ -643,8 +689,7 @@
   justify-content: space-between;
   gap: var(--s3);
   padding: var(--s2) var(--s3);
-  background: var(--ground-shade);
-  border-bottom: var(--rule);
+  border-bottom: var(--rule-line);
   flex-wrap: wrap;
 }
 
@@ -652,6 +697,7 @@
   font-size: var(--size-body);
   font-weight: 700;
   letter-spacing: 0;
+  color: var(--ink);
 }
 
 .cf__break-even {
@@ -664,7 +710,7 @@
 .cf__break-even-value {
   font-size: var(--size-lead);
   font-weight: 700;
-  color: var(--baseline);
+  color: var(--violet);
   line-height: 1;
 }
 
@@ -676,7 +722,7 @@
 
 .cf__row {
   padding: var(--s3);
-  border-bottom: var(--rule-faint);
+  border-bottom: var(--rule-line-faint);
   display: flex;
   flex-direction: column;
   gap: var(--s2);
@@ -695,15 +741,19 @@
 
 .cf__intervention {
   font-weight: 700;
+  color: var(--ink);
 }
 
+/* A replay's verdict: the word is always printed, and the border weight and
+   style separate a root cause from a partial from a null reading. */
 .cf__verdict {
-  font-family: var(--face-label);
+  font-family: var(--face-panel);
   font-size: var(--size-micro);
   font-weight: 600;
   letter-spacing: var(--track-micro);
   text-transform: uppercase;
   border: 1px solid currentColor;
+  border-radius: var(--radius-ctl);
   padding: 0 3px;
 }
 
@@ -713,15 +763,15 @@
 }
 
 .cf__verdict--partial {
-  color: var(--candidate);
+  color: var(--amber);
 }
 
 .cf__verdict--no_effect {
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
 .cf__verdict--inconclusive {
-  color: var(--graphite);
+  color: var(--ink-soft);
   border-style: dashed;
 }
 
@@ -780,11 +830,14 @@
 }
 
 .cf__delta--flat {
-  color: var(--graphite);
+  color: var(--ink-faint);
 }
 
+/* The reasoning behind a replay is available but not asserted: it is folded
+   away, and the summary that reveals it is a control with a visible focus
+   ring, because the reasoning is evidence and has to be reachable. */
 .cf__why {
-  border-top: var(--rule-faint);
+  border-top: var(--rule-line-faint);
   margin-top: var(--s1);
   padding-top: var(--s2);
 }
@@ -794,8 +847,12 @@
   color: var(--ink-soft);
 }
 
+.cf__why > summary:hover {
+  color: var(--signal);
+}
+
 .cf__why > summary:focus-visible {
-  outline: 2px solid var(--candidate);
+  outline: 2px solid var(--signal-bright);
   outline-offset: 2px;
 }
 
@@ -816,9 +873,11 @@
   flex-wrap: wrap;
 }
 
+/* The decision is the loudest reading on the surface, and it is a word. Block
+   is the departure ink, review is the unsettled ink, allow is the signal's. */
 .decision__word {
   font-size: var(--size-verdict);
-  letter-spacing: 0.03em;
+  letter-spacing: var(--track-head);
   text-transform: uppercase;
   line-height: 1;
 }
@@ -828,11 +887,11 @@
 }
 
 .decision__word--review {
-  color: var(--ink);
+  color: var(--amber);
 }
 
 .decision__word--allow {
-  color: var(--baseline);
+  color: var(--signal);
 }
 
 .decision__summary {
@@ -841,6 +900,8 @@
   color: var(--ink-soft);
 }
 
+/* Actions are numbered because the number is the order they must be taken in,
+   which is information the reader needs — not decoration. */
 .decision__actions {
   list-style: none;
   counter-reset: action;
@@ -858,15 +919,16 @@
   gap: var(--s2);
   font-size: var(--size-body);
   line-height: 1.5;
+  color: var(--ink);
   padding-bottom: var(--s1);
-  border-bottom: var(--rule-faint);
+  border-bottom: var(--rule-line-faint);
 }
 
 .decision__action::before {
   content: counter(action, decimal-leading-zero);
-  font-family: var(--face-device);
+  font-family: var(--face-readout);
   font-size: var(--size-micro);
-  color: var(--candidate);
+  color: var(--signal);
 }
 
 /* --------------------------------------------------------------- report -- */
@@ -877,13 +939,13 @@
   justify-content: space-between;
   gap: var(--s5);
   padding: var(--s4) var(--s5);
-  border-top: 2px solid var(--ink);
+  border-top: 1px solid var(--signal-edge);
   background: var(--ground);
   flex-wrap: wrap;
 }
 
 .inv__report-url {
-  color: var(--graphite);
+  color: var(--ink-faint);
   word-break: break-all;
 }
 
@@ -905,7 +967,7 @@
   }
 }
 
-/* DESIGN.md's narrow-screen pass: the header, viewbar and notice lose their
+/* The console's narrow-screen pass: the header, viewbar and notice lose their
    generous gutters, and this surface loses them with them. */
 @media (max-width: 900px) {
   .inv__intake,

@@ -1,6 +1,8 @@
 /* Entry point for every style in the console. Order matters: tokens define
-   the variables the rest resolve against. */
+   the variables the rest resolve against, and hud carries the plate material
+   the page stylesheets then arrange. */
 @import './tokens.css';
+@import './hud.css';
 @import './shell.css';
 @import './tape.css';
 @import './record.css';
