@@ -14,7 +14,7 @@ EvalPilot is an autonomous release-quality digital employee: it confirms whether
 
 ## Detailed description
 
-EvalPilot 面向 AI 产品与研究团队，解决模型、Prompt、检索、记忆或工具链更新后“看起来更好，却可能悄悄变差”的发布风险。系统首先对 baseline 与 candidate 执行同一组匹配场景，区分真实回归、测试难度变化和采样噪声；确认回归后，自主调查会生成风险假设、召回历史事故、追加探查，并通过反事实重放分别禁用可疑变更，测量失败是否消失。最终，系统输出 BLOCK / REVIEW / ALLOW 发布决策、根因、修复建议和可下载的证据报告。当前演示中，v1.1 虽然更快且普通问答仍通过，但压缩层导致 7 个条款丢失场景回归，安全护栏导致 1 个凭证泄露场景回归；26 个匹配场景、18 个控制组和配对置信区间共同确认这是发布阻断问题。系统默认离线可复现，同时支持接入 OpenAI-compatible 大模型进行自主规划和评审解释，且大模型不能覆盖实测证据和阻断结论。
+EvalPilot 面向 AI 产品与研究团队，解决模型、Prompt、检索、记忆或工具链更新后“看起来更好，却可能悄悄变差”的发布风险。系统首先对 baseline 与 candidate 执行同一组匹配场景，区分真实回归、测试难度变化和采样噪声；确认回归后，自主调查会生成风险假设、召回历史事故、追加探查，并通过反事实重放分别禁用可疑变更，测量失败是否消失。最终，系统输出 BLOCK / REVIEW / ALLOW 发布决策、根因、修复建议和可下载的证据报告，并通过 GET /api/runs/{run_id}/gate 返回 0 / 1 / 2 退出码，直接接入 CI/CD 发布流水线。当前演示中，v1.1 虽然更快且普通问答仍通过，但压缩层导致 7 个条款丢失场景回归，安全护栏导致 1 个凭证泄露场景回归；26 个匹配场景、18 个控制组和配对置信区间共同确认这是发布阻断问题。系统默认离线可复现，同时支持接入 OpenAI-compatible 大模型进行自主规划和评审解释，且大模型不能覆盖实测证据和阻断结论。
 
 ## Scoring alignment
 
@@ -29,7 +29,9 @@ EvalPilot 面向 AI 产品与研究团队，解决模型、Prompt、检索、记
 - Primary user: AI product, platform, evaluation, and QA teams shipping LLM applications.
 - Trigger: model, prompt, retrieval, memory, or tool update before release.
 - Value: convert hours of manual release checks into an auditable minutes-scale gate.
-- Path: project-based validation -> team subscription -> usage-based continuous evaluation.
+- Public paid competitors establish willingness to pay across seat and usage models.
+- Integration path: REST API -> release-gate report -> CI exit code -> team subscription -> enterprise self-host.
+- Revenue motions: fixed-scope release audit, monthly team gate, annual enterprise deployment.
 
 ### Innovation
 

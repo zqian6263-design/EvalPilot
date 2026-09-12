@@ -292,6 +292,23 @@ class RunDetail(_Model):
     event_count: int
 
 
+class ReleaseGate(_Model):
+    """Machine-readable CI gate derived from one completed run report."""
+
+    run_id: str
+    decision: Literal["allow", "review", "block"]
+    exit_code: int
+    regression_detected: bool
+    regression_confirmed: bool
+    baseline_pass_rate: float
+    candidate_pass_rate: float
+    mean_difference: float | None = None
+    ci_lower: float | None = None
+    ci_upper: float | None = None
+    threshold: float | None = None
+    reasons: list[str] = Field(default_factory=list)
+    report_url: str
+
 class InvestigationDetail(_Model):
     """``GET /investigations/{id}`` -> the full investigation artifact."""
 

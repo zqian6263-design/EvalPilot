@@ -148,6 +148,48 @@ def test_report_unavailable_before_completion(client: TestClient, project: dict)
     assert response.status_code == 409
 
 
+def test_release_gate_turns_a_confirmed_regression_into_a_block(
+    client: TestClient, project: dict
+) -> None:
+    run = client.post(
+        "/api/runs",
+        json={
+            "project_id": project["id"],
+            "baseline_version": "v1.0-baseline",
+            "candidate_version": "v1.1-candidate",
+            "case_count": 26,
+            "seed": 20260919,
+        },
+    ).json()
+    start_and_wait(client, run["id"])
+
+    gate = client.get(f"/api/runs/{run['id']}/gate")
+    assert gate.status_code == 200
+    payload = gate.json()
+    assert payload["decision"] == "block"
+    assert payload["exit_code"] == 2
+    assert payload["regression_confirmed"] is True
+    assert payload["reasons"] == ["regression_confirmed"]
+    assert payload["report_url"].endswith(f"/api/runs/{run['id']}/report")
+
+
+def test_release_gate_is_unavailable_before_completion(
+    client: TestClient, project: dict
+) -> None:
+    run = client.post(
+        "/api/runs",
+        json={
+            "project_id": project["id"],
+            "baseline_version": "a",
+            "candidate_version": "b",
+        },
+    ).json()
+    assert client.get(f"/api/runs/{run['id']}/gate").status_code == 409
+
+
+def test_release_gate_unknown_run_returns_404(client: TestClient) -> None:
+    assert client.get("/api/runs/does-not-exist/gate").status_code == 404
+
 def test_report_unknown_run_returns_404(client: TestClient) -> None:
     assert client.get("/api/runs/does-not-exist/report").status_code == 404
 
@@ -284,6 +326,7 @@ def test_openapi_schema_includes_all_contract_paths(client: TestClient) -> None:
         "/api/runs/{run_id}/start",
         "/api/runs/{run_id}/cancel",
         "/api/runs/{run_id}/report",
+        "/api/runs/{run_id}/gate",
         "/api/demo/seed",
     ):
         assert path in paths, f"{path} missing from OpenAPI schema"

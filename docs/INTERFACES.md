@@ -77,6 +77,7 @@ Base path: `/api`
 - `POST /runs/{run_id}/start` -> start an asynchronous run
 - `POST /runs/{run_id}/cancel` -> cancel a run
 - `GET /runs/{run_id}/report` -> `Report`
+- `GET /runs/{run_id}/gate` -> `ReleaseGate` (exit codes: 0 allow, 1 review, 2 block)
 - `GET /runs/{run_id}/events` -> server-sent events or newline-delimited progress events for MVP
 - `GET /demo/seed` -> deterministic demo metadata only; no side effects
 

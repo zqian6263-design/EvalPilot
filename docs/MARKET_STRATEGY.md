@@ -12,6 +12,14 @@ the tests can falsify them. Where a number appears it is either a *target*, a
 > `docs/MARKET_STRATEGY.md`. If the submission requires it at `docs/`, move the
 > file — no path inside it depends on its location.
 
+> **Competition evidence note (2026-09-12).** External interviews are useful but
+> are not required by the competition's market-feasibility criterion and are not
+> a prerequisite for this submission. The active evidence path is public vendor
+> pricing, public adoption signals, executable CI integration, deployment
+> feasibility, pricing motions, and unit-economics measurement in
+> `docs/MARKET_EVIDENCE_PACK.md`. The interview plan later in this document is
+> optional supporting research, not a blocker.
+
 ## 0. Zero-traction disclosure
 
 Read this before anything below.

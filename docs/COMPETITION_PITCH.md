@@ -24,10 +24,11 @@ EvalPilot is a digital quality employee with a closed loop:
 6. Combine deterministic checks with rubric-based LLM judging.
 7. Compare matched cases across versions using repeated samples.
 8. Produce findings, confidence, root-cause hints, and recommendations.
+9. Expose a CI gate with machine exit codes: 0 allow, 1 review, 2 block.
 
 ## Differentiated innovation
 
-The key differentiator is **causal regression comparison**, not another chatbot wrapper. EvalPilot controls case difficulty and randomness, uses paired samples, reports uncertainty, and refuses to call a noisy score change a regression. Every verdict is evidence-backed and reproducible.
+The key differentiator is **causal regression comparison**, not another chatbot wrapper. EvalPilot controls case difficulty and randomness, uses paired samples, reports uncertainty, and refuses to call a noisy score change a regression. Every verdict is evidence-backed and reproducible. The decision can also be enforced directly in CI because the gate returns standard machine exit codes.
 
 ## Initial market
 
