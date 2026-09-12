@@ -1069,3 +1069,76 @@
     display: none;
   }
 }
+
+/* ============================================================================
+   Professional light overrides
+   ========================================================================= */
+
+.mkt {
+  --mkt-grid: #e5e7eb;
+  --mkt-grid-ink: #cbd5e1;
+  --mkt-band: rgba(37, 99, 235, 0.06);
+  --mkt-band-edge: rgba(37, 99, 235, 0.22);
+  --mkt-cost: #2563eb;
+  --mkt-empty: #ffffff;
+}
+
+.mkt [class] {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.mkt__masthead {
+  background: #fff7f7;
+  border-color: #fca5a5;
+  border-width: 1px;
+  border-left-width: 3px;
+}
+
+.mkt__title {
+  font-size: var(--size-head);
+  font-weight: 700;
+}
+
+.mkt__disclosure {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  box-shadow: none;
+}
+
+.mkt__block,
+.mkt__actions,
+.mkt__prices,
+.mkt__stages,
+.mkt__moat,
+.mkt__ledgers,
+.mkt__band,
+.mkt__counts,
+.mkt__assumptions,
+.mkt__criteria {
+  background: var(--ground-lit);
+  border-color: var(--rule);
+  box-shadow: none;
+}
+
+.mkt__block-title {
+  font-size: var(--size-lead);
+  font-weight: 700;
+}
+
+.mkt__ledger {
+  background: var(--ground-lit);
+  border-right: 1px solid var(--rule);
+}
+
+.mkt__ledger--missing {
+  background: #fffbeb;
+}
+
+.mkt__action-verify {
+  border-left-color: var(--rule);
+}
+
+.mkt__footer {
+  border-top: 1px solid var(--rule);
+}

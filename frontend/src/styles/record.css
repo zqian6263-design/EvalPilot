@@ -625,3 +625,75 @@
 .event--complete .event__message {
   font-weight: 700;
 }
+
+/* ============================================================================
+   Professional light overrides
+   ========================================================================= */
+
+.record-wrap {
+  background: var(--ground-lit);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.record th {
+  font-size: var(--size-label);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+  background: var(--ground-shade);
+  border-bottom: 1px solid var(--rule);
+}
+
+.record td {
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.record__open {
+  border-bottom: 0;
+}
+
+.record__open:hover {
+  color: var(--signal-bright);
+  border-bottom-color: transparent;
+}
+
+.filters {
+  background: var(--ground-shade);
+  border-bottom: 1px solid var(--rule);
+}
+
+.drawer__close {
+  border-color: var(--rule);
+  color: var(--ink-soft);
+  background: var(--ground-lit);
+}
+
+.drawer__close:hover {
+  background: var(--ground-raise);
+  color: var(--signal-bright);
+}
+
+.ev {
+  background: var(--ground-lit);
+}
+
+.ev__head {
+  background: var(--ground-shade);
+  border-bottom: 1px solid var(--rule);
+}
+
+.ev__kind,
+.ev__label {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ev__kind {
+  color: var(--ink-soft);
+}
+
+.ev__label {
+  color: var(--ink-faint);
+}

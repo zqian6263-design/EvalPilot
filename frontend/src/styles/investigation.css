@@ -976,3 +976,116 @@
     padding-inline: var(--s3);
   }
 }
+
+/* ============================================================================
+   Professional light overrides
+   ========================================================================= */
+
+.inv__intake,
+.inv__statusbar,
+.inv__source,
+.inv__report {
+  background: var(--ground-lit);
+  border-color: var(--rule);
+  box-shadow: none;
+}
+
+.inv__title,
+.inv__status,
+.inv__risk,
+.step__kind,
+.step__status,
+.step__seq,
+.action__tag,
+.cf__verdict,
+.decision__word {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.inv__title {
+  font-size: var(--size-head);
+  font-weight: 700;
+}
+
+.inv__objective {
+  max-width: 100%;
+  border-color: var(--rule);
+  background: var(--ground-lit);
+  font-size: var(--size-body);
+}
+
+.inv__lamp {
+  width: 8px;
+  height: 8px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--graphite);
+}
+
+.inv__source--http .inv__lamp {
+  background: #16a34a;
+  box-shadow: none;
+}
+
+.inv__source--mock .inv__lamp {
+  background: var(--amber);
+}
+
+.inv__error {
+  background: #fff7f7;
+  box-shadow: none;
+}
+
+.inv__statusbar .u-device,
+.inv__summary {
+  color: var(--ink);
+}
+
+.inv__body {
+  gap: var(--s4);
+}
+
+.panel {
+  overflow: hidden;
+}
+
+.step__row {
+  background: var(--ground-lit);
+}
+
+.step__row:hover {
+  background: var(--ground-shade);
+}
+
+.action,
+.shot {
+  background: var(--ground-shade);
+  border-color: var(--rule);
+  border-radius: var(--radius-ctl);
+}
+
+.cf__group {
+  background: var(--ground-lit);
+  border-color: var(--rule);
+}
+
+.cf__verdict {
+  padding: 2px var(--s2);
+  border-radius: 999px;
+}
+
+.decision__word {
+  font-size: var(--size-verdict);
+  font-weight: 700;
+}
+
+.inv__report {
+  border-top: 1px solid var(--rule);
+}
+
+@media (max-width: 900px) {
+  .inv__body {
+    gap: var(--s3);
+  }
+}

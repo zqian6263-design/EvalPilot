@@ -380,3 +380,123 @@
     max-height: 0.7em;
   }
 }
+
+/* ============================================================================
+   Professional light overrides
+   ========================================================================= */
+
+.tape {
+  --plot-grid: #e5e7eb;
+  --plot-grid-faint: #f1f5f9;
+  --plot-baseline: #2563eb;
+  --plot-baseline-dim: #93c5fd;
+  --plot-candidate: #dc2626;
+  --plot-candidate-dim: #fca5a5;
+  --plot-band: rgba(37, 99, 235, 0.06);
+  --plot-band-edge: rgba(37, 99, 235, 0.22);
+  --plot-empty: #ffffff;
+}
+
+.tape__chassis {
+  background: var(--ground-lit);
+  border-bottom: 1px solid var(--rule);
+  box-shadow: none;
+}
+
+.tape__plate-label,
+.transport__key,
+.tape__watermark {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.tape__plate-label {
+  color: var(--ink-faint);
+}
+
+.tape__plate-value {
+  color: var(--ink);
+}
+
+.transport__key {
+  min-width: 68px;
+  border-color: var(--rule);
+  color: var(--ink);
+  background: var(--ground-lit);
+}
+
+.transport__key:hover:not(:disabled) {
+  background: var(--ground-raise);
+  color: var(--signal-bright);
+  border-color: var(--signal-edge);
+}
+
+.transport__key--run {
+  border-width: 1px;
+  border-color: var(--signal);
+  color: var(--signal-bright);
+}
+
+.tape__paper {
+  background: var(--ground-lit);
+}
+
+.tape__tag {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.stamp {
+  border: 1px solid #fca5a5;
+  background: #fef2f2;
+}
+
+.stamp__word {
+  font-size: var(--size-head);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.stamp--clear,
+.stamp--better {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.tape__ticks {
+  border-top: 1px solid var(--rule);
+  background: var(--ground-lit);
+}
+
+.tick {
+  min-width: 28px;
+  border-color: var(--rule);
+  background: var(--ground-lit);
+}
+
+.tick:hover,
+.tick--on {
+  background: var(--ground-raise);
+  color: var(--signal-bright);
+  border-color: var(--signal-edge);
+}
+
+.tick--down::after {
+  display: none;
+}
+
+.seam {
+  background: var(--ground-lit);
+  color: var(--ink);
+}
+
+.seam__half:first-child {
+  border-bottom: 1px dashed var(--rule);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .seam__clipped {
+    animation: none;
+  }
+}

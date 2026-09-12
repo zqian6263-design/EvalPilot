@@ -590,3 +590,98 @@
     padding: 0;
   }
 }
+
+/* ============================================================================
+   Professional light overrides
+   ========================================================================= */
+
+.sheet {
+  max-width: 1120px;
+  gap: var(--s5);
+}
+
+.sheet__masthead {
+  border-bottom: 1px solid var(--rule);
+}
+
+.sheet__doctype,
+.ledger__key,
+.finding__sev,
+.scenario__name,
+.metric__name,
+.metric__version,
+.verdict-card__word {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sheet__title {
+  font-size: var(--size-head);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sheet__summary {
+  font-size: var(--size-body);
+  line-height: 1.7;
+}
+
+.ledger {
+  border-top: 1px solid var(--rule);
+}
+
+.ledger__key,
+.ledger__val {
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.finding {
+  background: var(--ground-lit);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.finding__rail {
+  background: var(--ground-shade);
+  border-right: 1px solid var(--rule);
+}
+
+.finding__sev {
+  font-size: var(--size-body);
+  line-height: 1.2;
+}
+
+.finding__sev--critical {
+  text-decoration: none;
+}
+
+.finding__rec {
+  border-top: 1px solid var(--rule);
+}
+
+.signoff {
+  border-top: 1px solid var(--rule);
+}
+
+.scenario__options {
+  background: var(--ground-lit);
+}
+
+.scenario__option[aria-pressed='true'] {
+  background: var(--ground-raise);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.analysis,
+.verdict-card,
+.metric,
+.comparison {
+  background: var(--ground-lit);
+}
+
+.verdict-card__word {
+  font-size: var(--size-verdict);
+  line-height: 1.1;
+}
