@@ -110,6 +110,8 @@ _SYSTEM_PLANNER = (
     "- Cite only scenario ids that appear in the input, and cite at least one "
     "for every hypothesis.\n"
     "- Do not include private reasoning. State the claim and the mechanism.\n"
+    "Write every human-readable claim, mechanism and discarded text in Simplified Chinese. "
+    "Keep scenario ids and enum values exactly as supplied.\n"
     "Reply with JSON only, shaped exactly as: "
     '{"hypotheses": [{"kind": "<kind>", "claim": "<text>", '
     '"mechanism": "<text>", "scenario_ids": ["<scenario_id>"], '
@@ -127,6 +129,7 @@ _SYSTEM_DECISION = (
     "input, and return them in \"evidence_ids\".\n"
     "- Never invent a metric, a scenario or an evidence id.\n"
     "- Do not include private reasoning. State the conclusion and the actions.\n"
+    "Write the rationale and recommendations in Simplified Chinese. Keep all ids and enum values unchanged.\n"
     "Reply with JSON only, shaped exactly as: "
     '{"verdict": "<block|review|allow>", "risk_level": '
     '"<critical|high|medium|low>", "rationale": "<text>", '
@@ -281,6 +284,7 @@ def build_judge_prompt(
     if context:
         parts.append(f"Retrieved context:\n{context}")
     parts.append(
+        "Write every rationale in Simplified Chinese. Keep criterion names and numeric fields unchanged.\n"
         "Reply with JSON only, shaped exactly as: "
         '{"score": <0..1>, "confidence": <0..1>, "rationale": "<text>", '
         '"criteria": [{"name": "<criterion>", "score": <0..1>, '
