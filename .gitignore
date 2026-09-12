@@ -16,3 +16,7 @@ coverage/
 # tracked PIDs, captured server logs, and the console screenshot. All of it is
 # regenerated per run and none of it belongs in a review diff.
 .runtime/
+
+# Generated competition media; uploaded separately and not stored in Git.
+release/
+
