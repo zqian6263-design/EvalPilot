@@ -321,6 +321,7 @@ export function App(): React.JSX.Element {
             {route.view === 'investigation' && (
               <InvestigationWorkspace
                 runId={live.run.id}
+                autoStart={route.autoDemo}
                 runContext={{
                   baselineVersion: live.run.baseline_version,
                   candidateVersion: live.run.candidate_version,

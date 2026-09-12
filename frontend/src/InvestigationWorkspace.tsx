@@ -72,6 +72,8 @@ export interface InvestigationWorkspaceProps {
   onStarted?: ((objective: string, runId: string) => void) | undefined
   /** Injected in tests; the workspace builds its own when omitted. */
   transport?: InvestigationTransport | undefined
+  /** Start as soon as a run id is available, for an automated demo deep link. */
+  autoStart?: boolean | undefined
 }
 
 type Source = 'http' | 'mock'
@@ -138,6 +140,7 @@ export function InvestigationWorkspace({
   defaultObjectiveText,
   onStarted,
   transport: injected,
+  autoStart,
 }: InvestigationWorkspaceProps): React.JSX.Element {
   const [transport, setTransport] = useState<InvestigationTransport | null>(injected ?? null)
   const [info, setInfo] = useState<InvestigationTransportInfo | null>(
@@ -153,6 +156,7 @@ export function InvestigationWorkspace({
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null)
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
   const abortRef = useRef<AbortController | null>(null)
+  const autoStartedRef = useRef(false)
 
   useEffect(() => () => abortRef.current?.abort(), [])
 
@@ -223,6 +227,13 @@ export function InvestigationWorkspace({
       setStarting(false)
     }
   }
+
+
+  useEffect(() => {
+    if (!autoStart || !resolvedRunId || autoStartedRef.current) return
+    autoStartedRef.current = true
+    void start()
+  }, [autoStart, resolvedRunId, start])
 
   const investigation = run?.investigation ?? null
   const status = investigation?.status ?? 'queued'
