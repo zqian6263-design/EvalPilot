@@ -101,6 +101,34 @@ def test_complete_json_returns_a_validated_payload() -> None:
     }
 
 
+def test_complete_json_records_token_usage() -> None:
+    import asyncio
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {"message": {"role": "assistant", "content": '{"items":[{"kind":"a"}]}'}}
+                ],
+                "usage": {
+                    "prompt_tokens": 120,
+                    "completion_tokens": 30,
+                    "total_tokens": 150,
+                },
+            },
+        )
+
+    provider = make_provider(transport=httpx.MockTransport(handler))
+    result = asyncio.run(provider.complete_json(MESSAGES, SCHEMA))
+    assert result.usage == {
+        "prompt_tokens": 120,
+        "completion_tokens": 30,
+        "total_tokens": 150,
+    }
+    assert result.provenance()["usage"] == result.usage
+
+
 def test_client_sends_the_model_and_a_bearer_header() -> None:
     import asyncio
 

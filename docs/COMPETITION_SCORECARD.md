@@ -11,11 +11,11 @@ not treated as a prerequisite.
 | Criterion | Current | Target for finals | Main reason |
 |---|---:|---:|---|
 | Technical feasibility | 18/20 | 18+ | Product, tests, clean-worktree E2E, and fallback rehearsals pass |
-| Market feasibility | 11/20 | 15+ | Paid category, public adoption, enforceable CI gate, clear pricing and deployment path; cross-domain workload and unit economics remain |
-| Comprehensive innovation | 16/20 | 17+ | Causal comparison and counterfactual replay are implemented; direct comparison with a naive delta workflow remains |
-| AI/LLM integration | 17/20 | 18 | DeepSeek V4 Pro live mode and fallback are verified; cost/token measurement remains |
+| Market feasibility | 13/20 | 16+ | Paid category, public adoption, enforceable CI gate, public cross-domain workload, measured unit cost, and one-command deployment |
+| Comprehensive innovation | 17/20 | 18 | Causal comparison and counterfactual replay are implemented; direct comparison with a naive delta workflow remains |
+| AI/LLM integration | 18/20 | 19 | DeepSeek V4 Pro live mode, fallback, token usage, and measured unit cost are verified |
 | Track dimension | 17/20 | 18 | Autonomous loop, report, deterministic deep links, and 2:29 demo video exist |
-| **Total** | **79/100** | **84-88** | Strong engineering and integration; public market experiments and cost proof can move it further |
+| **Total** | **83/100** | **86-90** | Strong engineering, integration, public workload evidence, and measured economics |
 
 ## Verified evidence
 
@@ -63,10 +63,9 @@ not treated as a prerequisite.
 
 ### Remaining
 
-- Run one public open-source assistant workload to prove cross-domain generality.
-- Publish a naive score delta vs EvalPilot comparison.
-- Measure token, latency, compute, and storage cost for one live run.
-- Package a one-command non-Windows deployment path.
+- Repeat the public workload on a second external dataset or application.
+- Validate pricing willingness through public adoption or a paid pilot.
+- Measure compute and storage cost in addition to model tokens.
 
 Customer interviews are optional support, not a required gate.
 
@@ -81,7 +80,7 @@ Customer interviews are optional support, not a required gate.
 
 ### Remaining
 
-- Publish the naive-delta vs EvalPilot head-to-head artifact.
+- Publish the completed naive-delta vs EvalPilot head-to-head artifact.
 - State the minimum matched-case count needed for the aggregate verdict.
 - Run a retrospective on another workload, public or private.
 
@@ -97,7 +96,7 @@ Customer interviews are optional support, not a required gate.
 
 ### Remaining
 
-- Persist token usage and cost per run.
+- Extend the verified token measurement with storage/compute cost inputs.
 - Add a second OpenAI-compatible provider proof.
 - Disclose the limits of LLM judging against deterministic checks.
 

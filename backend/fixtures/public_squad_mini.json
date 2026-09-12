@@ -1,0 +1,191 @@
+{
+  "source": "rajpurkar/squad",
+  "config": "plain_text",
+  "split": "validation",
+  "source_url": "https://huggingface.co/datasets/rajpurkar/squad",
+  "license": "CC BY-SA 4.0",
+  "selection": "16 validation rows sampled across offsets with distinct article titles",
+  "rows": [
+    {
+      "id": "56be4db0acb8001400a502ec",
+      "title": "Super_Bowl_50",
+      "context": "Super Bowl 50 was an American football game to determine the champion of the National Football League (NFL) for the 2015 season. The American Football Conference (AFC) champion Denver Broncos defeated the National Football Conference (NFC) champion Carolina Panthers 24–10 to earn their third Super Bowl title. The game was played on February 7, 2016, at Levi's Stadium in the San Francisco Bay Area at Santa Clara, California. As this was the 50th Super Bowl, the league emphasized the \"golden anniversary\" with various gold-themed initiatives, as well as temporarily suspending the tradition of naming each Super Bowl game with Roman numerals (under which the game would have been known as \"Super Bowl L\"), so that the logo could prominently feature the Arabic numerals 50.",
+      "question": "Which NFL team represented the AFC at Super Bowl 50?",
+      "answers": [
+        "Denver Broncos",
+        "Denver Broncos",
+        "Denver Broncos"
+      ]
+    },
+    {
+      "id": "573368044776f41900660a2a",
+      "title": "Warsaw",
+      "context": "Other green spaces in the city include the Botanic Garden and the University Library garden. They have extensive botanical collection of rare domestic and foreign plants, while a palm house in the New Orangery displays plants of subtropics from all over the world. Besides, within the city borders, there are also: Pole Mokotowskie (a big park in the northern Mokotów, where was the first horse racetrack and then the airport), Park Ujazdowski (close to the Sejm and John Lennon street), Park of Culture and Rest in Powsin, by the southern city border, Park Skaryszewski by the right Vistula bank, in Praga. The oldest park in Praga, the Praga Park, was established in 1865–1871 and designed by Jan Dobrowolski. In 1927 a zoological garden (Ogród Zoologiczny) was established on the park grounds, and in 1952 a bear run, still open today.",
+      "question": "Where is a palm house with subtropic plants from all over the world on display?",
+      "answers": [
+        "New Orangery",
+        "New Orangery",
+        "New Orangery"
+      ]
+    },
+    {
+      "id": "56dfa3c338dc421700152156",
+      "title": "Nikola_Tesla",
+      "context": "In 1875, Tesla enrolled at Austrian Polytechnic in Graz, Austria, on a Military Frontier scholarship. During his first year, Tesla never missed a lecture, earned the highest grades possible, passed nine exams (nearly twice as many required), started a Serbian culture club, and even received a letter of commendation from the dean of the technical faculty to his father, which stated, \"Your son is a star of first rank.\" Tesla claimed that he worked from 3 a.m. to 11 p.m., no Sundays or holidays excepted. He was \"mortified when [his] father made light of [those] hard won honors.\" After his father's death in 1879, Tesla found a package of letters from his professors to his father, warning that unless he were removed from the school, Tesla would be killed through overwork. During his second year, Tesla came into conflict with Professor Poeschl over the Gramme dynamo, when Tesla suggested that commutators weren't necessary. At the end of his second year, Tesla lost his scholarship and became addicted to gambling. During his third year, Tesla gambled away his allowance and his tuition money, later gambling back his initial losses and returning the balance to his family. Tesla said that he \"conquered [his] passion then and there,\" but later he was known to play billiards in the US. When exam time came, Tesla was unprepared and asked for an extension to study, but was denied. He never graduated from the university and did not receive grades for the last semester.",
+      "question": "In what year did Tesla's father die?",
+      "answers": [
+        "1879",
+        "1879",
+        "1879"
+      ]
+    },
+    {
+      "id": "56e1b62ecd28a01900c67aa3",
+      "title": "Computational_complexity_theory",
+      "context": "For a precise definition of what it means to solve a problem using a given amount of time and space, a computational model such as the deterministic Turing machine is used. The time required by a deterministic Turing machine M on input x is the total number of state transitions, or steps, the machine makes before it halts and outputs the answer (\"yes\" or \"no\"). A Turing machine M is said to operate within time f(n), if the time required by M on each input of length n is at most f(n). A decision problem A can be solved in time f(n) if there exists a Turing machine operating in time f(n) that solves the problem. Since complexity theory is interested in classifying problems based on their difficulty, one defines sets of problems based on some criteria. For instance, the set of problems solvable within time f(n) on a deterministic Turing machine is then denoted by DTIME(f(n)).",
+      "question": "The time required to output an answer on a deterministic Turing machine is expressed as what?",
+      "answers": [
+        "state transitions",
+        "the total number of state transitions, or steps",
+        "total number of state transitions, or steps, the machine makes before it halts and outputs the answer"
+      ]
+    },
+    {
+      "id": "56e762fe00c9c71400d77074",
+      "title": "Teacher",
+      "context": "Teachers that exhibit enthusiasm can lead to students who are more likely to be engaged, interested, energetic, and curious about learning the subject matter. Recent research has found a correlation between teacher enthusiasm and students' intrinsic motivation to learn and vitality in the classroom. Controlled, experimental studies exploring intrinsic motivation of college students has shown that nonverbal expressions of enthusiasm, such as demonstrative gesturing, dramatic movements which are varied, and emotional facial expressions, result in college students reporting higher levels of intrinsic motivation to learn. Students who experienced a very enthusiastic teacher were more likely to read lecture material outside of the classroom.",
+      "question": "What is dramatic gesturing an example of?",
+      "answers": [
+        "nonverbal expressions of enthusiasm",
+        "nonverbal expressions of enthusiasm",
+        "nonverbal expressions of enthusiasm"
+      ]
+    },
+    {
+      "id": "56f80fdfaef2371900625d98",
+      "title": "Martin_Luther",
+      "context": "Archbishop Albrecht of Mainz and Magdeburg did not reply to Luther's letter containing the 95 Theses. He had the theses checked for heresy and in December 1517 forwarded them to Rome. He needed the revenue from the indulgences to pay off a papal dispensation for his tenure of more than one bishopric. As Luther later noted, \"the pope had a finger in the pie as well, because one half was to go to the building of St Peter's Church in Rome\".",
+      "question": "How much of the indulgences went to Rome?",
+      "answers": [
+        "one half",
+        "one half",
+        "half"
+      ]
+    },
+    {
+      "id": "570d44abb3d812140066d600",
+      "title": "Victoria_(Australia)",
+      "context": "As of August 2010, Victoria had 1,548 public schools, 489 Catholic schools and 214 independent schools. Just under 540,800 students were enrolled in public schools, and just over 311,800 in private schools. Over 61 per cent of private students attend Catholic schools. More than 462,000 students were enrolled in primary schools and more than 390,000 in secondary schools. Retention rates for the final two years of secondary school were 77 per cent for public school students and 90 per cent for private school students. Victoria has about 63,519 full-time teachers.",
+      "question": "How many full time teachers does Victoria have?",
+      "answers": [
+        "63,519",
+        "63,519",
+        "63,519"
+      ]
+    },
+    {
+      "id": "571a4d1a4faf5e1900b8a958",
+      "title": "Oxygen",
+      "context": "In the meantime, on August 1, 1774, an experiment conducted by the British clergyman Joseph Priestley focused sunlight on mercuric oxide (HgO) inside a glass tube, which liberated a gas he named \"dephlogisticated air\". He noted that candles burned brighter in the gas and that a mouse was more active and lived longer while breathing it. After breathing the gas himself, he wrote: \"The feeling of it to my lungs was not sensibly different from that of common air, but I fancied that my breast felt peculiarly light and easy for some time afterwards.\" Priestley published his findings in 1775 in a paper titled \"An Account of Further Discoveries in Air\" which was included in the second volume of his book titled Experiments and Observations on Different Kinds of Air. Because he published his findings first, Priestley is usually given priority in the discovery.",
+      "question": "\"An Account of Further Discoveries in Air\" was published by who in 1775?",
+      "answers": [
+        "Joseph Priestley",
+        "Priestley",
+        "Joseph Priestley",
+        "Joseph Priestley",
+        "Priestley"
+      ]
+    },
+    {
+      "id": "5725e152271a42140099d2d1",
+      "title": "Apollo_program",
+      "context": "Apollo 5 (AS-204) was the first unmanned test flight of LM in Earth orbit, launched from pad 37 on January 22, 1968, by the Saturn IB that would have been used for Apollo 1. The LM engines were successfully test-fired and restarted, despite a computer programming error which cut short the first descent stage firing. The ascent engine was fired in abort mode, known as a \"fire-in-the-hole\" test, where it was lit simultaneously with jettison of the descent stage. Although Grumman wanted a second unmanned test, George Low decided the next LM flight would be manned.",
+      "question": "What was the nickname for the test where, during abort mode, the ascent engine was started and fired?",
+      "answers": [
+        "\"fire-in-the-hole\"",
+        "fire-in-the-hole",
+        "fire-in-the-hole",
+        "fire-in-the-hole",
+        "\"fire-in-the-hole\""
+      ]
+    },
+    {
+      "id": "57263eaa38643c19005ad374",
+      "title": "Ctenophora",
+      "context": "Ctenophora (/tᵻˈnɒfərə/; singular ctenophore, /ˈtɛnəfɔːr/ or /ˈtiːnəfɔːr/; from the Greek κτείς kteis 'comb' and φέρω pherō 'carry'; commonly known as comb jellies) is a phylum of animals that live in marine waters worldwide. Their most distinctive feature is the ‘combs’ – groups of cilia which they use for swimming – they are the largest animals that swim by means of cilia. Adults of various species range from a few millimeters to 1.5 m (4 ft 11 in) in size. Like cnidarians, their bodies consist of a mass of jelly, with one layer of cells on the outside and another lining the internal cavity. In ctenophores, these layers are two cells deep, while those in cnidarians are only one cell deep. Some authors combined ctenophores and cnidarians in one phylum, Coelenterata, as both groups rely on water flow through the body cavity for both digestion and respiration. Increasing awareness of the differences persuaded more recent authors to classify them as separate phyla.",
+      "question": "What does ctenophora mean in Greek?",
+      "answers": [
+        "κτείς kteis 'comb' and φέρω pherō 'carry'",
+        "κτείς kteis 'comb' and φέρω pherō 'carry'",
+        "kteis 'comb' and φέρω pherō 'carry'"
+      ]
+    },
+    {
+      "id": "572654e2708984140094c2b7",
+      "title": "Black_Death",
+      "context": "The plague repeatedly returned to haunt Europe and the Mediterranean throughout the 14th to 17th centuries. According to Biraben, the plague was present somewhere in Europe in every year between 1346 and 1671. The Second Pandemic was particularly widespread in the following years: 1360–63; 1374; 1400; 1438–39; 1456–57; 1464–66; 1481–85; 1500–03; 1518–31; 1544–48; 1563–66; 1573–88; 1596–99; 1602–11; 1623–40; 1644–54; and 1664–67. Subsequent outbreaks, though severe, marked the retreat from most of Europe (18th century) and northern Africa (19th century). According to Geoffrey Parker, \"France alone lost almost a million people to the plague in the epidemic of 1628–31.\"",
+      "question": "When did the plague return to Europe?",
+      "answers": [
+        "throughout the 14th to 17th centuries",
+        "14th to 17th centuries",
+        "14th to 17th centuries"
+      ]
+    },
+    {
+      "id": "572763a8708984140094dcda",
+      "title": "American_Broadcasting_Company",
+      "context": "In 1990, Thomas S. Murphy delegated his position as president to Daniel B. Burke while remaining ABC's chairman and CEO. Capital Cities/ABC reported revenues of $465 million. Now at a strong second place, the network entered the 1990s with additional family-friendly hits including America's Funniest Home Videos (which has gone on to become the longest-running prime time entertainment program in the network's history), Step by Step, Hangin' with Mr. Cooper, Boy Meets World and Perfect Strangers spinoff Family Matters, as well as series such as Doogie Howser, M.D., Life Goes On, cult favorite Twin Peaks and The Commish. In September 1991, the network premiered Home Improvement, a sitcom starring stand-up comic Tim Allen centering on the family and work life of an accident-prone host of a cable-access home improvement show. Lasting nine seasons, its success led ABC to greenlight additional sitcom projects helmed by comedians during the 1990s including The Drew Carey Show; Brett Butler vehicle Grace Under Fire; and Ellen, which became notable for a 1997 episode which served as the coming out of series star Ellen DeGeneres (as well as her character in the series) as a lesbian.",
+      "question": "What position at ABC did Thomas Murphy stay on for after stepping down as president?",
+      "answers": [
+        "chairman and CEO",
+        "chairman and CEO",
+        "chairman"
+      ]
+    },
+    {
+      "id": "572755b7708984140094dc4f",
+      "title": "Construction",
+      "context": "In the United States, the industry in 2014 has around $960 billion in annual revenue according to statistics tracked by the Census Bureau, of which $680 billion is private (split evenly between residential and nonresidential) and the remainder is government. As of 2005, there were about 667,000 firms employing 1 million contractors (200,000 general contractors, 38,000 heavy, and 432,000 specialty); the average contractor employed fewer than 10 employees. As a whole, the industry employed an estimated 5.8 million as of April 2013, with a 13.2% unemployment rate. In the United States, approximately 828,000 women were employed in the construction industry as of 2011.",
+      "question": "How many firms were existing in 2005?",
+      "answers": [
+        "667,000 firms",
+        "667,000 firms",
+        "667,000 firms"
+      ]
+    },
+    {
+      "id": "572746addd62a815002e9a5e",
+      "title": "Private_school",
+      "context": "Private schools, also known as independent schools, non-governmental, or nonstate schools, are not administered by local, state or national governments; thus, they retain the right to select their students and are funded in whole or in part by charging their students tuition, rather than relying on mandatory taxation through public (government) funding; at some private schools students may be able to get a scholarship, which makes the cost cheaper, depending on a talent the student may have (e.g. sport scholarship, art scholarship, academic scholarship), financial need, or tax credit scholarships that might be available.",
+      "question": "Along with non-governmental and nonstate schools, what is another name for private schools?",
+      "answers": [
+        "independent",
+        "independent schools",
+        "independent schools"
+      ]
+    },
+    {
+      "id": "57284d484b864d1900164903",
+      "title": "University_of_Chicago",
+      "context": "After the 1940s, the Gothic style on campus began to give way to modern styles. In 1955, Eero Saarinen was contracted to develop a second master plan, which led to the construction of buildings both north and south of the Midway, including the Laird Bell Law Quadrangle (a complex designed by Saarinen); a series of arts buildings; a building designed by Ludwig Mies van der Rohe for the university's School of Social Service Administration;, a building which is to become the home of the Harris School of Public Policy Studies by Edward Durrell Stone, and the Regenstein Library, the largest building on campus, a brutalist structure designed by Walter Netsch of the Chicago firm Skidmore, Owings & Merrill. Another master plan, designed in 1999 and updated in 2004, produced the Gerald Ratner Athletics Center (2003), the Max Palevsky Residential Commons (2001), South Campus Residence Hall and dining commons (2009), a new children's hospital, and other construction, expansions, and restorations. In 2011, the university completed the glass dome-shaped Joe and Rika Mansueto Library, which provides a grand reading room for the university library and prevents the need for an off-campus book depository.",
+      "question": "What public policy school found it's home in the building that Ludwig Mies van der Rohe designed?",
+      "answers": [
+        "Harris School of Public Policy Studies",
+        "Harris School of Public Policy Studies",
+        "the Harris School of Public Policy Studies"
+      ]
+    },
+    {
+      "id": "5729727baf94a219006aa43b",
+      "title": "Prime_number",
+      "context": "Many questions regarding prime numbers remain open, such as Goldbach's conjecture (that every even integer greater than 2 can be expressed as the sum of two primes), and the twin prime conjecture (that there are infinitely many pairs of primes whose difference is 2). Such questions spurred the development of various branches of number theory, focusing on analytic or algebraic aspects of numbers. Primes are used in several routines in information technology, such as public-key cryptography, which makes use of properties such as the difficulty of factoring large numbers into their prime factors. Prime numbers give rise to various generalizations in other mathematical domains, mainly algebra, such as prime elements and prime ideals.",
+      "question": "What is the name of one algebraic generalization prime numbers have inspired?",
+      "answers": [
+        "prime ideals",
+        "prime elements",
+        "prime elements",
+        "prime elements"
+      ]
+    }
+  ]
+}

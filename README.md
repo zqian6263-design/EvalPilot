@@ -23,8 +23,22 @@
 
 ## 快速开始
 
+跨平台一键启动：
+
+```bash
+python scripts/deploy.py
+```
+
+Windows 也可以使用：
+
 ```powershell
 .\scripts\start-all.ps1
+```
+
+停止服务：
+
+```bash
+python scripts/deploy.py --stop
 ```
 
 启动后访问：
@@ -45,6 +59,9 @@
 .\scripts\test-frontend.ps1
 .\scripts\e2e-check.ps1
 .\scripts\v2-e2e-check.ps1
+$env:PYTHONPATH = (Resolve-Path backend)
+.venv\Scripts\python.exe backend\scripts\public_workload_check.py
+.\scripts\measure-live-cost.ps1 -RunId <run-id>
 ```
 
 `e2e-check.ps1` 会真实启动双服务，创建、执行并轮询一次完整 run，验证报告指标、证据链接、前端代理和截图，然后只停止它自己启动的进程。

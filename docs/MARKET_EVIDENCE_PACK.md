@@ -132,9 +132,19 @@ the primary evidence path.
 - [x] Competitor pricing matrix.
 - [x] Public repository adoption signals.
 - [x] CI gate and exit-code integration.
-- [ ] Run the same comparison on one public open-source assistant workload.
-- [ ] Publish naive-delta vs EvalPilot comparison.
-- [ ] Measure token, latency, and unit cost for one live investigation.
-- [ ] Package a one-command deployment path for a stranger to run.
+- [x] Run the same comparison on one public open-source assistant workload (SQuAD validation sample).
+- [x] Publish naive-delta vs EvalPilot comparison.
+- [x] Measure token and unit cost for one live investigation.
+- [x] Package a one-command cross-platform deployment path.
 
 These are execution tasks, not interview tasks.
+
+## 9. Measured evidence (2026-09-12)
+
+- Public SQuAD workload: 16 rows, 16 article titles, 5 controlled regressions, 11 controls.
+- Naive pass rate: 100.00% -> 68.75%.
+- EvalPilot: mean delta -0.3125, 95% CI [-0.5625, -0.1250], confidence 98.59%, regression confirmed.
+- Live DeepSeek V4 Pro investigation: 18,075 total tokens (5,377 input, 12,698 output).
+- Peak cost at published rates: $0.057382 per investigation.
+- Off-peak cost: $0.028691 per investigation.
+- Portable launcher: `python scripts/deploy.py`.

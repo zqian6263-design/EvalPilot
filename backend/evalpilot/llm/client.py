@@ -99,14 +99,14 @@ class OpenAICompatibleProvider:
             LLMSchemaError: the completion parsed but violated the schema.
         """
         self._check_configured()
-        content = await self._post(
+        content, usage = await self._post(
             messages,
             timeout_seconds=timeout_seconds,
             force_json=True,
         )
         payload = _parse_json_object(content)
         validate_json_schema(payload, schema)
-        return self._result(payload)
+        return self._result(payload, usage)
 
     async def complete_text(
         self,
@@ -122,7 +122,8 @@ class OpenAICompatibleProvider:
             LLMResponseError: the response was not a usable completion.
         """
         self._check_configured()
-        return await self._post(messages, timeout_seconds=timeout_seconds)
+        content, _ = await self._post(messages, timeout_seconds=timeout_seconds)
+        return content
 
     # -- internals -----------------------------------------------------------
 
@@ -156,7 +157,7 @@ class OpenAICompatibleProvider:
         *,
         timeout_seconds: float | None,
         force_json: bool = False,
-    ) -> str:
+    ) -> tuple[str, dict[str, int] | None]:
         timeout = float(
             self.timeout_seconds if timeout_seconds is None else timeout_seconds
         )
@@ -204,18 +205,26 @@ class OpenAICompatibleProvider:
                 status=response.status_code,
             )
 
-        return _extract_content(response, self.host)
+        return _extract_content_and_usage(response, self.host)
 
-    def _result(self, payload: dict[str, Any]) -> LLMResult:
+    def _result(
+        self,
+        payload: dict[str, Any],
+        usage: dict[str, int] | None,
+    ) -> LLMResult:
         return LLMResult(
             payload=payload,
             model=self.model,
             call_id=new_id(),
             provider=self.name,
+            usage=usage,
         )
 
 
-def _extract_content(response: httpx.Response, host: str) -> str:
+def _extract_content_and_usage(
+    response: httpx.Response,
+    host: str,
+) -> tuple[str, dict[str, int] | None]:
     """Pull ``choices[0].message.content`` out of a completion envelope.
 
     Raises:
@@ -248,7 +257,20 @@ def _extract_content(response: httpx.Response, host: str) -> str:
             f"LLM endpoint {host} returned "
             f"{type(content).__name__} content, expected a string"
         )
-    return content
+    return content, _extract_usage(envelope)
+
+
+def _extract_usage(envelope: dict[str, Any]) -> dict[str, int] | None:
+    raw = envelope.get("usage")
+    if not isinstance(raw, dict):
+        return None
+    fields = ("prompt_tokens", "completion_tokens", "total_tokens")
+    usage = {
+        field: int(raw[field])
+        for field in fields
+        if isinstance(raw.get(field), int) and not isinstance(raw.get(field), bool)
+    }
+    return usage or None
 
 
 def _parse_json_object(content: str) -> dict[str, Any]:

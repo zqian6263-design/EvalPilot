@@ -1,6 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+declare const process: { env: Record<string, string | undefined> }
+
+const apiTarget = process.env.EVALPILOT_API_PROXY_TARGET ?? 'http://127.0.0.1:8000'
+
 // The frozen contract (docs/INTERFACES.md) puts everything under /api.
 // The dev proxy forwards that prefix to the FastAPI backend so the browser
 // sees a same-origin API and no CORS configuration is needed.
@@ -16,7 +20,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: apiTarget,
         changeOrigin: true,
       },
     },

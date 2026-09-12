@@ -51,6 +51,7 @@ LLM_DATA_KEYS: frozenset[str] = frozenset(
         "source",
         "model",
         "llm_call_id",
+        "usage",
         "objective",
         "claim",
         "mechanism",

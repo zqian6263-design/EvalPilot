@@ -36,14 +36,18 @@ class LLMResult:
     call_id: str
     provider: str
     source: str = "llm"
+    usage: dict[str, int] | None = None
 
     def provenance(self) -> dict[str, Any]:
         """The three keys the contract puts on an LLM-generated step."""
-        return {
+        provenance = {
             "source": self.source,
             "model": self.model,
             "llm_call_id": self.call_id,
         }
+        if self.usage is not None:
+            provenance["usage"] = self.usage
+        return provenance
 
 
 @runtime_checkable
