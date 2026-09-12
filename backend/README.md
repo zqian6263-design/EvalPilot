@@ -383,11 +383,69 @@ a concrete counterfactual to replay.
 
 ## Tool safety
 
-Only `kb_search` is available, and it is a pure in-process function. `http_get`
-and `file_read` exist as explicit stubs that raise — they are not registered and
-are not listed in `ToolRegistry.available()`. `python_run` refuses unless
-`EVALPILOT_ENABLE_PYTHON_TOOL=true`, and even then has no implementation. No code
-path in the MVP executes arbitrary input (`CLAUDE.md` non-negotiable #4).
+The tool layer has two tiers, and the second is unreachable by default.
+
+**Pure.** `kb_search` is a deterministic in-process function over the static
+knowledge base: no network, no filesystem, no randomness. It is always available.
+
+**Gated.** `http_get` and `file_read` reach outside the process, so neither is
+registered nor callable until a `ToolPolicy` explicitly names what it may reach.
+The default policy has an empty host allowlist and no read roots, so:
+
+```python
+registry = ToolRegistry()
+registry.available()            # ['kb_search']
+registry.invoke("http_get")     # ToolError: no_allowed_hosts
+registry.invoke("file_read")    # ToolError: no_roots
+```
+
+Granting access is a per-instance decision, not an environment side effect:
+
+```python
+policy = ToolPolicy(
+    http_allowed_hosts=("api.internal.example",),   # literal hostnames
+    file_read_roots=(Path("/srv/demo-root"),),      # resolved, traversal-checked
+)
+ToolRegistry(policy=policy).available()             # ['kb_search', 'http_get', 'file_read']
+```
+
+`http_get` supports text and JSON bodies, honours a timeout (default 5 s) and a
+response-size cap (default 512 KiB), and does **not** follow redirects: a 302 is
+returned as an observation rather than followed past the allowlist. `file_read`
+reads UTF-8 text or JSON under a configured root, caps at 256 KiB, and resolves
+each path before the containment check, so `../` traversal and symlink escapes
+are refused rather than followed.
+
+Every call — including one that was refused — is appended to
+`ToolRegistry.calls` as a structured trace row (`tool`, arguments, `outcome`,
+and a stable `reason` on refusal). `python_run` refuses unless
+`EVALPILOT_ENABLE_PYTHON_TOOL=true`, and even then has no implementation. No
+code path executes arbitrary input (`CLAUDE.md` non-negotiable #4).
+
+Tests never touch the public internet: HTTP cases run against an ephemeral
+loopback server bound to port 0, or against an injected `httpx.MockTransport`
+via `ToolRegistry(http_transport=...)`. See `tests/test_v3_tools.py`.
+
+### The investigation's real tool observation
+
+The deterministic investigation makes exactly one real tool call. After the run
+observation it opens its own persisted trace artifacts through the allowlisted
+`file_read` tool and verifies they are readable JSON with a parseable trace
+payload, persisting the result as a run evidence row (`kind="trace"`) that the
+`tool` step and the release decision both cite. The read root is the run's
+artifact directory and the policy grants no HTTP host, so the cross-check can
+never become a network call.
+
+The evidence row is anchored to an already-regressed candidate case so it
+satisfies the evidence foreign key. It cannot change any score: the evaluation
+engine selects a case's evidence by `test_case_id`, and the tool-trace check
+reads tool calls from the case `output`, so an extra trace row for an existing
+case is invisible to scoring. `tests/test_v3_tools.py` asserts the run's metrics
+are byte-identical before and after the investigation runs.
+
+When the artifacts are absent (a run executed elsewhere), the step records that
+it read nothing and no evidence row is written — a cross-check that opened no
+artifact never reports success.
 
 ## Environment variables
 

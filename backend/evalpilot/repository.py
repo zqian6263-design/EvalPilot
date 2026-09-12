@@ -953,6 +953,21 @@ class Repository:
 
     # -- counts -------------------------------------------------------------
 
+    def run_artifacts(self, run_id: str) -> list[str]:
+        """Filenames of the run's persisted artifacts, sorted.
+
+        Read-only and non-creating: unlike :meth:`Database.run_artifact_dir` it
+        does not make the directory, so listing a run that never wrote an
+        artifact reports an empty list instead of an empty directory that then
+        exists.
+        """
+        directory = self.db.artifacts_dir / run_id
+        if not directory.is_dir():
+            return []
+        return sorted(
+            item.name for item in directory.iterdir() if item.is_file()
+        )
+
     def count_evidence(self, run_id: str) -> int:
         with self.db.connect() as conn:
             row = conn.execute(

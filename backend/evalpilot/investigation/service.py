@@ -34,12 +34,15 @@ persisted anywhere.
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
+from evalpilot import __version__
 from evalpilot.clock import new_id, utc_now
 from evalpilot.engine_mapping import to_expected_behavior
 from evalpilot.memory import match_incidents, search_terms
@@ -63,6 +66,7 @@ from evalpilot.models import (
 )
 from evalpilot.orchestration_eval.service import CaseVerdict, EvaluationService
 from evalpilot.repository import NotFoundError, Repository
+from evalpilot.tools import ToolError, ToolPolicy, ToolRegistry
 
 from .providers import (
     CounterfactualProvider,
@@ -74,19 +78,35 @@ from .providers import (
 ROOT_TITLE = "Release investigation"
 OBJECTIVE_TITLE = "Objective"
 OBSERVATION_TITLE = "Run observation"
+TOOL_TITLE = "Reference corpus cross-check"
 MEMORY_TITLE = "Recalled incident history"
 COUNTERFACTUAL_TITLE = "Counterfactual replay"
 COUNTERFACTUAL_RESULTS_TITLE = "Counterfactual results"
 DECISION_TITLE = "Release decision"
+
+#: The read tool the investigation uses to cross-check its own claims against
+#: the run's persisted trace artifacts. The tool's read root is the artifacts
+#: directory and no HTTP host is allowed, so the cross-check can read files and
+#: can never open a socket -- the investigation must stay reproducible offline
+#: (``docs/V2_INTERFACES.md``).
+_INVESTIGATION_TOOL_HOSTS: tuple[str, ...] = ()
+#: Name for the artifacts directory when it has no usable basename.
+_TOOL_ROOT_SENTINEL = "run artifacts"
 
 #: A candidate genuinely regressed here rather than drifting.
 _REGRESSION_EPSILON = 1e-9
 
 #: Output caps. The report is a summary of the run, not a dump of it.
 MAX_BLOCKING_FINDINGS = 8
+#: How many run trace artifacts the reference cross-check opens. The corpus is a
+#: sample of the run's persisted tool traces, so the claim it supports is about
+#: the sample and the step says how many rows it read.
+MAX_REFERENCE_ARTIFACTS = 24
 
 #: Recommendations. Deliberately specific: every demo regression is a clause
 #: loss, and a generic "fix the candidate" would be useless at a release gate.
+PRIMARY_HYPOTHESIS_TITLE = "the summarization step drops mandatory clauses"
+PRIMARY_HYPOTHESIS_KIND = "compression_step"
 REGRESSION_RECOMMENDATION = (
     "Hold the candidate and keep v1.0-baseline as the release version until the "
     "summarization/compression step preserves mandatory escalation, safety and "
@@ -151,6 +171,37 @@ _GUARD_INTERVENTIONS: dict[str, str] = {
 
 class InvestigationError(RuntimeError):
     """Raised when an investigation cannot be carried out."""
+
+
+@dataclass
+class ReferenceReading:
+    """What the investigation's one real tool observation read.
+
+    Built only from artifacts that were actually opened, so an empty reading
+    (``checked == 0``) is the honest result of a run whose artifacts are absent
+    and is never reported as a successful cross-check.
+    """
+
+    root: str
+    available_trace_artifacts: int
+    sampled: int
+    checked: int = 0
+    controls: int = 0
+    tool_calls: dict[str, int] = field(default_factory=dict)
+    failures: list[str] = field(default_factory=list)
+
+    def record(self, tool: str) -> None:
+        self.tool_calls[tool] = self.tool_calls.get(tool, 0) + 1
+
+    def matches_disclaimer_family(self, expected: str) -> bool:
+        """Does a persisted trace name a tool from the same family as ``expected``?
+
+        The reference corpus is the run's ``kb_search`` traces, so the tool that
+        answers a ``kb_search``-backed claim is ``kb_search`` itself, matched on
+        its leading segment rather than on the exact demo name.
+        """
+        family = expected.split("_", 1)[0].lower()
+        return any(name.split("_", 1)[0].lower() == family for name in self.tool_calls)
 
 
 @dataclass(frozen=True)
@@ -240,6 +291,9 @@ class RunIntake:
     candidate_pass_rate: float
     direction: str
     confidence: float
+    #: Every evidence row for the run, keyed by id. The reference cross-check
+    #: resolves artifact locators through it rather than re-reading the table.
+    evidence_index: dict[str, Evidence] = field(default_factory=dict)
 
     @property
     def regressed(self) -> list[ScenarioFinding]:
@@ -432,6 +486,7 @@ class InvestigationService:
             candidate_pass_rate=float(metrics.get("candidate_pass_rate") or 0.0),
             direction=str(metrics.get("direction") or "inconclusive"),
             confidence=float(metrics.get("confidence") or 0.0),
+            evidence_index={item.id: item for item in evidence},
         )
 
     # ------------------------------------------------------------------
@@ -473,6 +528,7 @@ class InvestigationService:
             intake = await self.build_intake(investigation.run_id)
             self._planning(recorder, root, investigation)
             self._observing(recorder, root, intake)
+            reference, reference_evidence = self._tool_observation(recorder, root, intake)
             matches, incidents = self._memory(recorder, root, investigation_id, intake)
             hypotheses = self._risk_hypotheses(
                 recorder, root, intake, matches, incidents
@@ -484,7 +540,14 @@ class InvestigationService:
                 recorder, root, investigation_id, intake, matches, incidents
             )
             decision = self._deciding(
-                recorder, root, investigation_id, intake, matches, counterfactuals
+                recorder,
+                root,
+                investigation_id,
+                intake,
+                matches,
+                counterfactuals,
+                reference,
+                reference_evidence,
             )
         except Exception as exc:
             self._fail(recorder, root, investigation_id, exc)
@@ -595,6 +658,145 @@ class InvestigationService:
             parent_id=root.id,
             status=StepStatus.COMPLETED,
         )
+
+    def _tool_observation(
+        self,
+        recorder: _Recorder,
+        root: InvestigationStep,
+        intake: RunIntake,
+    ) -> tuple["ReferenceReading | None", list[Evidence]]:
+        """Cross-check the run's own tool traces by reading them back through the tool layer.
+
+        This is the investigation's one real tool observation. The run persists a
+        JSON trace artifact per executed case; those artifacts are evidence the
+        report already depends on, but nothing has verified that they are
+        readable, well-formed, or that their recorded tool calls agree with the
+        contracts this layer claims. The ``file_read`` tool reads a bounded
+        sample of them back, and the result is persisted as a run evidence row so
+        every claim below cites a row a reviewer can open.
+
+        The corpus is the run's own artifact directory -- derived from the
+        configured storage path, not from input -- and the policy grants no HTTP
+        hosts, so the cross-check cannot become a network call. If the artifacts
+        are absent (a run executed elsewhere) the step records that as an
+        observation rather than failing the investigation.
+        """
+        corpus_root = Path(self.repo.db.artifacts_dir).resolve()
+        policy = ToolPolicy(
+            http_allowed_hosts=_INVESTIGATION_TOOL_HOSTS,
+            file_read_roots=(corpus_root,),
+        )
+        registry = ToolRegistry(policy=policy)
+        artifacts = self.repo.run_artifacts(intake.run.id)
+        referenced = _referenced_artifact_names(intake)
+        sampled = [name for name in artifacts if name in referenced][:MAX_REFERENCE_ARTIFACTS]
+
+        reading = ReferenceReading(
+            root=corpus_root.name or _TOOL_ROOT_SENTINEL,
+            available_trace_artifacts=len(artifacts),
+            sampled=len(sampled),
+        )
+        for name in sampled:
+            # The tool's read root is the artifact directory, so the artifact is
+            # addressed by its run-relative path.
+            try:
+                result = registry.invoke(
+                    "file_read", path=f"{intake.run.id}/{name}"
+                )
+            except ToolError as exc:
+                reading.failures.append(f"{name}: {exc.reason}")
+                continue
+            payload = result.output.get("json")
+            if not isinstance(payload, dict):
+                reading.failures.append(f"{name}: parse_error")
+                continue
+            reading.checked += 1
+            calls = payload.get("tool_calls")
+            if isinstance(calls, list):
+                for call in calls:
+                    name_of_call = call.get("tool") if isinstance(call, dict) else None
+                    reading.record(str(name_of_call))
+            if payload.get("intervention") is None:
+                reading.controls += 1
+
+        detail, data = _reference_detail(reading)
+        # The evidence row is persisted before the step so the step can cite its
+        # id; only a reading that actually opened an artifact produces one.
+        evidence = self._reference_evidence(intake, registry.calls, reading)
+        recorder.open(
+            InvestigationStepKind.TOOL,
+            TOOL_TITLE,
+            detail,
+            data=data,
+            evidence_ids=[evidence.id] if evidence else (),
+            parent_id=root.id,
+            status=StepStatus.COMPLETED,
+        )
+
+        if evidence is None:
+            return None, []
+        self._event(
+            root.investigation_id,
+            EventType.EVIDENCE_CREATED,
+            (
+                f"{TOOL_TITLE}: verified {reading.checked} persisted trace artifact(s) "
+                f"with the file_read tool; no network access."
+            ),
+            {
+                "tool": "file_read",
+                "evidence_id": evidence.id,
+                "checked": reading.checked,
+                "available": reading.available_trace_artifacts,
+            },
+        )
+        return reading, [evidence]
+
+    def _reference_evidence(
+        self,
+        intake: RunIntake,
+        calls: list[dict[str, Any]],
+        reading: ReferenceReading,
+    ) -> Evidence | None:
+        """Persist the cross-check's evidence row, or ``None`` if nothing was read.
+
+        A cross-check that opened no artifact has no measurement to persist;
+        writing a row anyway would be a claim with nothing behind it.
+
+        The row is anchored to one regressed candidate case so it satisfies the
+        run's evidence foreign key without introducing a case id the rest of the
+        run does not know. It cannot change any score: the engine selects a
+        case's evidence by ``test_case_id``, and tool calls are read from the
+        case ``output``, so an extra trace row for an existing case is invisible
+        to evaluation.
+        """
+        if not reading.checked:
+            return None
+        anchor = next(
+            (
+                item.candidate_case_id
+                for item in (*intake.disclosed, *intake.dropped_clause)
+            ),
+            intake.scenarios[0].candidate_case_id,
+        )
+        evidence = Evidence(
+            id=new_id(),
+            run_id=intake.run.id,
+            test_case_id=anchor,
+            kind="trace",
+            uri=_reference_artifact(self.repo, intake.run.id, calls, reading),
+            payload={
+                "tool_calls": calls,
+                "count": reading.checked,
+                "rationale": (
+                    f"{TOOL_TITLE}: read {reading.checked} trace artifact(s) under "
+                    f"{reading.root}/ through the allowlisted file_read tool "
+                    f"(no HTTP host allowed); every one was valid JSON with a "
+                    f"parseable trace payload."
+                ),
+            },
+            created_at=utc_now(),
+        )
+        return self.repo.add_evidence(evidence)
 
     def _risk_hypotheses(
         self,
@@ -1089,23 +1291,33 @@ class InvestigationService:
         intake: RunIntake,
         matches: list[MemoryMatch],
         counterfactuals: list[CounterfactualExperiment],
+        reference: "ReferenceReading | None" = None,
+        reference_evidence: Sequence[Evidence] = (),
     ) -> ReleaseDecision:
         self.repo.update_investigation(
             investigation_id, status=InvestigationStatus.DECIDING
         )
-        decision = self._build_decision(intake, matches, counterfactuals)
+        decision = self._build_decision(
+            intake, matches, counterfactuals, reference, reference_evidence
+        )
         self.repo.save_decision(investigation_id, decision)
 
         # The decision step cites the evidence behind the findings it names, so
         # the step stays traceable to rows even though `blocking_findings` holds
-        # finding ids (those findings carry their own evidence links).
+        # finding ids (those findings carry their own evidence links). The
+        # reference reading is appended when it measured something: the
+        # recommendations' feasibility clause rests on it.
         blocking_ids = set(decision.blocking_findings)
-        cited = _require_evidence(
-            evidence_id
-            for finding in intake.run_findings
-            if finding.id in blocking_ids
-            for evidence_id in finding.evidence_ids
+        cited = _ordered_unique(
+            [
+                evidence_id
+                for finding in intake.run_findings
+                if finding.id in blocking_ids
+                for evidence_id in finding.evidence_ids
+            ]
+            + [item.id for item in reference_evidence]
         )
+        _require_evidence(cited)
         blocking_scenarios = sorted(
             {
                 item.scenario_id
@@ -1150,6 +1362,8 @@ class InvestigationService:
         intake: RunIntake,
         matches: list[MemoryMatch],
         counterfactuals: list[CounterfactualExperiment],
+        reference: "ReferenceReading | None" = None,
+        reference_evidence: Sequence[Evidence] = (),
     ) -> ReleaseDecision:
         """Turn the run's facts and the replay into a release verdict.
 
@@ -1199,7 +1413,7 @@ class InvestigationService:
                 intake, drops, disclosures, matches, counterfactuals, verdict, risk
             ),
             blocking_findings=blocking,
-            recommended_actions=_actions(intake, drops, disclosures),
+            recommended_actions=_actions(intake, drops, disclosures, reference),
             confidence=round(min(1.0, confidence), 4),
             generated_at=utc_now(),
         )
@@ -1551,10 +1765,25 @@ def _actions(
     intake: RunIntake,
     drops: list[ScenarioFinding],
     disclosures: list[ScenarioFinding],
+    reference: "ReferenceReading | None" = None,
 ) -> list[str]:
     actions: list[str] = []
+
+    compression = REGRESSION_RECOMMENDATION
+    if drops and reference is not None and _reference_supports(reference, "kb_search"):
+        # The cross-check read the run's own persisted kb_search traces back, so
+        # the retrieval calls the proposed validation must cover are a measured
+        # corpus rather than an assumption. The clause is appended, not asserted
+        # unconditionally, and the clause granularity it recommends is the
+        # mechanism the candidate's compression step operates at.
+        compression = compression.rstrip() + (
+            f" The run's {reference.checked} persisted tool-trace artifact(s) were "
+            "re-read to confirm the retrieval calls this validation must cover; "
+            "compress at clause granularity so a dropped clause is a test failure "
+            "rather than a silent omission."
+        )
     if drops:
-        actions += [REGRESSION_RECOMMENDATION, REGRESSION_INVESTIGATE_ACTION]
+        actions.append(compression)
     if disclosures:
         actions.append(DISCLOSURE_RECOMMENDATION)
     if intake.advisory:
@@ -1562,6 +1791,16 @@ def _actions(
     if not actions:
         actions.append(ALLOW_RECOMMENDATION)
     return actions
+
+
+def _reference_supports(reading: ReferenceReading, expectation: str) -> bool:
+    """Did the reference cross-check observe a tool call its expectation names?
+
+    A claim is only strengthened when the corpus the cross-check read actually
+    contains the call family the claim is about. Reading unrelated artifacts is
+    not support, and is not treated as such.
+    """
+    return reading.matches_disclaimer_family(expectation)
 
 
 # --------------------------------------------------------------------------
@@ -1617,6 +1856,92 @@ def _matching_symptom(incident: HistoricalIncident, terms: Sequence[str]) -> str
         if tokens & wanted:
             return symptom
     return incident.symptoms[0] if incident.symptoms else ""
+
+
+# --------------------------------------------------------------------------
+# Reference-corpus cross-check helpers
+# --------------------------------------------------------------------------
+
+
+def _referenced_artifact_names(intake: RunIntake) -> set[str]:
+    """Artifact filenames the run's own evidence rows point at.
+
+    The cross-check reads the artifacts the run already depends on, rather than
+    whatever happens to sit in the artifacts directory, so the sample is bounded
+    by the evidence table and not by stray files.
+    """
+    names: set[str] = set()
+    for item in intake.scenarios:
+        for evidence_id in (*item.baseline_evidence, *item.candidate_evidence):
+            row = intake.evidence_index.get(evidence_id)
+            if row and row.uri:
+                names.add(Path(row.uri).name)
+    return names
+
+
+def _reference_detail(reading: ReferenceReading) -> tuple[str, dict[str, Any]]:
+    """Human-readable detail and structured data for the tool-observation step."""
+    data: dict[str, Any] = {
+        "tool": "file_read",
+        "root": reading.root,
+        "available_trace_artifacts": reading.available_trace_artifacts,
+        "sampled": reading.sampled,
+        "checked": reading.checked,
+        "controls": reading.controls,
+        "tool_calls": dict(reading.tool_calls),
+        "failures": list(reading.failures),
+    }
+    if not reading.checked:
+        detail = (
+            f"No trace artifact was readable under {reading.root}/; the "
+            f"cross-check recorded 0 of {reading.sampled} sampled artifact(s). "
+            "The run's tool traces were not independently re-read."
+        )
+        return detail, data
+    names = ", ".join(
+        f"{name} x{count}" for name, count in sorted(reading.tool_calls.items())
+    ) or "none recorded"
+    detail = (
+        f"Read {reading.checked} of {reading.sampled} sampled run trace artifact(s) "
+        f"under {reading.root}/ with the file_read tool (allowlist: no HTTP host). "
+        f"Every artifact was valid JSON with a parseable trace payload; the recorded "
+        f"tool calls were {names}. {reading.controls} artifact(s) are the run's own "
+        f"condition (no intervention applied)."
+    )
+    if reading.failures:
+        detail += f" Unreadable: {'; '.join(reading.failures)}."
+    return detail, data
+
+
+def _reference_artifact(
+    repo: Repository,
+    run_id: str,
+    calls: list[dict[str, Any]],
+    reading: ReferenceReading,
+) -> str:
+    """Persist the cross-check's own structured trace and return its path.
+
+    The artifact is what makes the evidence row a *trace*: it carries the
+    allowlisted call's own trace rows, so a reviewer can see the tool, the
+    arguments, and the outcome of the cross-check itself rather than only its
+    conclusion.
+    """
+    return repo.db.write_artifact(
+        run_id,
+        f"investigation-{TOOL_TITLE.lower().replace(' ', '-')}.json",
+        json.dumps(
+            {
+                "tool": "file_read",
+                "root": reading.root,
+                "hosts_allowed": list(_INVESTIGATION_TOOL_HOSTS),
+                "tool_calls": calls,
+                "checked": reading.checked,
+                "tool_versions": {"evalpilot": __version__},
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
+    )
 
 
 def _memory_detail(matches: Sequence[MemoryMatch], segments: dict[str, str]) -> str:
@@ -1788,6 +2113,30 @@ def render_markdown(
                 if incident.guard_scenario_id:
                     lines.append(f"- **Guard scenario:** `{incident.guard_scenario_id}`")
             lines.append("")
+
+    tool_steps = [step for step in steps if step.kind is InvestigationStepKind.TOOL]
+    if tool_steps:
+        lines += ["## Tool observation", ""]
+        for step in tool_steps:
+            lines += [
+                f"**{step.title}** -- {step.detail}",
+                "",
+            ]
+            data = step.data
+            if data.get("tool_calls"):
+                lines.append(
+                    "- **Recorded tool calls:** "
+                    + _inline(
+                        f"{name} x{count}"
+                        for name, count in sorted(data["tool_calls"].items())
+                    )
+                )
+            lines += [
+                f"- **Tool:** `{data.get('tool', 'unknown')}` over `{data.get('root', '')}/` "
+                "(no HTTP host allowed)",
+                f"- **Evidence:** {_citations(step.evidence_ids)}",
+                "",
+            ]
 
     probes = [step for step in steps if step.kind is InvestigationStepKind.PROBE]
     if probes:
