@@ -43,7 +43,7 @@ RISK_LEVELS: tuple[str, ...] = ("critical", "high", "medium", "low")
 
 #: Output caps. A rationale is a paragraph, not an essay.
 MAX_HYPOTHESES = 4
-MAX_RECOMMENDATIONS = 4
+MAX_RECOMMENDATIONS = 6
 MAX_RATIONALE_CHARS = 1200
 
 #: The schema for a risk-hypothesis proposal.
