@@ -488,6 +488,7 @@ class InvestigationService:
             evidence_by_case=evidence_by_case,
             baseline_version=run.baseline_version,
             candidate_version=run.candidate_version,
+            use_judge=False,
         )
 
         scenarios = _scenario_findings(cases, evidence_by_case, outcome.cases)

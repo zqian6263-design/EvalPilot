@@ -62,9 +62,8 @@ def build_container(settings: Settings | None = None) -> Container:
     # The judge seam is populated only in live mode. In deterministic mode
     # `build_judge_callable` returns None and no judge is installed at all, so
     # the offline path is byte-for-byte what it was before this package
-    # existed. Note that the fixture executor does not record the question text
-    # a judge needs, so live mode still warns rather than blending a judge
-    # score in — see `orchestration_eval.service`.
+    # existed. Run evaluation passes question text and the judge rubric into
+    # the engine; investigation intake explicitly disables judge re-scoring.
     judge_callable = build_judge_callable(llm_runtime)
     evaluation_service = EvaluationService(
         judge=RubricJudge(judge_callable) if judge_callable is not None else None,

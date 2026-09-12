@@ -22,11 +22,10 @@ Two properties of that number decide what this run can conclude:
 
 - It is *coverage*, not pass/fail: a scenario that loses one of two required
   facts scores 0.5 rather than 1.0.
-- There is no judge in the offline demo, so this is the whole score. The engine
-  would blend a judge in at equal weight, halving the deterministic signal, and
-  the fixture executor does not record the question text a judge needs — so the
-  demo runs judge-free on purpose and reports a configured judge as a warning
-  instead of quietly blending in a non-deterministic number.
+- The offline demo installs no judge, so deterministic checks are the whole
+  score. In live mode the caller supplies the judge rubric and question text;
+  the judge contributes a disclosed qualitative score while case verdicts and
+  release decisions continue to rest on deterministic measurements.
 
 The comparison is deliberately not forced to a verdict. With 26 matched cases
 this bootstrap resolves a mean drop of about 0.23 and nothing smaller, so three
@@ -85,6 +84,29 @@ _SEVERITY_LABELS = {
     "low": "低",
     "info": "提示",
 }
+
+
+def _judge_metrics(report: ComparisonReport, *, enabled: bool) -> dict[str, int | bool]:
+    """Summarise judge participation without changing the measured verdict."""
+    calls = sum(len(item.judge_scores_by_version) for item in report.case_evaluations)
+    disagreements = 0
+    for item in report.case_evaluations:
+        baseline_deterministic = item.deterministic_scores_by_version.get("baseline")
+        candidate_deterministic = item.deterministic_scores_by_version.get("candidate")
+        baseline_judge = item.judge_scores_by_version.get("baseline")
+        candidate_judge = item.judge_scores_by_version.get("candidate")
+        if None in (baseline_deterministic, candidate_deterministic, baseline_judge, candidate_judge):
+            continue
+        deterministic_delta = candidate_deterministic - baseline_deterministic
+        judge_delta = candidate_judge - baseline_judge
+        if deterministic_delta * judge_delta < 0:
+            disagreements += 1
+    return {
+        "enabled": enabled,
+        "calls": calls,
+        "failures": report.judge_failures,
+        "disagreements": disagreements,
+    }
 
 
 def count_by_severity(findings: list[Finding]) -> dict[str, int]:
@@ -158,6 +180,7 @@ class EvaluationService:
         evidence_by_case: dict[str, list[Evidence]],
         baseline_version: str = "baseline",
         candidate_version: str = "candidate",
+        use_judge: bool = True,
     ) -> EvaluationOutcome:
         """Score and compare every matched scenario in a finished run.
 
@@ -193,19 +216,39 @@ class EvaluationService:
             if scenario not in case_rows or case.version == "candidate":
                 case_rows[scenario] = case.id
 
+        questions: dict[str, str] = {}
+        contexts: dict[str, str] = {}
+        for case in cases:
+            scenario = engine_mapping.scenario_id(case)
+            question = case.input.get("question")
+            if isinstance(question, str) and question.strip():
+                questions.setdefault(scenario, question.strip())
+            context = case.input.get("context")
+            if isinstance(context, str) and context.strip():
+                contexts.setdefault(scenario, context.strip())
+
+        rubric = self.judge.rubric if self.judge is not None and use_judge else None
         report = await engine.compare_async(
             observations=observations,
             expectations=expectations,
             evidence_ids_by_case=attributed,
+            rubric=rubric,
+            questions=questions,
+            contexts=contexts,
             run_id=run_id,
         )
 
         warnings = list(report.warnings)
-        if self.judge is not None:
+        judge_metrics = _judge_metrics(report, enabled=rubric is not None)
+        if self.judge is not None and not use_judge:
             warnings.append(
-                "An LLM judge is configured, but the offline fixture executor does not "
-                "record the question text a judge needs, so only deterministic checks "
-                "were scored and no judge contributes to these numbers."
+                "An LLM judge is configured but was disabled for this evaluation pass; "
+                "the run used deterministic checks only."
+            )
+        elif report.judge_failures:
+            warnings.append(
+                f"The LLM judge failed on {report.judge_failures} observation(s); "
+                "those observations used deterministic scoring only."
             )
 
         verdicts = _case_verdicts(cases, report)
@@ -217,6 +260,7 @@ class EvaluationService:
             candidate_version=candidate_version,
         )
         metrics["findings_by_severity"] = count_by_severity(findings)
+        metrics["judge"] = judge_metrics
         if warnings:
             metrics["evaluation_warnings"] = list(warnings)
 
@@ -242,6 +286,7 @@ class EvaluationService:
         evidence_by_case: dict[str, list[Evidence]],
         baseline_version: str = "baseline",
         candidate_version: str = "candidate",
+        use_judge: bool = True,
     ) -> EvaluationOutcome:
         """Synchronous wrapper for callers with no event loop (CLI, tests)."""
         return asyncio.run(
@@ -251,6 +296,7 @@ class EvaluationService:
                 evidence_by_case=evidence_by_case,
                 baseline_version=baseline_version,
                 candidate_version=candidate_version,
+                use_judge=use_judge,
             )
         )
 
