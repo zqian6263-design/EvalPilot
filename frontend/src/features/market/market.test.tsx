@@ -42,6 +42,12 @@ afterEach(cleanup)
  * that would tell a reader it is a guess. The assertions below are written
  * against the properties that make the surface honest, not against the
  * strings it happens to print.
+ *
+ * Every model and fixture value on this surface is Chinese prose about the
+ * market, so the reference expectations above (`MOAT`, `PRICING`,
+ * `ZERO_TRACTION_DISCLOSURE`, `TRACTION_ROWS`) stay the source of truth: the
+ * rendering assertions below compare against those values, not against
+ * literals retyped into the test.
  */
 describe('market model — the derivations', () => {
   it('occupies exactly one rung of the evidence ladder', () => {
@@ -67,8 +73,8 @@ describe('market model — the derivations', () => {
   })
 
   it('states the zero-traction disclosure in words, not in the absence of a number', () => {
-    expect(ZERO_TRACTION_DISCLOSURE).toMatch(/no external customers/i)
-    expect(ZERO_TRACTION_DISCLOSURE).toMatch(/pre-validation/i)
+    expect(ZERO_TRACTION_DISCLOSURE).toMatch(/没有任何外部客户/)
+    expect(ZERO_TRACTION_DISCLOSURE).toMatch(/尚未验证/)
   })
 
   it('bands the ROI rather than pointing it', () => {
@@ -188,11 +194,18 @@ describe('market fixtures — the scorecard', () => {
  *
  * A data test cannot catch the failure mode this surface exists to prevent:
  * a correct number shown without the word that says what kind of number it is.
+ *
+ * The region names and headings below are the Chinese the panel prints; the
+ * expectations that reference a model value (`currentProofLevel().label`,
+ * `formatBand(...)`, `TRACTION_ROWS.length`) read it from the model, so this
+ * file never restates a number or a sentence the surface already owns.
  */
 describe('MarketImpactPanel — honesty on screen', () => {
   it('renders with no props at all', () => {
     render(<MarketImpactPanel />)
-    expect(screen.getByRole('heading', { name: /AI applications need a release gate/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /AI 应用需要一个发布门禁/ }),
+    ).toBeInTheDocument()
   })
 
   it('leads with the zero-traction disclosure', () => {
@@ -202,29 +215,34 @@ describe('MarketImpactPanel — honesty on screen', () => {
 
   it('renders every traction count as a dash with its reason', () => {
     render(<MarketImpactPanel />)
-    const traction = screen.getByRole('region', { name: /^traction$/i })
+    const traction = screen.getByRole('region', { name: /^牵引力$/ })
     // Six labelled counts, six dashes.
     expect(within(traction).getAllByText('—')).toHaveLength(TRACTION_ROWS.length)
-    expect(within(traction).getByText(/no person has ever paid for this product/i)).toBeInTheDocument()
+    for (const row of TRACTION_ROWS) {
+      expect(within(traction).getByText(row.label)).toBeInTheDocument()
+    }
+    expect(
+      within(traction).getByText(TRACTION.paying_customers.note),
+    ).toBeInTheDocument()
   })
 
   it('marks the current rung and labels the rungs ahead as not reached', () => {
     render(<MarketImpactPanel />)
-    const ladder = screen.getByRole('list', { name: /evidence ladder/i })
-    expect(within(ladder).getAllByText(/we are here/i)).toHaveLength(1)
-    expect(within(ladder).getAllByText(/not reached/i).length).toBeGreaterThan(0)
+    const ladder = screen.getByRole('list', { name: /证据阶梯/ })
+    expect(within(ladder).getAllByText(/我们在这里/)).toHaveLength(1)
+    expect(within(ladder).getAllByText(/尚未达到/).length).toBeGreaterThan(0)
     expect(within(ladder).getAllByText(currentProofLevel().label).length).toBeGreaterThan(0)
   })
 
   it('shows the ROI as a band and refuses to resolve it', () => {
     render(<MarketImpactPanel />)
-    const roi = screen.getByRole('region', { name: /return on investment/i })
+    const roi = screen.getByRole('region', { name: /投资回报/ })
     expect(within(roi).getByText(formatBand(roiValueBand()))).toBeInTheDocument()
     // The band's width is stated as a number, not as a vibe.
     expect(
-      within(roi).getByText(`${roiBandSpread()!.toFixed(2)} orders of magnitude`),
+      within(roi).getByText(`${roiBandSpread()!.toFixed(2)} 个数量级`),
     ).toBeInTheDocument()
-    expect(within(roi).getAllByText(/^Unresolved$/).length).toBeGreaterThan(0)
+    expect(within(roi).getAllByText(/^无法判定$/).length).toBeGreaterThan(0)
     // Every model input is on screen with its basis, so a reader can adjust it.
     for (const input of ROI_INPUT_BY_ID.values()) {
       expect(within(roi).getByText(input.label)).toBeInTheDocument()
@@ -233,21 +251,21 @@ describe('MarketImpactPanel — honesty on screen', () => {
 
   it('carries the ROI chart as text as well, so nothing is chart-only', () => {
     render(<MarketImpactPanel />)
-    const chart = screen.getByRole('img', { name: /annual value of avoided bad releases/i })
+    const chart = screen.getByRole('img', { name: /年化价值/ })
     expect(chart).toBeInTheDocument()
-    expect(within(chart).getByText(/modelled annual value against modelled annual cost/i)).toBeInTheDocument()
+    expect(within(chart).getByText(/年化价值与年化建模成本的对比/)).toBeInTheDocument()
   })
 
   it('labels pricing as a hypothesis and prints the falsifier', () => {
     render(<MarketImpactPanel />)
-    const pricing = screen.getByRole('region', { name: /pricing hypothesis/i })
-    expect(within(pricing).getAllByText('hypothesis')).toHaveLength(PRICING.length)
-    expect(within(pricing).getByText(/if, after ten qualified conversations/i)).toBeInTheDocument()
+    const pricing = screen.getByRole('region', { name: /定价假设/ })
+    expect(within(pricing).getAllByText('假设')).toHaveLength(PRICING.length)
+    expect(within(pricing).getByText(/如果在十次有明确意向的沟通之后/)).toBeInTheDocument()
   })
 
   it('gives each of the five criteria its score, its gap and its actions', () => {
     render(<MarketImpactPanel />)
-    const scorecard = screen.getByRole('region', { name: /competition scorecard/i })
+    const scorecard = screen.getByRole('region', { name: /赛道评分表/ })
     for (const criterion of CRITERIA) {
       expect(within(scorecard).getAllByText(criterion.official).length).toBeGreaterThan(0)
       for (const action of criterion.actions) {
@@ -259,7 +277,7 @@ describe('MarketImpactPanel — honesty on screen', () => {
 
   it('says it has no run rather than borrowing a report’s authority', () => {
     render(<MarketImpactPanel />)
-    expect(screen.getByText(/none — the panel is rendering on its own/i)).toBeInTheDocument()
+    expect(screen.getByText(/无 —— 本面板独立渲染/)).toBeInTheDocument()
   })
 
   it('attributes the report figures when it is mounted beside a run', () => {
@@ -275,21 +293,22 @@ describe('MarketImpactPanel — honesty on screen', () => {
         }}
       />,
     )
+    // The run label is a version pair, not prose, and stays as the run reports it.
     expect(screen.getByText('v1.4.2 vs v1.5.0-rc1')).toBeInTheDocument()
     // One text node, so the reading is not assembled out of separate spans.
     expect(
-      screen.getByText(/confirmed regression · mean -0\.173 · 95% CI -0\.288 to -0\.077 · threshold -0\.050/),
+      screen.getByText(/已确认回归 · 均值 -0\.173 · 95% 置信区间 -0\.288 至 -0\.077 · 阈值 -0\.050/),
     ).toBeInTheDocument()
   })
 
   it('states plainly when a run has no verdict yet', () => {
     render(<MarketImpactPanel measured={{ runLabel: 'v1.0 vs v1.1', confirmed: false }} />)
-    expect(screen.getByText(/no verdict recorded/)).toBeInTheDocument()
+    expect(screen.getByText(/无裁决记录/)).toBeInTheDocument()
   })
 
   it('explains itself when no workspace is injected', () => {
     render(<MarketImpactPanel />)
-    expect(screen.getByText(/No workspace injected/i)).toBeInTheDocument()
+    expect(screen.getByText(/未注入工作区/)).toBeInTheDocument()
   })
 
   it('mounts an injected workspace rather than importing one', () => {
@@ -299,16 +318,14 @@ describe('MarketImpactPanel — honesty on screen', () => {
       />,
     )
     expect(screen.getByTestId('host-workspace')).toBeInTheDocument()
-    expect(screen.queryByText(/No workspace injected/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/未注入工作区/)).not.toBeInTheDocument()
   })
 
   it('keeps the market claim off the product’s evidence', () => {
     render(<MarketImpactPanel />)
     // The headline sentence a judge should be able to quote back at us.
-    expect(
-      screen.getByText(/the competition result is not the market result/i),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: /moat/i })).toBeInTheDocument()
-    expect(screen.getAllByText('Assumption').length).toBeGreaterThan(0)
+    expect(screen.getByText(/比赛结果不等于市场结果/)).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: /护城河/ })).toBeInTheDocument()
+    expect(screen.getAllByText('假设').length).toBeGreaterThan(0)
   })
 })

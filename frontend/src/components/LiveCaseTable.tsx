@@ -1,5 +1,6 @@
 import type { LiveCase } from '../api/evaluation'
 import { formatSignedScore } from '../lib/format'
+import { caseCategoryLabel, caseStatusLabel } from '../i18n/labels'
 
 interface Props {
   cases: readonly LiveCase[]
@@ -31,45 +32,44 @@ export function LiveCaseTable({
     <div className="record-wrap">
       <div className="filters">
         <div className="filters__group">
-          <span className="u-micro">Matched scenarios</span>
+          <span className="u-micro">匹配场景</span>
           <span className="u-device">{cases.length}</span>
         </div>
         <div className="filters__group">
-          <span className="u-micro">Regressed</span>
+          <span className="u-micro">已回归</span>
           <span className="u-device">{regressed.length}</span>
         </div>
         {unmatchedScenarios.length > 0 && (
           <div className="filters__group">
-            <span className="u-micro">Excluded (one version only)</span>
+            <span className="u-micro">已排除（仅单侧版本）</span>
             <span className="u-device">{unmatchedScenarios.length}</span>
           </div>
         )}
         <span className="u-micro" style={{ marginLeft: 'auto' }}>
-          {cases.length} of {cases.length} matched cases
+          {cases.length} / {cases.length} 个匹配场景
         </span>
       </div>
 
       <div className="scroll-x">
         <table className="record">
           <caption className="visually-hidden">
-            Matched scenarios from the live run, with each version's status and the candidate's
-            answer
+            实时运行中的匹配场景，含每个版本的状态与候选版本的回答
           </caption>
           <thead>
             <tr>
               <th scope="col" className="record__num">
-                No
+                编号
               </th>
-              <th scope="col">Case</th>
-              <th scope="col">Category</th>
-              <th scope="col">Diff.</th>
+              <th scope="col">场景</th>
+              <th scope="col">类别</th>
+              <th scope="col">难度</th>
               <th scope="col" className="record__score-col">
-                Baseline
+                基线版本
               </th>
               <th scope="col" className="record__score-col">
-                Candidate
+                候选版本
               </th>
-              <th scope="col">Candidate answer</th>
+              <th scope="col">候选版本回答</th>
             </tr>
           </thead>
           <tbody>
@@ -96,12 +96,12 @@ export function LiveCaseTable({
                     {row.regressed && (
                       <>
                         {' '}
-                        <span className="chip chip--fail">regressed</span>
+                        <span className="chip chip--fail">已回归</span>
                       </>
                     )}
                   </td>
                   <td>
-                    <span className="u-micro">{row.category}</span>
+                    <span className="u-micro">{caseCategoryLabel(row.category)}</span>
                   </td>
                   <td className="u-num">{row.difficulty.toFixed(2)}</td>
                   <td className="u-num">
@@ -131,15 +131,13 @@ export function LiveCaseTable({
 
       {cases.length === 0 && (
         <p className="u-micro" style={{ padding: 'var(--s4)' }}>
-          The run has recorded no matched case yet. Start the run and this table fills as the
-          executor reports each scenario.
+          该运行尚未记录到任何匹配场景。启动运行后，执行器每报告一个场景，此表就会填入一行。
         </p>
       )}
 
       <p className="u-micro" style={{ padding: 'var(--s3) var(--s4)', lineHeight: 1.6 }}>
-        Scores are not shown because the evaluation service reports a pass/fail status per case and
-        no per-case score. The offline fixture corpus does compute one; the live run does not, and
-        this table prints only what the run produced.
+        这里不显示分数，因为评估服务按场景给出的是通过／未通过状态，而不是逐场景分数。离线夹具语料会计算分数，
+        实时运行则不会；本表只打印该运行真正产生的数据。
       </p>
     </div>
   )
@@ -147,7 +145,7 @@ export function LiveCaseTable({
 
 function StatusChip({ status }: { status: LiveCase['candidateStatus'] }): React.JSX.Element {
   const kind = status === 'passed' ? 'pass' : status === 'error' ? 'error' : 'fail'
-  return <span className={`chip chip--${kind}`}>{status}</span>
+  return <span className={`chip chip--${kind}`}>{caseStatusLabel(status)}</span>
 }
 
 function asText(value: unknown): string {

@@ -432,8 +432,9 @@ describe('MockInvestigationTransport lifecycle', () => {
     for (let i = 0; i < 5; i += 1) await transport.startInvestigation(created.id)
 
     const report = await transport.getReport(created.id)
-    expect(report).toContain('# Investigation report')
-    expect(report).toContain('**BLOCK**')
+    // Chinese heading; the intervention name inside the body is an identifier.
+    expect(report).toContain('# 调查报告')
+    expect(report).toContain('**阻断发布**')
     expect(report).toContain('compression_disabled')
   })
 

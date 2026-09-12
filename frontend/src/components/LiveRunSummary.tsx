@@ -1,6 +1,7 @@
 import type { LiveEvaluation } from '../api/evaluation'
 import type { LiveReportMetrics } from '../api/types'
 import { formatClock, formatPercent, formatStamp } from '../lib/format'
+import { caseCategoryLabel, runStatusLabel } from '../i18n/labels'
 
 interface Props {
   evaluation: LiveEvaluation
@@ -31,15 +32,15 @@ export function LiveRunSummary({
   const hasRegression = verdict !== 'no-regression'
   const word =
     verdict === 'regression'
-      ? 'Confirmed Regression'
+      ? '已确认回归'
       : verdict === 'localized-regression'
-        ? 'Localized Regression'
-        : 'No regression'
+        ? '局部回归'
+        : '无回归'
   const stampWord =
-    verdict === 'regression' ? 'Regressed' : verdict === 'localized-regression' ? 'Localized' : 'Clear'
+    verdict === 'regression' ? '已回归' : verdict === 'localized-regression' ? '局部回归' : '通过'
 
   return (
-    <section className="verdict-card" aria-label="Verdict">
+    <section className="verdict-card" aria-label="裁决结论">
       <div className="verdict-card__headline">
         <h2
           className={`verdict-card__word verdict-card__word--${
@@ -60,16 +61,16 @@ export function LiveRunSummary({
       </div>
 
       <p className="verdict-card__summary">
-        {evaluation.summary || 'The run has not produced a report yet; its summary appears here once it completes.'}
+        {evaluation.summary || '该运行尚未生成报告；完成后摘要会显示在这里。'}
       </p>
 
       <div className="comparison">
         <div className="comparison__cell">
-          <span className="u-micro">Matched</span>
+          <span className="u-micro">匹配场景</span>
           <span className="comparison__value">{counts.cases}</span>
         </div>
         <div className="comparison__cell">
-          <span className="u-micro">Regressed</span>
+          <span className="u-micro">已回归</span>
           <span
             className={`comparison__value${regressed > 0 ? ' comparison__value--alert' : ''}`}
           >
@@ -77,40 +78,40 @@ export function LiveRunSummary({
           </span>
         </div>
         <div className="comparison__cell">
-          <span className="u-micro">Findings</span>
+          <span className="u-micro">发现</span>
           <span className="comparison__value">{counts.findings}</span>
         </div>
         <div className="comparison__cell">
-          <span className="u-micro">Evidence</span>
+          <span className="u-micro">证据</span>
           <span className="comparison__value">{counts.evidence}</span>
         </div>
         <div className="comparison__cell">
-          <span className="u-micro">Events</span>
+          <span className="u-micro">事件</span>
           <span className="comparison__value">{counts.events}</span>
         </div>
       </div>
 
       <dl className="ledger" style={{ borderTop: 'none' }}>
-        <dt className="ledger__key">Run</dt>
+        <dt className="ledger__key">运行 ID</dt>
         <dd className="ledger__val">{run.id}</dd>
-        <dt className="ledger__key">Status</dt>
-        <dd className="ledger__val">{run.status}</dd>
-        <dt className="ledger__key">Started</dt>
+        <dt className="ledger__key">状态</dt>
+        <dd className="ledger__val">{runStatusLabel(run.status)}</dd>
+        <dt className="ledger__key">开始时间</dt>
         <dd className="ledger__val">{formatStamp(run.created_at)}</dd>
-        <dt className="ledger__key">Completed</dt>
+        <dt className="ledger__key">完成时间</dt>
         <dd className="ledger__val">
           {run.completed_at
             ? `${formatStamp(run.completed_at)} · ${formatClock(run.completed_at)}`
-            : 'still running'}
+            : '仍在运行'}
         </dd>
-        <dt className="ledger__key">Report generated</dt>
+        <dt className="ledger__key">报告生成时间</dt>
         <dd className="ledger__val">
-          {reportGeneratedAt ? formatStamp(reportGeneratedAt) : 'not yet available'}
+          {reportGeneratedAt ? formatStamp(reportGeneratedAt) : '尚不可用'}
         </dd>
         {typeof reportMetrics.baseline_pass_rate === 'number' &&
           typeof reportMetrics.candidate_pass_rate === 'number' && (
             <>
-              <dt className="ledger__key">Pass rate</dt>
+              <dt className="ledger__key">通过率</dt>
               <dd className="ledger__val">
                 {formatPercent(reportMetrics.baseline_pass_rate)} →{' '}
                 {formatPercent(reportMetrics.candidate_pass_rate)}
@@ -119,21 +120,21 @@ export function LiveRunSummary({
           )}
         {typeof reportMetrics.mean_difference === 'number' && (
           <>
-            <dt className="ledger__key">Mean delta</dt>
+            <dt className="ledger__key">平均差值</dt>
             <dd className="ledger__val">{reportMetrics.mean_difference.toFixed(3)}</dd>
           </>
         )}
         {typeof reportMetrics.ci_lower === 'number' && typeof reportMetrics.ci_upper === 'number' && (
           <>
-            <dt className="ledger__key">95% interval</dt>
+            <dt className="ledger__key">95% 置信区间</dt>
             <dd className="ledger__val">
-              {reportMetrics.ci_lower.toFixed(3)} to {reportMetrics.ci_upper.toFixed(3)}
+              {reportMetrics.ci_lower.toFixed(3)} 至 {reportMetrics.ci_upper.toFixed(3)}
             </dd>
           </>
         )}
         {typeof reportMetrics.confidence === 'number' && (
           <>
-            <dt className="ledger__key">Confidence</dt>
+            <dt className="ledger__key">置信度</dt>
             <dd className="ledger__val">{formatPercent(reportMetrics.confidence)}</dd>
           </>
         )}
@@ -143,23 +144,23 @@ export function LiveRunSummary({
         <div className="scroll-x" style={{ marginTop: 'var(--s3)' }}>
           <table className="record">
             <caption className="visually-hidden">
-              Matched scenarios by category, with how many regressed
+              按类别统计的匹配场景，以及其中有多少发生了回归
             </caption>
             <thead>
               <tr>
-                <th scope="col">Category</th>
+                <th scope="col">类别</th>
                 <th scope="col" className="record__num">
-                  Matched
+                  匹配
                 </th>
                 <th scope="col" className="record__num">
-                  Regressed
+                  已回归
                 </th>
               </tr>
             </thead>
             <tbody>
               {categories.map(([category, bucket]) => (
                 <tr key={category}>
-                  <td>{category}</td>
+                  <td>{caseCategoryLabel(category as Parameters<typeof caseCategoryLabel>[0])}</td>
                   <td className="u-num">{bucket.total ?? 0}</td>
                   <td
                     className={`u-num${(bucket.regressed ?? 0) > 0 ? ' record__score--down' : ''}`}

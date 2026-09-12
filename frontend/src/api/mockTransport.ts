@@ -36,7 +36,7 @@ export class MockTransport implements Transport {
     return {
       kind: 'mock',
       live: false,
-      label: 'offline demo — bundled fixtures',
+      label: '离线演示 — 内置夹具数据',
       baseUrl: null,
     }
   }

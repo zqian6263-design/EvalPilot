@@ -58,7 +58,7 @@ export class HttpInvestigationTransport implements InvestigationTransport {
     return {
       kind: 'http',
       live: true,
-      label: 'live backend — investigation service',
+      label: '实时后端 — 调查服务',
       baseUrl: this.baseUrl,
     }
   }

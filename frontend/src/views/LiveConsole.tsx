@@ -47,15 +47,15 @@ export function LiveConsole({
   return (
     <>
       <div className="notice notice--live">
-        <span className="notice__tag">Live</span>
+        <span className="notice__tag">实时</span>
         <span>
-          These figures come from run{' '}
-          <code className="u-device">{evaluation.run.id.slice(0, 8)}</code> on the running service:{' '}
-          {evaluation.counts.cases} case(s), {evaluation.counts.evidence} evidence row(s),{' '}
-          {evaluation.counts.findings} finding(s).
+          以下数据来自正在运行的服务上的运行{' '}
+          <code className="u-device">{evaluation.run.id.slice(0, 8)}</code>：
+          {evaluation.counts.cases} 个场景，{evaluation.counts.evidence} 条证据，
+          {evaluation.counts.findings} 条发现。
           {evaluation.sources.report
-            ? ' The report has been generated.'
-            : ' The report has not been generated yet, so the verdict below is the run status.'}
+            ? '报告已生成。'
+            : '报告尚未生成，因此下方的裁决即该运行的当前状态。'}
         </span>
       </div>
 

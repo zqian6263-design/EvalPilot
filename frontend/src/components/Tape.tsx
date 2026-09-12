@@ -98,42 +98,42 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
   const isRegression = scenario.verdict === 'regression'
 
   return (
-    <section className="tape" aria-label="Baseline and candidate scores across matched cases">
+    <section className="tape" aria-label="各匹配场景上基线版本与候选版本的得分轨迹">
       <div className="tape__chassis">
         <div className="tape__chassis-group">
           <div className="tape__plate">
-            <span className="tape__plate-label">Recording</span>
+            <span className="tape__plate-label">记录</span>
             <span className="tape__plate-value">
               {scenario.baselineVersion} vs {scenario.candidateVersion}
             </span>
           </div>
           <span className="tape__divider" aria-hidden="true" />
           <div className="tape__plate">
-            <span className="tape__plate-label">Channel A</span>
-            <span className="tape__plate-value">{scenario.baselineVersion} · baseline</span>
+            <span className="tape__plate-label">通道 A</span>
+            <span className="tape__plate-value">{scenario.baselineVersion} · 基线</span>
           </div>
           <div className="tape__plate">
-            <span className="tape__plate-label">Channel B</span>
-            <span className="tape__plate-value">{scenario.candidateVersion} · candidate</span>
+            <span className="tape__plate-label">通道 B</span>
+            <span className="tape__plate-value">{scenario.candidateVersion} · 候选</span>
           </div>
           <span className="tape__divider" aria-hidden="true" />
           <div className="tape__plate">
-            <span className="tape__plate-label">Timebase</span>
-            <span className="tape__plate-value">{count} matched cases · 3 repeats</span>
+            <span className="tape__plate-label">时基</span>
+            <span className="tape__plate-value">{count} 个匹配场景 · 3 次重复采样</span>
           </div>
         </div>
 
         <div className="tape__chassis-group">
-          <span className="tape__plate-label">Chart speed</span>
-          <span className="tape__plate-value">{count} cases / run</span>
+          <span className="tape__plate-label">走纸速度</span>
+          <span className="tape__plate-value">{count} 个场景 / 次运行</span>
         </div>
       </div>
 
       <div className="tape__paper">
         <span className="tape__watermark">
           {isRegression
-            ? 'Tolerance band — baseline ± 0.05'
-            : 'Tolerance band ± 0.05 · no departure'}
+            ? '容差带 — 基线 ± 0.05'
+            : '容差带 ± 0.05 · 无偏离'}
         </span>
 
         <div className="tape__scroll">
@@ -142,9 +142,9 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
             viewBox={`0 0 ${W} ${H}`}
             preserveAspectRatio="xMidYMid meet"
             role="img"
-            aria-label={`Score trace for ${count} matched cases. ${scenario.verdictText}. ${scenario.summary}`}
+            aria-label={`${count} 个匹配场景的得分轨迹。${scenario.verdictText}。${scenario.summary}`}
           >
-            <title>Baseline and candidate score trace</title>
+            <title>基线版本与候选版本的得分轨迹</title>
             <desc>{scenario.summary}</desc>
 
             <defs>
@@ -193,7 +193,7 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
               </text>
             ))}
             <text x={PAD_L - 8} y={PAD_T - 8} textAnchor="end" className="tape__axis-label">
-              SCORE
+              得分
             </text>
 
             {/* --- the tolerance band --------------------------------------- */}
@@ -287,7 +287,7 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
                   y={PAD_T - 26}
                   className="tape__tag"
                 >
-                  {`T-${String(departureIndex).padStart(2, '0')} DEPARTURE`}
+                  {`T-${String(departureIndex).padStart(2, '0')} 偏离`}
                 </text>
               </g>
             )}
@@ -296,7 +296,7 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
 
         {/* --- the tick margin. A character lattice that doubles as the
                 directly-keyed case index (raised from the teletext hand). -- */}
-        <div className="tape__ticks" role="group" aria-label="Case index">
+        <div className="tape__ticks" role="group" aria-label="场景索引">
           {outcomes.map((outcome) => (
             <button
               key={outcome.spec.n}
@@ -306,7 +306,7 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
               }`}
               aria-pressed={selectedCaseNumber === outcome.spec.n}
               onClick={() => onSelectCase(caseIdFor(scenario, outcome.spec.n))}
-              title={`Case ${outcome.spec.n} — ${outcome.spec.title}`}
+              title={`场景 ${outcome.spec.n} — ${outcome.spec.title}`}
             >
               {String(outcome.spec.n).padStart(2, '0')}
             </button>
@@ -317,28 +317,28 @@ export function Tape({ scenario, selectedCaseNumber, onSelectCase }: Props): JSX
       <div className="legend">
         <span className="legend__item">
           <span className="legend__swatch legend__swatch--baseline" aria-hidden="true" />
-          <span className="u-micro">{scenario.baselineVersion} baseline</span>
+          <span className="u-micro">{scenario.baselineVersion} 基线</span>
         </span>
         <span className="legend__item">
           <span className="legend__swatch legend__swatch--candidate" aria-hidden="true" />
-          <span className="u-micro">{scenario.candidateVersion} candidate — in ink where it departs</span>
+          <span className="u-micro">{scenario.candidateVersion} 候选 —— 偏离处用实色绘制</span>
         </span>
         <span className="legend__item">
           <span className="legend__swatch legend__swatch--muted" aria-hidden="true" />
-          <span className="u-micro">within tolerance</span>
+          <span className="u-micro">在容差带内</span>
         </span>
         <span className="legend__item">
           <span className="legend__swatch legend__swatch--band" aria-hidden="true" />
-          <span className="u-micro">Tolerance band ±0.05</span>
+          <span className="u-micro">容差带 ±0.05</span>
         </span>
         <span className="legend__item">
-          <span className="u-micro">Filled marker = stable regression</span>
+          <span className="u-micro">实心标记 = 稳定回归</span>
         </span>
         <span className="legend__item" style={{ marginLeft: 'auto' }}>
           <span className="u-micro">
             {departureIndex === null
-              ? 'No departure outside band'
-              : `First departure at case ${String(departureIndex).padStart(2, '0')}`}
+              ? '容差带外无偏离'
+              : `首次偏离出现在场景 ${String(departureIndex).padStart(2, '0')}`}
           </span>
         </span>
       </div>

@@ -2,6 +2,7 @@ import type { Evidence } from '../api/types'
 import type { CaseOutcome } from '../fixtures/scenarios'
 import { evidenceForCase } from '../fixtures/findings'
 import { formatScore, formatSignedScore } from '../lib/format'
+import { caseCategoryLabel, checkLabel } from '../i18n/labels'
 
 interface Props {
   outcome: CaseOutcome
@@ -55,9 +56,9 @@ function PromptEvidence({ payload }: { payload: Record<string, unknown> }): Reac
   return (
     <>
       <p className="prompt">{str(payload.question)}</p>
-      <p className="u-micro">System: {str(payload.system)}</p>
+      <p className="u-micro">系统提示：{str(payload.system)}</p>
       <div>
-        <p className="ev__label">Retrieved passages ({retrieved.length})</p>
+        <p className="ev__label">检索到的段落（{retrieved.length}）</p>
         <ul className="citation-list" style={{ marginTop: 'var(--s1)' }}>
           {retrieved.map((passage, index) => (
             <li key={index} className="citation">
@@ -105,7 +106,7 @@ function AnswerEvidence({
       <div className="answers">
         <div className="answer answer--baseline">
           <div className="answer__head">
-            <span className="u-label">Baseline</span>
+            <span className="u-label">基线版本</span>
             <span className="u-device">{formatScore(outcome.baselineVerdict.total)}</span>
           </div>
           <p className="answer__text">
@@ -114,7 +115,7 @@ function AnswerEvidence({
         </div>
         <div className="answer answer--candidate">
           <div className="answer__head">
-            <span className="u-label">Candidate</span>
+            <span className="u-label">候选版本</span>
             <span className="u-device">{formatScore(outcome.candidateVerdict.total)}</span>
           </div>
           <p className="answer__text">
@@ -134,7 +135,7 @@ function CitationEvidence({ payload }: { payload: Record<string, unknown> }): Re
     <>
       <div className="citations">
         <div>
-          <p className="ev__label">Baseline — {baseline.length} citation(s)</p>
+          <p className="ev__label">基线版本 — {baseline.length} 条引用</p>
           <ul className="citation-list">
             {baseline.map((citation, index) => (
               <li key={index} className="citation">
@@ -147,7 +148,7 @@ function CitationEvidence({ payload }: { payload: Record<string, unknown> }): Re
           </ul>
         </div>
         <div>
-          <p className="ev__label">Candidate — {candidate.length} citation(s)</p>
+          <p className="ev__label">候选版本 — {candidate.length} 条引用</p>
           <ul className="citation-list">
             {candidate.map((citation, index) => (
               <li key={index} className="citation">
@@ -162,14 +163,14 @@ function CitationEvidence({ payload }: { payload: Record<string, unknown> }): Re
                 <span className="citation__tick" aria-hidden="true">
                   —
                 </span>
-                <span>no citation supplied</span>
+                <span>未提供引用</span>
               </li>
             ))}
           </ul>
         </div>
       </div>
       <p className="u-micro">
-        At least {required} citation(s) required by the case definition.
+        该场景定义要求至少 {required} 条引用。
       </p>
     </>
   )
@@ -180,19 +181,18 @@ function ScreenshotEvidence({ payload }: { payload: Record<string, unknown> }): 
     <>
       <div className="shots">
         <div className="shot">
-          <span className="shot__tag">Baseline capture</span>
+          <span className="shot__tag">基线版本截图</span>
           <span className="shot__ref">{str(payload.baseline_ref)}</span>
-          <span className="u-micro">not captured in this build</span>
+          <span className="u-micro">本次构建未采集</span>
         </div>
         <div className="shot">
-          <span className="shot__tag">Candidate capture</span>
+          <span className="shot__tag">候选版本截图</span>
           <span className="shot__ref">{str(payload.candidate_ref)}</span>
-          <span className="u-micro">not captured in this build</span>
+          <span className="u-micro">本次构建未采集</span>
         </div>
       </div>
       <p className="u-micro">
-        {str(payload.caption)} — no browser capture ran for this worktree, so the frame above is a
-        placeholder rather than a rendered answer.
+        {str(payload.caption)} —— 本工作树中没有运行浏览器截图，因此上方画面是占位符，而非真实渲染的回答。
       </p>
     </>
   )
@@ -223,7 +223,7 @@ function CheckEvidence({
         const delta = candidate - baseline
         return (
           <div className="scored__row" key={index}>
-            <span className="u-label">{str(check.label)}</span>
+            <span className="u-label">{checkLabel(str(check.id), str(check.label))}</span>
             <div>
               <p className="check__detail">{str(check.detail)}</p>
             </div>
@@ -236,8 +236,8 @@ function CheckEvidence({
         )
       })}
       <p className="u-micro">
-        Weighted total: baseline {formatScore(outcome.baselineVerdict.total)} → candidate{' '}
-        {formatScore(outcome.candidateVerdict.total)}.
+        加权总分：基线 {formatScore(outcome.baselineVerdict.total)} → 候选{' '}
+        {formatScore(outcome.candidateVerdict.total)}。
       </p>
     </div>
   )
@@ -248,11 +248,11 @@ function RationaleEvidence({ payload }: { payload: Record<string, unknown> }): R
     <>
       <div className="rationale">
         <div>
-          <span className="ev__label">Baseline</span>
+          <span className="ev__label">基线版本</span>
           <p>{str(payload.baseline)}</p>
         </div>
         <div>
-          <span className="ev__label">Candidate</span>
+          <span className="ev__label">候选版本</span>
           <p>{str(payload.candidate)}</p>
         </div>
       </div>
@@ -274,41 +274,41 @@ function EvidenceItem({
   switch (evidence.kind) {
     case 'text':
       return payload.question !== undefined ? (
-        <EvidenceShell kind="prompt" label={label}>
+        <EvidenceShell kind="提问" label="输入">
           <PromptEvidence payload={payload} />
         </EvidenceShell>
       ) : (
-        <EvidenceShell kind="rationale" label="evaluator">
+        <EvidenceShell kind="评分理由" label="评估器">
           <RationaleEvidence payload={payload} />
         </EvidenceShell>
       )
     case 'trace':
       return (
-        <EvidenceShell kind="answers + scored points" label="evaluator">
+        <EvidenceShell kind="回答与得分要点" label="评估器">
           <AnswerEvidence payload={payload} outcome={outcome} />
         </EvidenceShell>
       )
     case 'citation':
       return (
-        <EvidenceShell kind="citations" label="deterministic check">
+        <EvidenceShell kind="引用" label="确定性检查">
           <CitationEvidence payload={payload} />
         </EvidenceShell>
       )
     case 'screenshot':
       return (
-        <EvidenceShell kind="screenshot (placeholder)" label="capture">
+        <EvidenceShell kind="截图（占位符）" label="采集">
           <ScreenshotEvidence payload={payload} />
         </EvidenceShell>
       )
     case 'log':
       return (
-        <EvidenceShell kind="log" label="executor">
+        <EvidenceShell kind="日志" label="执行器">
           <LogEvidence payload={payload} />
         </EvidenceShell>
       )
     case 'metric':
       return (
-        <EvidenceShell kind="checks" label="deterministic">
+        <EvidenceShell kind="检查项" label="确定性">
           <CheckEvidence payload={payload} outcome={outcome} />
         </EvidenceShell>
       )
@@ -338,36 +338,36 @@ export function EvidenceDrawer({ outcome, onClose }: Props): React.JSX.Element {
       <button
         type="button"
         className="drawer__scrim"
-        aria-label="Close the evidence packet"
+        aria-label="关闭证据包"
         onClick={onClose}
       />
       <aside
         className="drawer"
         role="dialog"
         aria-modal="true"
-        aria-label={`Evidence packet for case ${outcome.spec.n}`}
+        aria-label={`场景 ${outcome.spec.n} 的证据包`}
       >
         <header className="drawer__head">
           <div className="drawer__title">
             <span className="u-micro">
-              Case {String(outcome.spec.n).padStart(2, '0')} · {outcome.spec.category} · difficulty{' '}
+              场景 {String(outcome.spec.n).padStart(2, '0')} · {caseCategoryLabel(outcome.spec.category)} · 难度{' '}
               {outcome.spec.difficulty.toFixed(2)}
             </span>
             <h2 className="drawer__case-title">{outcome.spec.title}</h2>
             <span className="u-device">
-              {outcome.spec.source} · baseline {formatScore(outcome.baselineVerdict.total)} →
-              candidate {formatScore(outcome.candidateVerdict.total)} (
-              {formatSignedScore(outcome.delta)})
+              {outcome.spec.source} · 基线 {formatScore(outcome.baselineVerdict.total)} →
+              候选 {formatScore(outcome.candidateVerdict.total)}（
+              {formatSignedScore(outcome.delta)}）
             </span>
           </div>
           <button type="button" className="drawer__close" onClick={onClose} autoFocus>
-            Close
+            关闭
           </button>
         </header>
 
         <div className="drawer__body">
           <p className="u-micro" style={{ lineHeight: 1.6 }}>
-            Why this case exists: {outcome.spec.rationale}
+            该场景存在的原因：{outcome.spec.rationale}
           </p>
           {items.map((evidence) => (
             <EvidenceItem key={evidence.id} evidence={evidence} outcome={outcome} />

@@ -18,8 +18,8 @@ interface Props {
 export function DemoEntry({ scenarioId, onScenarioChange, starting, onStartDemo }: Props): React.JSX.Element {
   return (
     <>
-      <section className="scenario" aria-label="Demo scenario">
-        <span className="u-micro">Seeded scenario</span>
+      <section className="scenario" aria-label="演示场景">
+        <span className="u-micro">预置场景</span>
         <div className="scenario__options">
           {SCENARIOS.map((scenario) => (
             <button
@@ -36,7 +36,7 @@ export function DemoEntry({ scenarioId, onScenarioChange, starting, onStartDemo 
         </div>
       </section>
 
-      <section className="entry" aria-label="Demo entry">
+      <section className="entry" aria-label="演示入口">
         <div className="entry__guard">
           <button
             type="button"
@@ -44,17 +44,16 @@ export function DemoEntry({ scenarioId, onScenarioChange, starting, onStartDemo 
             onClick={onStartDemo}
             disabled={starting}
           >
-            {starting ? 'Starting…' : 'Start demo run'}
+            {starting ? '正在启动…' : '启动演示运行'}
           </button>
           <p className="entry__note">
-            Loads the seeded project and both versions. With the backend reachable this creates or
-            opens the real run for those versions and runs it live — pressing again reopens the
-            same run rather than creating a second one. Without it, the console presents the same
-            scenario from bundled fixtures and marks the data as offline.
+            加载预置项目及其两个版本。后端可达时会创建或打开这两个版本的真实运行并实时执行 ——
+            再次点击只会重新打开同一个运行，而不会创建第二个。后端不可达时，控制台改为展示内置夹具数据中的同一场景，
+            并明确标注数据为离线。
           </p>
         </div>
         <div className="entry__controls">
-          <span className="u-micro">Deterministic seed</span>
+          <span className="u-micro">确定性随机种子</span>
           <span className="u-device">20260911</span>
         </div>
       </section>

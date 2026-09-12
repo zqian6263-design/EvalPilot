@@ -59,13 +59,11 @@ export function Console({
 
       {transport && !transport.describe().live && (
         <div className="notice notice--alert">
-          <span className="notice__tag">Offline</span>
+          <span className="notice__tag">离线</span>
           <span>
-            The backend did not answer <code className="u-device">/api/health</code>. This run is
-            served from bundled fixtures and reproduces identically on every load — useful for a
-            demo, but it is not evidence about a real system. Press{' '}
-            <strong>Start demo run</strong> again once the backend is up to switch to the real
-            service; the header will name the run it opens.
+            后端未响应 <code className="u-device">/api/health</code>
+            。本次运行由内置夹具数据提供，每次加载结果完全一致 —— 适合演示，但它并不是关于真实系统的证据。
+            后端就绪后再次点击<strong>「启动演示运行」</strong>即可切换到真实服务；页眉会标明它打开的是哪一次运行。
           </span>
         </div>
       )}

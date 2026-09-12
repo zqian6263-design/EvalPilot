@@ -3,6 +3,7 @@ import type { Severity } from '../api/types'
 import type { Scenario } from '../fixtures/scenarios'
 import { FINDINGS, REPORT } from '../fixtures/findings'
 import { SEVERITY_ORDER, formatPercent } from '../lib/format'
+import { severityLabel } from '../i18n/labels'
 
 interface Props {
   scenario: Scenario
@@ -37,24 +38,24 @@ export function FindingsView({ scenario, onOpenCase }: Props): React.JSX.Element
       <header className="sheet__masthead">
         <div className="stack" style={{ gap: 'var(--s1)' }}>
           <span className="sheet__doctype">
-            Findings · {scenario.baselineVersion} vs {scenario.candidateVersion}
+            评估发现 · {scenario.baselineVersion} vs {scenario.candidateVersion}
           </span>
           <h1 className="sheet__title">
             {scenario.verdict === 'regression'
-              ? 'What the change broke'
+              ? '本次变更破坏了什么'
               : scenario.verdict === 'improvement'
-                ? 'What the change improved'
-                : 'Nothing moved'}
+                ? '本次变更改进了什么'
+                : '没有任何变化'}
           </h1>
         </div>
-        <div className="rocker" role="group" aria-label="Filter findings by severity">
+        <div className="rocker" role="group" aria-label="按严重程度筛选发现">
           <button
             type="button"
             className="rocker__pos"
             aria-pressed={severity === 'all'}
             onClick={() => setSeverity('all')}
           >
-            All ({FINDINGS.length})
+            全部（{FINDINGS.length}）
           </button>
           {SEVERITY_ORDER.map((value) => (
             <button
@@ -65,7 +66,7 @@ export function FindingsView({ scenario, onOpenCase }: Props): React.JSX.Element
               onClick={() => setSeverity(value)}
               disabled={(counts.get(value) ?? 0) === 0}
             >
-              {value} ({counts.get(value) ?? 0})
+              {severityLabel(value)}（{counts.get(value) ?? 0}）
             </button>
           ))}
         </div>
@@ -74,7 +75,7 @@ export function FindingsView({ scenario, onOpenCase }: Props): React.JSX.Element
       <div className="ledger-strip">
         {SEVERITY_ORDER.map((value) => (
           <div className="ledger-strip__cell" key={value}>
-            <span className="u-micro">{value}</span>
+            <span className="u-micro">{severityLabel(value)}</span>
             <span
               className={`ledger-strip__value${
                 (value === 'high' || value === 'critical') && (counts.get(value) ?? 0) > 0
@@ -87,7 +88,7 @@ export function FindingsView({ scenario, onOpenCase }: Props): React.JSX.Element
           </div>
         ))}
         <div className="ledger-strip__cell">
-          <span className="u-micro">Evidence links</span>
+          <span className="u-micro">证据关联</span>
           <span className="ledger-strip__value">
             {FINDINGS.reduce((sum, finding) => sum + finding.evidence_ids.length, 0)}
           </span>
@@ -96,7 +97,7 @@ export function FindingsView({ scenario, onOpenCase }: Props): React.JSX.Element
 
       {findings.length === 0 && (
         <p className="u-micro">
-          No finding at this severity. The run recorded {FINDINGS.length} finding(s) in total.
+          该严重程度下没有发现。本次运行共记录了 {FINDINGS.length} 条发现。
         </p>
       )}
 
@@ -108,9 +109,9 @@ export function FindingsView({ scenario, onOpenCase }: Props): React.JSX.Element
           <article className="finding" key={finding.id}>
             <div className="finding__rail">
               <span className={`finding__sev finding__sev--${finding.severity}`}>
-                {finding.severity}
+                {severityLabel(finding.severity)}
               </span>
-              <span className="u-micro">confidence {finding.confidence.toFixed(2)}</span>
+              <span className="u-micro">置信度 {finding.confidence.toFixed(2)}</span>
             </div>
 
             <div className="finding__body">
@@ -119,26 +120,24 @@ export function FindingsView({ scenario, onOpenCase }: Props): React.JSX.Element
 
               {finding.recommendation && (
                 <div className="finding__rec">
-                  <span className="u-micro">Recommendation</span>
+                  <span className="u-micro">改进建议</span>
                   <p>{finding.recommendation}</p>
                 </div>
               )}
 
               <div className="finding__evidence">
-                <span className="u-micro">
-                  {finding.evidence_ids.length} evidence link(s)
-                </span>
+                <span className="u-micro">{finding.evidence_ids.length} 条证据关联</span>
                 {primaryCase && (
                   <button
                     type="button"
                     className="record__open"
                     onClick={() => onOpenCase(primaryCase.caseId)}
                   >
-                    Open case {String(primaryCase.spec.n).padStart(2, '0')} — {primaryCase.spec.title}
+                    打开场景 {String(primaryCase.spec.n).padStart(2, '0')} — {primaryCase.spec.title}
                   </button>
                 )}
                 {!primaryCase && finding.severity === 'info' && (
-                  <span className="u-micro">Aggregate finding across the matched set</span>
+                  <span className="u-micro">跨匹配场景的汇总性发现</span>
                 )}
               </div>
             </div>
@@ -148,14 +147,14 @@ export function FindingsView({ scenario, onOpenCase }: Props): React.JSX.Element
 
       <div className="signoff">
         <div className="signoff__line">
-          <span className="u-micro">Report generated</span>
+          <span className="u-micro">报告生成时间</span>
           <span className="u-device">{REPORT.generated_at.replace('T', ' ')}</span>
         </div>
         <div className="signoff__line">
-          <span className="u-micro">Reviewed by</span>
+          <span className="u-micro">复核人</span>
           <div className="signoff__rule" />
           <span className="u-micro">
-            {formatPercent(scenario.comparison.regression_confidence)} confidence in the verdict
+            对该裁决的置信度为 {formatPercent(scenario.comparison.regression_confidence)}
           </span>
         </div>
       </div>

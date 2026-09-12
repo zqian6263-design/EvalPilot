@@ -52,13 +52,13 @@ export interface LiveMetricRow {
  * from the table is worse than a metric visibly marked "not reported".
  */
 export const LIVE_METRIC_ROWS: ReadonlyArray<{ id: string; label: string }> = [
-  { id: 'task_success', label: 'Task success (pass rate)' },
-  { id: 'citation_coverage', label: 'Citation coverage' },
-  { id: 'correct_refusal', label: 'Correct refusal rate' },
-  { id: 'format_compliance', label: 'Format compliance' },
-  { id: 'groundedness', label: 'Groundedness (rubric)' },
-  { id: 'latency_p50', label: 'Latency p50' },
-  { id: 'answer_tokens', label: 'Answer length (mean)' },
+  { id: 'task_success', label: '任务成功率（通过率）' },
+  { id: 'citation_coverage', label: '引用覆盖率' },
+  { id: 'correct_refusal', label: '正确拒答率' },
+  { id: 'format_compliance', label: '格式合规率' },
+  { id: 'groundedness', label: '有据性（评分表）' },
+  { id: 'latency_p50', label: '延迟 P50' },
+  { id: 'answer_tokens', label: '回答长度（均值）' },
 ]
 
 /**
@@ -73,7 +73,7 @@ function passRateMetric(metrics: LiveReportMetrics): MetricValue | null {
   const { baseline_pass_rate: baseline, candidate_pass_rate: candidate } = metrics
   if (typeof baseline !== 'number' || typeof candidate !== 'number') return null
   return {
-    label: 'Task success (pass rate)',
+    label: '任务成功率（通过率）',
     unit: '',
     direction: 'higher',
     baseline,
