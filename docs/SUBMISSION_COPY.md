@@ -23,6 +23,7 @@ EvalPilot 面向 AI 产品与研究团队，解决模型、Prompt、检索、记
 - Runnable FastAPI + React product, SQLite persistence, event streams, migration support.
 - 26 matched scenarios, 18 controls, 8 critical regressions, evidence-linked findings.
 - Measured counterfactual replay with explicit fallbacks and no network requirement for the demo.
+- Public open-source Haystack HTTP SUT adapter with offline cache replay and loud failure on SUT outage.
 
 ### Market feasibility
 
@@ -31,7 +32,7 @@ EvalPilot 面向 AI 产品与研究团队，解决模型、Prompt、检索、记
 - Value: convert hours of manual release checks into an auditable minutes-scale gate.
 - Public paid competitors establish willingness to pay across seat and usage models.
 - Public SQuAD and HotpotQA workloads verify cross-dataset matched-control decisions.
-- A complete live run costs about $0.0623 at peak, including model, compute, and storage.
+- A complete live run costs about $0.2647 at peak including 52 Judge calls, model, compute, and storage; the public Haystack SUT path is independently tested.
 - Integration path: REST API -> release-gate report -> CI exit code -> team subscription -> enterprise self-host.
 - Revenue motions: fixed-scope release audit, monthly team gate, annual enterprise deployment.
 
@@ -44,7 +45,7 @@ EvalPilot 面向 AI 产品与研究团队，解决模型、Prompt、检索、记
 
 ### LLM integration
 
-- LLM planner proposes risk hypotheses from the release objective.
+- LLM planner proposes risk hypotheses and selects bounded counterfactual experiments from an executable allowlist.
 - LLM judge adds qualitative rubric scoring with strict JSON validation.
 - LLM reporter produces an evidence-grounded rationale and recommendations.
 - Measured verdicts remain authoritative; LLM has no authority to invent evidence or override replay results.
