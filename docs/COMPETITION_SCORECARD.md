@@ -94,12 +94,13 @@ Customer interviews are optional support, not a required gate.
 - A valid replay plan can affect control flow, but does not write scores, evidence, or verdicts.
 - DeepSeek V4 Pro is verified in live mode, including one persisted model-guided replay plan.
 - The fallback path is verified with a deliberate HTTP 401.
-- Token, run-time, storage, and total-cost measurements are recorded.
+- Token, run-time, storage, and investigation-cost measurements are recorded; judge token usage is not yet persisted, so the model cost is a lower bound.
 
 ### Remaining
 
 - Add a second OpenAI-compatible provider proof.
 - Disclose the limits of LLM judging against deterministic checks.
+- Persist judge token usage so the full run cost is exact.
 - Measure the marginal quality gain of model-guided plans against deterministic plans.
 
 ## Track dimension — 18/20

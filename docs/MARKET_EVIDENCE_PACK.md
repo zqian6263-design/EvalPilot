@@ -150,6 +150,8 @@ These are execution tasks, not interview tasks.
 - Full run compute: 462.00 seconds (386.16 run + 76.45 investigation); logical storage: 0.2501 MB.
 - Model peak cost: $0.057108; compute: $0.012833; storage: $0.00000562.
 - Total peak cost: $0.069947; total off-peak cost: $0.041393.
+
+The model and cost figure above covers persisted investigation LLM usage. The live run also performed rubric-judge calls during evaluation; those calls contribute to wall time but their token usage is not yet persisted, so the model cost is a lower bound rather than a complete run cost.
 - Portable launcher: `python scripts/deploy.py`.
 
 ## 10. External integration proof (2026-09-13)
