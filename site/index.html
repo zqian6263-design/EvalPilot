@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EvalPilot｜AI 应用回归评测与自主发布质量官</title>
+  <meta name="description" content="用匹配回归评测、统计置信与反事实重放，为 AI 应用生成可验收的发布决策。">
+  <meta name="theme-color" content="#f6f8fb">
+  <link rel="canonical" href="https://zqian6263-design.github.io/EvalPilot/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="EvalPilot｜AI 应用回归评测与自主发布质量官">
+  <meta property="og:description" content="把 AI 版本变化从“感觉变差”变成有证据的发布决策。">
+  <meta property="og:url" content="https://zqian6263-design.github.io/EvalPilot/">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#product" aria-label="EvalPilot 首页">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M7 8.5 16 3l9 5.5v15L16 29l-9-5.5z"></path>
+          <path d="M11 12h10M11 16h7M11 20h5"></path>
+        </svg>
+        <span>EvalPilot</span>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a href="#loop">闭环</a>
+        <a href="#evidence">证据</a>
+        <a href="#architecture">架构</a>
+        <a href="#start">开始使用</a>
+      </nav>
+      <a class="button button-small button-secondary header-action" href="https://github.com/zqian6263-design/EvalPilot" rel="noopener noreferrer">GitHub</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="product">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">AI 应用回归评测与自主发布质量官</p>
+          <h1>让每一次版本发布，都有可验收的质量证据。</h1>
+          <p class="lead">版本更新后，AI 应用可能在速度提升、普通问答通过的同时，悄悄破坏条款、权限或安全护栏。EvalPilot 用匹配场景、统计置信和反事实重放，把“感觉变差”变成明确发布决策。</p>
+          <div class="actions">
+            <a class="button button-primary" href="#demo">观看演示视频</a>
+            <a class="button button-secondary" href="https://github.com/zqian6263-design/EvalPilot" rel="noopener noreferrer">查看 GitHub</a>
+          </div>
+          <p class="release-link"><a href="https://github.com/zqian6263-design/EvalPilot/releases/tag/evalpilot-v0.1.0-rc1" rel="noopener noreferrer">浏览 v0.1.0-rc1 Release</a></p>
+        </div>
+
+        <aside class="quality-card" aria-label="EvalPilot 发布质量闭环">
+          <div class="card-heading">
+            <span>Release decision</span>
+            <strong>BLOCK / CRITICAL</strong>
+          </div>
+          <ol class="flow-list">
+            <li><span>01</span><div><strong>匹配回归评测</strong><small>26 个场景同时运行两个版本</small></div></li>
+            <li><span>02</span><div><strong>统计置信判定</strong><small>控制组、效应量与配对区间</small></div></li>
+            <li><span>03</span><div><strong>反事实根因重放</strong><small>真实禁用可疑变更并测量恢复</small></div></li>
+            <li><span>04</span><div><strong>发布质量门禁</strong><small>报告、CI 退出码与 PR 回写</small></div></li>
+          </ol>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="problem">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">问题</p>
+          <h2>分数变化不等于真实回归。</h2>
+        </div>
+        <div class="three-grid">
+          <article class="plain-card">
+            <h3>关键能力会静默退化</h3>
+            <p>新版本可能更快，普通问题仍然通过，却丢失退款条款、破坏租户隔离或泄露凭证。</p>
+          </article>
+          <article class="plain-card">
+            <h3>单次分数无法证明因果</h3>
+            <p>测试集变难、采样波动和版本差异都可能导致误判，没有控制组就没有可信结论。</p>
+          </article>
+          <article class="plain-card">
+            <h3>报告失败不等于能发布</h3>
+            <p>团队仍要知道哪个变更造成失败、修复后是否恢复，以及问题是否足以阻断发布。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-muted" id="loop">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">闭环</p>
+          <h2>从版本变更到发布决策，任务完整接管。</h2>
+          <p>模型负责规划和解释；实测分数、证据、根因结论和发布决策由确定性引擎掌握。</p>
+        </div>
+        <div class="four-grid">
+          <article class="step-card">
+            <span class="step-number">01</span>
+            <h3>匹配回归评测</h3>
+            <p>baseline 与 candidate 使用同一组 26 个匹配场景和 18 个控制组。</p>
+          </article>
+          <article class="step-card">
+            <span class="step-number">02</span>
+            <h3>统计置信与功效</h3>
+            <p>输出效应量、配对置信区间、功效诊断与明确 verdict，避免把噪声说成回归。</p>
+          </article>
+          <article class="step-card">
+            <span class="step-number">03</span>
+            <h3>反事实根因重放</h3>
+            <p>受约束模型规划候选实验，引擎执行白名单干预，通过真实恢复情况确认根因。</p>
+          </article>
+          <article class="step-card">
+            <span class="step-number">04</span>
+            <h3>发布质量门禁</h3>
+            <p>输出 BLOCK / REVIEW / ALLOW、Markdown 报告、JUnit、SARIF、PR 回写和退出码。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="evidence">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">公开证据</p>
+          <h2>结果不是口号，全部可追溯。</h2>
+          <p>以下数值来自仓库中已经执行的公开工作负载、上游版本比较和完整 Live Run。</p>
+        </div>
+        <div class="evidence-grid">
+          <a class="evidence-card" href="https://github.com/zqian6263-design/EvalPilot/blob/main/docs/PUBLIC_OPEN_SOURCE_CASE.md" rel="noopener noreferrer">
+            <span class="metric">8 / 26</span>
+            <h3>公开 Haystack 场景确认回归</h3>
+            <p>受控 candidate 在 26 个匹配场景中触发 8 个回归，同版本控制为 0。</p>
+            <span class="source-link">查看公开案例 →</span>
+          </a>
+          <a class="evidence-card" href="https://github.com/zqian6263-design/EvalPilot/blob/main/docs/UPSTREAM_VERSION_RESULT.json" rel="noopener noreferrer">
+            <span class="metric">52 / 0</span>
+            <h3>真实上游版本比较</h3>
+            <p>Haystack 3.0.0 vs 3.1.1：52 次比较，0 个语义差异。</p>
+            <span class="source-link">查看原始结果 →</span>
+          </a>
+          <a class="evidence-card" href="https://github.com/zqian6263-design/EvalPilot/blob/main/docs/OOD_REPLAY_RESULT.json" rel="noopener noreferrer">
+            <span class="metric">4 / 4</span>
+            <h3>OOD 反事实根因确认</h3>
+            <p>检索、Unicode、记忆隔离和缓存四类干预均通过 HTTP 实测恢复。</p>
+            <span class="source-link">查看重放结果 →</span>
+          </a>
+          <a class="evidence-card" href="https://github.com/zqian6263-design/EvalPilot/blob/main/docs/MARKET_EVIDENCE_PACK.md" rel="noopener noreferrer">
+            <span class="metric">52 calls</span>
+            <h3>完整 Live Run 成本</h3>
+            <p>78,695 tokens，峰值运行下界 $0.264697（2026-09-12 已记录价格假设）。</p>
+            <span class="source-link">查看成本依据 →</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-muted" id="architecture">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">架构</p>
+          <h2>自主执行，但结论不可被模型覆盖。</h2>
+        </div>
+        <div class="architecture" aria-label="EvalPilot 端到端执行架构">
+          <div><strong>需求与版本变更</strong><small>自然语言目标</small></div>
+          <span aria-hidden="true">→</span>
+          <div><strong>匹配场景规划</strong><small>正常 / 边界 / 对抗</small></div>
+          <span aria-hidden="true">→</span>
+          <div><strong>外部 SUT 执行</strong><small>HTTP / 工具 / 证据</small></div>
+          <span aria-hidden="true">→</span>
+          <div><strong>统计判定</strong><small>配对区间 / 控制组</small></div>
+          <span aria-hidden="true">→</span>
+          <div><strong>自主调查</strong><small>假设 / 记忆 / 探查</small></div>
+          <span aria-hidden="true">→</span>
+          <div><strong>反事实重放</strong><small>白名单干预 / 实测</small></div>
+          <span aria-hidden="true">→</span>
+          <div><strong>Release Gate</strong><small>报告 / CI / PR</small></div>
+        </div>
+        <div class="boundary-grid">
+          <article>
+            <strong>故障显式失败</strong>
+            <p>外部 SUT 不可用时不会静默回退 mock，避免把基础设施故障伪装成评测结果。</p>
+          </article>
+          <article>
+            <strong>模型边界受控</strong>
+            <p>LLM Judge 可替换为确定性实现；规划和评审调用受 token 与调用次数预算约束。</p>
+          </article>
+          <article>
+            <strong>默认离线可复现</strong>
+            <p>演示无需 API Key；Live 模式通过 OpenAI-compatible 接口接入 DeepSeek V4 Pro。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="demo">
+      <div class="container demo-grid">
+        <div>
+          <p class="eyebrow">演示</p>
+          <h2>看见回归如何被确认、定位并阻断。</h2>
+          <p>视频展示匹配评测、统计判定、自主调查、反事实重放、BLOCK 决策和证据报告。</p>
+          <a class="button button-primary" href="https://www.bilibili.com/video/BV1mPYY6sE1k" rel="noopener noreferrer">在 B 站打开</a>
+        </div>
+        <div class="video-frame">
+          <iframe src="https://player.bilibili.com/player.html?bvid=BV1mPYY6sE1k&amp;page=1&amp;high_quality=1&amp;danmaku=0" title="EvalPilot 竞赛演示视频" loading="lazy" allowfullscreen></iframe>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-muted" id="start">
+      <div class="container start-grid">
+        <div>
+          <p class="eyebrow">快速开始</p>
+          <h2>公开验证，或本地一键运行。</h2>
+          <p>公开产品验证请从 Release 开始；本地运行需要 Python。启动后终端会输出控制台和 API 文档地址。</p>
+          <a class="button button-secondary" href="https://github.com/zqian6263-design/EvalPilot/releases/tag/evalpilot-v0.1.0-rc1" rel="noopener noreferrer">查看 Release</a>
+        </div>
+        <pre><code>git clone https://github.com/zqian6263-design/EvalPilot.git
+cd EvalPilot
+python scripts/deploy.py</code></pre>
+      </div>
+    </section>
+
+    <section class="section final-cta">
+      <div class="container cta-inner">
+        <div>
+          <p class="eyebrow">EvalPilot</p>
+          <h2>用证据决定，而不是用感觉发布。</h2>
+        </div>
+        <div class="cta-links">
+          <a class="button button-primary" href="https://github.com/zqian6263-design/EvalPilot" rel="noopener noreferrer">查看源码</a>
+          <a class="button button-secondary" href="https://github.com/zqian6263-design/EvalPilot/releases/tag/evalpilot-v0.1.0-rc1" rel="noopener noreferrer">下载 Release</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>EvalPilot · Apache-2.0 · AI 应用回归评测与自主发布质量官</p>
+      <div>
+        <a href="https://github.com/zqian6263-design/EvalPilot/blob/main/SECURITY.md" rel="noopener noreferrer">安全策略</a>
+        <a href="https://github.com/zqian6263-design/EvalPilot/blob/main/LICENSE" rel="noopener noreferrer">许可证</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
