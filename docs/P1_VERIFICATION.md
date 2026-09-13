@@ -14,6 +14,8 @@ Date: 2026-09-13
 
 - Full backend suite: pass.
 - Public Haystack SUT E2E: pass, including capability discovery and failure when the SUT is unavailable.
+- Haystack pipeline: `splitter -> retriever -> joiner -> grounded reranker`; baseline 26/26 and candidate 8/26 regressions unchanged.
+- Pipeline acceptance evidence: `.runtime/sut-e2e-94284678fa274bacaa1ccd96f0832c3c/summary.json`.
 - CI export against a live run:
   - `gate.json` decision `BLOCK`, exit code `2`.
   - `junit.xml`: 8 failures / 8 test cases.
