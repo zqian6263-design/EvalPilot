@@ -1,0 +1,74 @@
+{
+  "benchmark": "measured OOD counterfactual execution",
+  "cases": 4,
+  "root_cause_confirmed": 4,
+  "accuracy": 1.0,
+  "results": [
+    {
+      "scenario_id": "ood-multi-doc",
+      "question": "What is the refund timeline after the warehouse receives the return?",
+      "include": [
+        "5 business days"
+      ],
+      "intervention": "retrieval_top_k_restored",
+      "baseline_pass": true,
+      "candidate_fail": true,
+      "intervention_pass": true,
+      "root_cause_confirmed": true,
+      "baseline_answer": "Refund Policy: refunds arrive within 5 business days after the warehouse receives the return.",
+      "candidate_answer": "Refund Policy: contact support for the refund timeline.",
+      "intervention_answer": "Refund Policy: refunds arrive within 5 business days after the warehouse receives the return."
+    },
+    {
+      "scenario_id": "ood-unicode",
+      "question": "退款多久到账？",
+      "include": [
+        "5 个工作日"
+      ],
+      "intervention": "unicode_normalization_restored",
+      "baseline_pass": true,
+      "candidate_fail": true,
+      "intervention_pass": true,
+      "root_cause_confirmed": true,
+      "baseline_answer": "Unicode normalized match: 退款将在 5 个工作日内到账。",
+      "candidate_answer": "No normalized match was found.",
+      "intervention_answer": "Unicode normalized match: 退款将在 5 个工作日内到账。"
+    },
+    {
+      "scenario_id": "ood-memory-scope",
+      "question": "Does tenant A see tenant B memory?",
+      "include": [
+        "isolated to tenant A memory"
+      ],
+      "avoid": [
+        "tenant B memory"
+      ],
+      "intervention": "memory_scope_restored",
+      "baseline_pass": true,
+      "candidate_fail": true,
+      "intervention_pass": true,
+      "root_cause_confirmed": true,
+      "baseline_answer": "Tenant A context is isolated to tenant A memory.",
+      "candidate_answer": "Tenant A context includes tenant B memory.",
+      "intervention_answer": "Tenant A context is isolated to tenant A memory."
+    },
+    {
+      "scenario_id": "ood-cache-stale",
+      "question": "Did the tool return a stale cached error?",
+      "include": [
+        "fresh HTTP 200"
+      ],
+      "avoid": [
+        "stale cached HTTP 503"
+      ],
+      "intervention": "cache_bypass_enabled",
+      "baseline_pass": true,
+      "candidate_fail": true,
+      "intervention_pass": true,
+      "root_cause_confirmed": true,
+      "baseline_answer": "Tool result: fresh HTTP 200 status.",
+      "candidate_answer": "Tool result: stale cached HTTP 503 status.",
+      "intervention_answer": "Tool result: fresh HTTP 200 status."
+    }
+  ]
+}

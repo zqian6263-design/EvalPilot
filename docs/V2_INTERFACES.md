@@ -111,6 +111,7 @@ The confirmed 26-case regression run is the entry point. The investigation must 
 4. one counterfactual experiment per critical finding, or a justified grouping;
 5. `compression_disabled` as the dominant root-cause intervention for dropped clauses;
 6. `security_guard_enabled` as the root-cause intervention for credential disclosure;
+7. OOD intervention vocabulary includes `retrieval_top_k_restored`, `unicode_normalization_restored`, `memory_scope_restored`, and `cache_bypass_enabled`;
 7. `decision.verdict = block`;
 8. an exportable Markdown report whose claims cite evidence ids.
 

@@ -26,7 +26,7 @@ Status: implemented
 
 ## 3. Public open-source patch regression case
 
-Status: implemented as a controlled public-dependency case
+Status: implemented as a controlled public-dependency case plus a real upstream version comparison
 
 - Run against a real upstream patch in a public repository.
 - Preserve the patch and source revision.

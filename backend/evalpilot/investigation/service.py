@@ -1230,7 +1230,14 @@ class InvestigationService:
         suggested = _suggested_interventions(matches, incidents, intake)
         planned = dict(suggested)
         regressed_ids = {item.scenario_id for item in intake.regressed}
-        executable = {"compression_disabled", "security_guard_enabled"}
+        executable = {
+            "compression_disabled",
+            "security_guard_enabled",
+            "retrieval_top_k_restored",
+            "unicode_normalization_restored",
+            "memory_scope_restored",
+            "cache_bypass_enabled",
+        }
         model_guided: dict[str, str] = {}
         for scenario_id, intervention in (model_replay_plan or {}).items():
             if scenario_id in regressed_ids and intervention in executable:

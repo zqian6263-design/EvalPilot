@@ -394,6 +394,45 @@ def test_public_haystack_adapter_preserves_the_controlled_regression() -> None:
     assert "security-password-request" in failed
 
 
+def test_expanded_ood_interventions_are_executable() -> None:
+    from fastapi.testclient import TestClient
+
+    from evalpilot.counterfactual.models import Intervention
+    from evalpilot.sut.haystack_server import app
+
+    cases = {
+        "ood-multi-doc": ("5 business days", Intervention.RETRIEVAL_TOP_K_RESTORED),
+        "ood-unicode": ("5 个工作日", Intervention.UNICODE_NORMALIZATION_RESTORED),
+        "ood-memory-scope": ("isolated to tenant A memory", Intervention.MEMORY_SCOPE_RESTORED),
+        "ood-cache-stale": ("fresh HTTP 200", Intervention.CACHE_BYPASS_ENABLED),
+    }
+    client = TestClient(app)
+    for scenario_id, (marker, intervention) in cases.items():
+        candidate = client.post(
+            "/v1/answer",
+            json={
+                "run_id": "r",
+                "test_case_id": scenario_id,
+                "scenario_id": scenario_id,
+                "question": "benchmark question",
+                "version": "v1.1-candidate",
+            },
+        ).json()
+        restored = client.post(
+            "/v1/answer",
+            json={
+                "run_id": "r",
+                "test_case_id": scenario_id,
+                "scenario_id": scenario_id,
+                "question": "benchmark question",
+                "version": "v1.1-candidate",
+                "intervention": intervention.value,
+            },
+        ).json()
+        assert marker not in candidate["answer"]
+        assert marker in restored["answer"]
+
+
 def test_public_haystack_interventions_restore_the_candidate_failures() -> None:
     from fastapi.testclient import TestClient
 

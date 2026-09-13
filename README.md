@@ -73,6 +73,9 @@ python scripts/deploy.py --stop
 .\scripts\sut-e2e-check.ps1
 .venv\Scripts\python.exe backend\scripts\planning_quality_check.py
 .venv\Scripts\python.exe backend\scripts\planning_ood_check.py
+.venv\Scripts\python.exe backend\scripts\ood_replay_check.py
+.venv\Scripts\python.exe backend\scripts\upstream_version_check.py --baseline-python <python3.0-env> --candidate-python .venv\Scripts\python.exe
+.venv\Scripts\python.exe backend\scripts\judge_calibration.py <human_scores.csv>
 $env:PYTHONPATH = (Resolve-Path backend)
 .venv\Scripts\python.exe backend\scripts\public_workload_check.py
 .\scripts\measure-live-cost.ps1 -RunId <run-id>

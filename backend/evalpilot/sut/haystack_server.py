@@ -219,7 +219,72 @@ def _latency_ms(request: HaystackRequest) -> int:
     return latency
 
 
+def _ood_answer(request: HaystackRequest) -> HaystackResponse | None:
+    """Measured intervention behavior for OOD planning cases.
+
+    These scenario ids represent controlled cross-system faults used by the P2+
+    benchmark. They are intentionally separate from the enterprise-support
+    fixture and exercise the expanded executable intervention vocabulary.
+    """
+
+    candidate = _is_candidate(request.version)
+    intervention = request.intervention
+    scenario = request.scenario_id
+    model = f"haystack-ood-assistant@{request.version}"
+
+    if scenario == "ood-multi-doc":
+        restored = not candidate or intervention == "retrieval_top_k_restored"
+        answer = (
+            "Refund Policy: refunds arrive within 5 business days after the warehouse receives the return."
+            if restored
+            else "Refund Policy: contact support for the refund timeline."
+        )
+        citations = ["kb-refund-policy"] if restored else []
+        calls = ["haystack.pipeline:kb-refund-policy"] if restored else ["haystack.pipeline:partial"]
+    elif scenario == "ood-unicode":
+        restored = not candidate or intervention == "unicode_normalization_restored"
+        answer = (
+            "Unicode normalized match: 退款将在 5 个工作日内到账。"
+            if restored
+            else "No normalized match was found."
+        )
+        citations = ["kb-unicode"] if restored else []
+        calls = ["haystack.pipeline:kb-unicode"] if restored else ["haystack.pipeline:miss"]
+    elif scenario == "ood-memory-scope":
+        restored = not candidate or intervention == "memory_scope_restored"
+        answer = (
+            "Tenant A context is isolated to tenant A memory."
+            if restored
+            else "Tenant A context includes tenant B memory."
+        )
+        citations = ["kb-memory-policy"] if restored else []
+        calls = ["memory.scope:isolated"] if restored else ["memory.scope:shared"]
+    elif scenario == "ood-cache-stale":
+        restored = not candidate or intervention == "cache_bypass_enabled"
+        answer = (
+            "Tool result: fresh HTTP 200 status."
+            if restored
+            else "Tool result: stale cached HTTP 503 status."
+        )
+        citations = ["kb-cache-policy"] if restored else []
+        calls = ["tool.cache:bypass"] if restored else ["tool.cache:stale"]
+    else:
+        return None
+
+    return HaystackResponse(
+        answer=answer,
+        citations=citations,
+        tool_calls=calls,
+        latency_ms=_latency_ms(request),
+        model=model,
+        refused=False,
+    )
+
+
 def _answer(request: HaystackRequest) -> HaystackResponse:
+    ood = _ood_answer(request)
+    if ood is not None:
+        return ood
     candidate = _is_candidate(request.version)
     model = f"haystack-kb-assistant@{request.version}"
 

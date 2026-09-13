@@ -43,9 +43,21 @@ The result supports the product design:
 - every proposed intervention still requires an executable allowlist and a
   measured replay before it can affect a release decision.
 
-This benchmark is **planning-only**. The four OOD interventions are not yet
-implemented in the production counterfactual executor, so the benchmark does
-not claim measured root-cause accuracy for them.
+## Measured replay
+
+The four OOD interventions are now implemented in the public Haystack SUT and
+checked through the HTTP contract. A measured replay check confirms 4/4 root
+causes:
+
+```text
+baseline pass -> candidate fail -> intervention pass
+```
+
+Full result: `docs/OOD_REPLAY_RESULT.json`.
+
+This is a controlled cross-system benchmark, not a claim that upstream Haystack
+shipped those defects. The measured executor support is production code; the
+specific OOD faults are benchmark fixtures.
 
 ## Reproduce
 

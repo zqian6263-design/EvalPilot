@@ -11,11 +11,11 @@ not treated as a prerequisite.
 | Criterion | Current | Target for finals | Main reason |
 |---|---:|---:|---|
 | Technical feasibility | 20/20 | 20 | Product, tests, external HTTP SUT E2E, offline replay, outage failure, and one-command deployment pass |
-| Market feasibility | 17/20 | 18+ | Paid category, public adoption, enforceable CI gate, two public workloads, measured end-to-end cost, and one-command deployment |
+| Market feasibility | 18/20 | 19 | Paid category, public adoption, enforceable CI gate, two public workloads, measured end-to-end cost, and one-command deployment |
 | Comprehensive innovation | 19/20 | 20 | Causal comparison and bounded model-guided experiments are implemented; the core statistical method remains an integration innovation rather than a new algorithm |
 | AI/LLM integration | 19/20 | 19+ | DeepSeek V4 Pro live mode can select validated replay experiments; fallback, token usage, and unit cost are verified |
 | Track dimension | 19/20 | 20 | Autonomous loop, bounded model-guided replays, report, deep links, and 2:29 demo video exist |
-| **Total** | **94/100** | **95-97** | Strong engineering plus an actually evaluated HTTP SUT and bounded agent control flow |
+| **Total** | **95/100** | **95-97** | Strong engineering plus an actually evaluated HTTP SUT and bounded agent control flow |
 
 ## Verified evidence
 
@@ -52,7 +52,7 @@ not treated as a prerequisite.
 - Verify the clean setup on a second physical host.
 - Decide whether browser execution belongs after the competition.
 
-## Market feasibility — 17/20
+## Market feasibility — 18/20
 
 ### Strong
 
@@ -63,6 +63,7 @@ not treated as a prerequisite.
 - JUnit, SARIF 2.1.0, GitHub Actions, and PR summary export paths are implemented.
 - GitHub webhook with HMAC verification can write the gate result to a PR.
 - Release Audit generation and a public competitor capability matrix are published.
+- Real upstream Haystack 3.0.0 vs 3.1.1 comparison: 52 checks, 0 semantic mismatches.
 - Pricing and revenue motions are explicit: release audit, team subscription, enterprise self-host.
 - Two public workloads and a measured unit-economics model are published.
 - A separate HTTP SUT proves the integration is not limited to the bundled fixture.
@@ -88,6 +89,9 @@ Customer interviews are optional support, not a required gate.
 - Live mode can select a bounded replay experiment, which is then executed and measured rather than trusted.
 - Naive pass-rate delta versus EvalPilot is documented on SQuAD, HotpotQA, and the enterprise workload.
 - OOD planning benchmark: deterministic rules 2/6; DeepSeek V4 Pro 6/6 at 1,359 tokens.
+- OOD execution benchmark: 4/4 root causes measured through HTTP.
+- Real upstream Haystack 3.0.0 vs 3.1.1: 52 comparisons, 0 semantic mismatches.
+- Judge calibration harness emits MAE, bias, Pearson correlation, and exact agreement; real human labels remain external.
 
 ### Remaining
 

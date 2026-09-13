@@ -62,6 +62,10 @@ class Intervention(str, enum.Enum):
 
     COMPRESSION_DISABLED = "compression_disabled"
     SECURITY_GUARD_ENABLED = "security_guard_enabled"
+    RETRIEVAL_TOP_K_RESTORED = "retrieval_top_k_restored"
+    UNICODE_NORMALIZATION_RESTORED = "unicode_normalization_restored"
+    MEMORY_SCOPE_RESTORED = "memory_scope_restored"
+    CACHE_BYPASS_ENABLED = "cache_bypass_enabled"
     NONE = "none"
 
     @classmethod

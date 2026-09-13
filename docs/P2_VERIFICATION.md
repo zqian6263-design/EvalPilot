@@ -11,6 +11,8 @@ Date: 2026-09-13
 - Public open-source Haystack pipeline regression case.
 - Full RAG pipeline acceptance.
 - OOD planning benchmark: deterministic 2/6 vs DeepSeek V4 Pro 6/6.
+- OOD measured replay: 4/4 root causes confirmed through the HTTP contract.
+- Real upstream Haystack comparison: 3.0.0 vs 3.1.1, 52 comparisons, 0 semantic mismatches.
 
 ## Verification
 
@@ -25,7 +27,6 @@ Date: 2026-09-13
 
 ## External / unresolved
 
-- OOD interventions are planning-only until added to the executable counterfactual vocabulary.
 - Paid pilot and public adoption require an external user or organization.
-- Upstream patch selection remains a future enhancement; the current public case
-  uses a controlled patch around a pinned open-source dependency.
+- A real upstream version comparison is now recorded; a future enhancement can
+  target a specific upstream bug-fix commit rather than adjacent releases.
