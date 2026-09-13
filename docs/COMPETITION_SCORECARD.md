@@ -11,11 +11,11 @@ not treated as a prerequisite.
 | Criterion | Current | Target for finals | Main reason |
 |---|---:|---:|---|
 | Technical feasibility | 19/20 | 19+ | Product, tests, external HTTP SUT E2E, offline replay, outage failure, and one-command deployment pass |
-| Market feasibility | 15/20 | 17+ | Paid category, public adoption, enforceable CI gate, two public workloads, measured end-to-end cost, and one-command deployment |
+| Market feasibility | 16/20 | 17+ | Paid category, public adoption, enforceable CI gate, two public workloads, measured end-to-end cost, and one-command deployment |
 | Comprehensive innovation | 18/20 | 19 | Causal comparison and bounded model-guided experiments are implemented; the core statistical method remains an integration innovation rather than a new algorithm |
 | AI/LLM integration | 19/20 | 19+ | DeepSeek V4 Pro live mode can select validated replay experiments; fallback, token usage, and unit cost are verified |
 | Track dimension | 19/20 | 20 | Autonomous loop, bounded model-guided replays, report, deep links, and 2:29 demo video exist |
-| **Total** | **90/100** | **92-94** | Strong engineering plus an actually evaluated HTTP SUT and bounded agent control flow |
+| **Total** | **91/100** | **92-94** | Strong engineering plus an actually evaluated HTTP SUT and bounded agent control flow |
 
 ## Verified evidence
 
@@ -28,7 +28,8 @@ not treated as a prerequisite.
 - Same live run verifies 3 LLM steps, 1 persisted model-guided replay plan, 52 Judge calls, 8 measured counterfactuals, and the expected `BLOCK / CRITICAL` decision.
 - Invalid model key produces recorded fallback steps while preserving the measured decision.
 - Run and investigation deep links reopen recorded service data.
-- CI gate returns `allow=0`, `review=1`, `block=2`.
+- CI gate returns `allow=0`, `review=1`, `block=2`; JUnit and SARIF exports validate against a live run.
+- Judge call/token budgets, SUT capability discovery, and paired power diagnostics are implemented and tested.
 - Competition video v2 is rendered at `release/EvalPilot-competition-demo-v2.mp4`; it explicitly shows the model-guided replay plan from 1:10 to 1:25.
 - Public video: https://www.bilibili.com/video/BV1mPYY6sE1k (backup: https://n.uguu.se/AFnrdUSF.mp4).
 
@@ -50,7 +51,7 @@ not treated as a prerequisite.
 - Verify the clean setup on a second physical host.
 - Decide whether browser execution belongs after the competition.
 
-## Market feasibility — 15/20
+## Market feasibility — 16/20
 
 ### Strong
 
@@ -58,6 +59,7 @@ not treated as a prerequisite.
 - Public repository adoption shows developer demand and distribution channels.
 - EvalPilot has a clear wedge: release decision, not another observability dashboard.
 - `GET /api/runs/{run_id}/gate` provides a real CI integration; exit codes `0/1/2` enforce it automatically.
+- JUnit, SARIF 2.1.0, GitHub Actions, and PR summary export paths are implemented.
 - Pricing and revenue motions are explicit: release audit, team subscription, enterprise self-host.
 - Two public workloads and a measured unit-economics model are published.
 - A separate HTTP SUT proves the integration is not limited to the bundled fixture.
@@ -117,13 +119,12 @@ Customer interviews are optional support, not a required gate.
 
 ### Remaining
 
-- Upload the video publicly and verify it in a logged-out browser.
 - Add the final team and product descriptions to the competition form.
-- Verify v2 in a logged-out browser after upload.
+- Verify the Bilibili page from a logged-out browser after review completes.
 
 ## Highest-value next actions
 
-1. Verify v2 in a logged-out browser and optionally migrate it to a permanent platform.
+1. Submit the competition form with `https://www.bilibili.com/video/BV1mPYY6sE1k`.
 2. Add one paid-pilot or public-adoption conversion signal.
 3. Extend the Haystack adapter to a full upstream RAG application deployment.
 4. Extend planning comparison to out-of-distribution failures.

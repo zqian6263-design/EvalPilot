@@ -23,6 +23,8 @@ The release decision remains evidence- and counterfactual-driven. The LLM may pr
 - `EVALPILOT_LLM_MODEL`: model id configured by the user, for example `deepseek-v4-pro`
 - `EVALPILOT_LLM_MODE`: `deterministic` or `live`; default `deterministic`
 - `EVALPILOT_LLM_TIMEOUT_SECONDS`: default 45
+- `EVALPILOT_JUDGE_MAX_CALLS`: optional maximum Judge calls per run
+- `EVALPILOT_JUDGE_MAX_TOKENS`: optional maximum persisted Judge tokens per run
 
 ## Provider seam
 

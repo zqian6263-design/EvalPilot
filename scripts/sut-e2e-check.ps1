@@ -194,6 +194,12 @@ try {
     $sutHealth = if ($sutHealthy) { Invoke-RestMethod -Uri "$sutUrl/health" -TimeoutSec 10 } else { $null }
     Step 'the public open-source Haystack SUT is healthy' ($sutHealthy -and $sutHealth.engine -eq 'haystack-ai') (Server-Tail $sutProcess.stdout $sutProcess.stderr)
     if (-not $sutHealthy) { throw 'public Haystack SUT did not become healthy' }
+    $sutCapabilities = Invoke-RestMethod -Uri "$sutUrl/capabilities" -TimeoutSec 10
+    Step 'the SUT advertises its executable capabilities' (
+        $sutCapabilities.contract_version -eq '1.0' -and
+        ($sutCapabilities.interventions -contains 'compression_disabled') -and
+        ($sutCapabilities.interventions -contains 'security_guard_enabled')
+    ) "interventions=$($sutCapabilities.interventions -join ',')"
 
     Write-Host "`n-- Start EvalPilot against the HTTP SUT"
     $onlineBackend = Start-EvalPilotBackend `

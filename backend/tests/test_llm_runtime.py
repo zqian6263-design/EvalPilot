@@ -351,6 +351,8 @@ def test_defaults_keep_the_offline_demo_untouched() -> None:
     settings = load_settings({})
     assert settings.llm_mode == MODE_DETERMINISTIC
     assert settings.llm_timeout_seconds == DEFAULT_LLM_TIMEOUT_SECONDS
+    assert settings.judge_max_calls is None
+    assert settings.judge_max_tokens is None
 
 
 def test_settings_read_the_v3_environment_variables(tmp_path) -> None:
@@ -359,10 +361,14 @@ def test_settings_read_the_v3_environment_variables(tmp_path) -> None:
             "EVALPILOT_DB_PATH": str(tmp_path / "v3.db"),
             "EVALPILOT_LLM_MODE": "live",
             "EVALPILOT_LLM_TIMEOUT_SECONDS": "12.5",
+            "EVALPILOT_JUDGE_MAX_CALLS": "52",
+            "EVALPILOT_JUDGE_MAX_TOKENS": "80000",
         }
     )
     assert settings.llm_mode == "live"
     assert settings.llm_timeout_seconds == 12.5
+    assert settings.judge_max_calls == 52
+    assert settings.judge_max_tokens == 80000
 
 
 def test_an_unusable_timeout_falls_back_to_the_default() -> None:

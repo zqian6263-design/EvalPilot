@@ -322,6 +322,8 @@ def test_orchestration_passes_question_and_rubric_to_the_judge() -> None:
         "calls": 2,
         "failures": 0,
         "disagreements": 0,
+        "skipped": 0,
+        "budget_exhausted": False,
         "usage": {},
     }
     assert outcome.cases[0].candidate_status == "failed"

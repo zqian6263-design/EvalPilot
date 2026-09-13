@@ -31,6 +31,17 @@ class SutError(RuntimeError):
     """The external SUT contract could not be satisfied."""
 
 
+class SutCapabilities(BaseModel):
+    """Capabilities an external SUT advertises before evaluation starts."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    contract_version: str = "1.0"
+    versions: list[str] = Field(default_factory=list)
+    interventions: list[str] = Field(default_factory=list)
+    features: list[str] = Field(default_factory=list)
+
+
 class SutRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -64,12 +75,16 @@ class HttpCaseExecutor:
         offline: bool = False,
         cache_dir: Path | None = None,
         transport: httpx.BaseTransport | None = None,
+        discover_capabilities: bool = False,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
         self.offline = offline
         self.cache_dir = cache_dir
         self._transport = transport
+        self.discover_capabilities = discover_capabilities
+        self._capabilities: SutCapabilities | None = None
+        self._capability_source: str | None = None
         if self.cache_dir is not None:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -81,6 +96,10 @@ class HttpCaseExecutor:
         intervention: str | None = None,
     ) -> ExecutionResult:
         del registry  # Kept for signature compatibility with the mock executor.
+        if self.discover_capabilities and not self.offline:
+            capabilities = self._get_capabilities()
+            self._validate_request(case, intervention, capabilities)
+
         request = SutRequest(
             run_id=case.run_id,
             test_case_id=case.id,
@@ -99,6 +118,12 @@ class HttpCaseExecutor:
                 {
                     "request": request.model_dump(mode="json"),
                     "response": response.model_dump(mode="json"),
+                    "capabilities": (
+                        self._capabilities.model_dump(mode="json")
+                        if self._capabilities is not None
+                        else None
+                    ),
+                    "capability_source": self._capability_source,
                 },
                 indent=2,
                 ensure_ascii=False,
@@ -125,6 +150,12 @@ class HttpCaseExecutor:
                         "tool_calls": list(response.tool_calls),
                         "request": request.model_dump(mode="json"),
                         "response_model": response.model,
+                        "capability_source": self._capability_source,
+                        "capabilities": (
+                            self._capabilities.model_dump(mode="json")
+                            if self._capabilities is not None
+                            else None
+                        ),
                     },
                     **base,
                 ),
@@ -164,6 +195,60 @@ class HttpCaseExecutor:
             "intervention": intervention,
         }
         return ExecutionResult(output=output, evidence=evidence)
+
+    def _get_capabilities(self) -> SutCapabilities:
+        if self._capabilities is not None:
+            return self._capabilities
+        url = f"{self.base_url}/capabilities"
+        try:
+            with httpx.Client(
+                timeout=self.timeout_seconds,
+                transport=self._transport,
+            ) as client:
+                response = client.get(url)
+        except httpx.HTTPError as exc:
+            raise SutError(f"SUT capability request failed: {exc}") from exc
+
+        if response.status_code == 404:
+            self._capability_source = "legacy"
+            self._capabilities = SutCapabilities()
+            return self._capabilities
+        if response.status_code >= 400:
+            raise SutError(
+                f"SUT capabilities returned HTTP {response.status_code}: "
+                f"{response.text[:500]}"
+            )
+        try:
+            parsed = SutCapabilities.model_validate(response.json())
+        except (ValueError, ValidationError) as exc:
+            raise SutError(
+                f"SUT capabilities violate the contract: {exc}"
+            ) from exc
+        self._capability_source = "declared"
+        self._capabilities = parsed
+        return parsed
+
+    @staticmethod
+    def _validate_request(
+        case: TestCase,
+        intervention: str | None,
+        capabilities: SutCapabilities,
+    ) -> None:
+        version = str(case.input.get("version_label") or case.version)
+        if capabilities.versions and version not in capabilities.versions:
+            raise SutError(
+                f"SUT does not advertise version {version!r}; "
+                f"supported versions: {capabilities.versions}"
+            )
+        if (
+            intervention is not None
+            and capabilities.interventions
+            and intervention not in capabilities.interventions
+        ):
+            raise SutError(
+                f"SUT does not advertise intervention {intervention!r}; "
+                f"supported interventions: {capabilities.interventions}"
+            )
 
     def _answer(self, request: SutRequest) -> SutResponse:
         cache_path = self._cache_path(request)

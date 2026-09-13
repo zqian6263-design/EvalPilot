@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
 from datetime import datetime
 
 from pydantic import Field
@@ -80,6 +81,7 @@ class CaseEvaluation(EvaluationModel):
     deterministic_scores_by_version: dict[str, float] = Field(default_factory=dict)
     judge_scores_by_version: dict[str, float] = Field(default_factory=dict)
     judge_failures: int = 0
+    judge_skipped: int = 0
     judge_usage: dict[str, int] = Field(default_factory=dict)
     errors: int = 0
     missing_evidence: list[MissingEvidence] = Field(default_factory=list)
@@ -109,8 +111,39 @@ class ComparisonReport(EvaluationModel):
     excluded_case_ids: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     judge_failures: int = 0
+    judge_skipped: int = 0
+    judge_budget_exhausted: bool = False
     judge_usage: dict[str, int] = Field(default_factory=dict)
     generated_at: datetime = Field(default_factory=utc_now)
+
+
+@dataclass
+class _JudgeBudget:
+    """Call and token budget shared across one comparison."""
+
+    max_calls: int | None = None
+    max_tokens: int | None = None
+    calls: int = 0
+    tokens: int = 0
+    skipped: int = 0
+
+    @property
+    def exhausted(self) -> bool:
+        return (
+            (self.max_calls is not None and self.calls >= self.max_calls)
+            or (self.max_tokens is not None and self.tokens >= self.max_tokens)
+        )
+
+    def reserve(self) -> bool:
+        if self.exhausted:
+            self.skipped += 1
+            return False
+        self.calls += 1
+        return True
+
+    def record(self, usage: Mapping[str, int] | None) -> None:
+        if usage:
+            self.tokens += int(usage.get("total_tokens") or 0)
 
 
 class EvaluationService:
@@ -134,12 +167,16 @@ class EvaluationService:
         threshold: float = DEFAULT_REGRESSION_THRESHOLD,
         bootstrap_resamples: int = 2000,
         seed: int = 0,
+        max_judge_calls: int | None = None,
+        max_judge_tokens: int | None = None,
     ) -> None:
         self.judge = judge
         self.judge_criteria = list(judge_criteria or [])
         self.threshold = threshold
         self.bootstrap_resamples = bootstrap_resamples
         self.seed = seed
+        self.max_judge_calls = max_judge_calls
+        self.max_judge_tokens = max_judge_tokens
 
     # ------------------------------------------------------------------
     # Single-case evaluation
@@ -189,6 +226,31 @@ class EvaluationService:
         Raises:
             ValueError: if any observation belongs to a different case.
         """
+        budget = _JudgeBudget(
+            max_calls=self.max_judge_calls,
+            max_tokens=self.max_judge_tokens,
+        )
+        return await self._evaluate_case_with_budget(
+            case_id=case_id,
+            expected=expected,
+            observations=observations,
+            rubric=rubric,
+            question=question,
+            context=context,
+            judge_budget=budget,
+        )
+
+    async def _evaluate_case_with_budget(
+        self,
+        *,
+        case_id: str,
+        expected: ExpectedBehavior,
+        observations: Sequence[SampleObservation],
+        rubric: str | None,
+        question: str | None,
+        context: str | None,
+        judge_budget: _JudgeBudget | None,
+    ) -> CaseEvaluation:
         selected = self._select_observations(case_id, observations)
 
         tasks = [
@@ -198,6 +260,7 @@ class EvaluationService:
                 rubric=rubric,
                 question=question,
                 context=context,
+                judge_budget=judge_budget,
             )
             for observation in selected
         ]
@@ -268,14 +331,19 @@ class EvaluationService:
                     "needs an ExpectedBehavior to be scored."
                 )
 
+        judge_budget = _JudgeBudget(
+            max_calls=self.max_judge_calls,
+            max_tokens=self.max_judge_tokens,
+        )
         evaluations = [
-            await self.evaluate_case_async(
+            await self._evaluate_case_with_budget(
                 case_id=case_id,
                 expected=expectations[case_id],
                 observations=observations,
                 rubric=rubric,
                 question=questions.get(case_id),
                 context=contexts.get(case_id),
+                judge_budget=judge_budget,
             )
             for case_id in scorable
         ]
@@ -332,6 +400,8 @@ class EvaluationService:
             excluded_case_ids=excluded_case_ids,
             warnings=warnings,
             judge_failures=sum(e.judge_failures for e in evaluations),
+            judge_skipped=judge_budget.skipped,
+            judge_budget_exhausted=judge_budget.exhausted,
             judge_usage=_sum_usage(e.judge_usage for e in evaluations),
         )
 
@@ -456,6 +526,7 @@ class EvaluationService:
         rubric: str | None,
         question: str | None,
         context: str | None,
+        judge_budget: _JudgeBudget | None = None,
     ) -> "_ScoredObservation":
         """Score one observation deterministically, and with the judge if enabled."""
         if observation.error:
@@ -466,14 +537,20 @@ class EvaluationService:
 
         judge_score: float | None = None
         judge_failed = False
+        judge_skipped = False
         judge_usage: dict[str, int] | None = None
         if rubric and self.judge is not None:
-            judge_score, judge_failed, judge_usage = await self._judge_observation(
-                observation,
-                question=question,
-                rubric=rubric,
-                context=context,
-            )
+            if judge_budget is None or judge_budget.reserve():
+                judge_score, judge_failed, judge_usage = await self._judge_observation(
+                    observation,
+                    question=question,
+                    rubric=rubric,
+                    context=context,
+                )
+                if judge_budget is not None:
+                    judge_budget.record(judge_usage)
+            else:
+                judge_skipped = True
 
         if deterministic is None and judge_score is None:
             # Nothing applicable to score. Treat as a neutral pass rather than a
@@ -492,6 +569,7 @@ class EvaluationService:
             deterministic=deterministic,
             judge=judge_score,
             judge_failed=judge_failed,
+            judge_skipped=judge_skipped,
             judge_usage=judge_usage,
             outcomes=outcomes,
         )
@@ -541,6 +619,7 @@ class EvaluationService:
         failing: set[CheckKind] = set()
         errors = 0
         judge_failures = 0
+        judge_skipped = 0
         judge_usage: dict[str, int] = {}
 
         for version, items in by_version.items():
@@ -558,6 +637,7 @@ class EvaluationService:
             for item in items:
                 errors += int(item.errored)
                 judge_failures += int(item.judge_failed)
+                judge_skipped += int(item.judge_skipped)
                 judge_usage = _merge_usage(judge_usage, item.judge_usage)
                 for outcome in item.outcomes:
                     if outcome.applicable and not outcome.passed:
@@ -578,6 +658,7 @@ class EvaluationService:
             deterministic_scores_by_version=deterministic_scores,
             judge_scores_by_version=judge_scores,
             judge_failures=judge_failures,
+            judge_skipped=judge_skipped,
             judge_usage=judge_usage,
             errors=errors,
             missing_evidence=list(gaps.values()),
@@ -607,6 +688,7 @@ class _ScoredObservation:
         "deterministic",
         "judge",
         "judge_failed",
+        "judge_skipped",
         "judge_usage",
         "errored",
         "outcomes",
@@ -620,6 +702,7 @@ class _ScoredObservation:
         deterministic: float | None = None,
         judge: float | None = None,
         judge_failed: bool = False,
+        judge_skipped: bool = False,
         judge_usage: dict[str, int] | None = None,
         errored: bool = False,
         outcomes: Sequence[CheckOutcome] | None = None,
@@ -629,6 +712,7 @@ class _ScoredObservation:
         self.deterministic = deterministic
         self.judge = judge
         self.judge_failed = judge_failed
+        self.judge_skipped = judge_skipped
         self.judge_usage = dict(judge_usage or {})
         self.errored = errored
         self.outcomes = list(outcomes or [])

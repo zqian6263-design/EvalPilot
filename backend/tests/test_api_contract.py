@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from xml.etree import ElementTree
+
 import json
 
 from fastapi.testclient import TestClient
@@ -171,6 +173,51 @@ def test_release_gate_turns_a_confirmed_regression_into_a_block(
     assert payload["regression_confirmed"] is True
     assert payload["reasons"] == ["regression_confirmed"]
     assert payload["report_url"].endswith(f"/api/runs/{run['id']}/report")
+
+
+def test_ci_exports_are_machine_readable(client: TestClient, project: dict) -> None:
+    run = client.post(
+        "/api/runs",
+        json={
+            "project_id": project["id"],
+            "baseline_version": "v1.0-baseline",
+            "candidate_version": "v1.1-candidate",
+            "case_count": 26,
+            "seed": 20260919,
+        },
+    ).json()
+    start_and_wait(client, run["id"])
+
+    junit = client.get(f"/api/runs/{run['id']}/junit")
+    assert junit.status_code == 200
+    assert junit.headers["content-type"].startswith("application/xml")
+    suite = ElementTree.fromstring(junit.content)
+    assert suite.tag == "testsuite"
+    assert suite.attrib["failures"] == str(8)
+    assert len(suite.findall("testcase")) == 8
+
+    sarif = client.get(f"/api/runs/{run['id']}/sarif")
+    assert sarif.status_code == 200
+    payload = sarif.json()
+    assert payload["version"] == "2.1.0"
+    assert payload["runs"][0]["properties"]["run_id"] == run["id"]
+    assert len(payload["runs"][0]["results"]) == 8
+    assert payload["runs"][0]["results"][0]["level"] in {"error", "warning", "note"}
+
+
+def test_ci_exports_are_unavailable_before_completion(
+    client: TestClient, project: dict
+) -> None:
+    run = client.post(
+        "/api/runs",
+        json={
+            "project_id": project["id"],
+            "baseline_version": "a",
+            "candidate_version": "b",
+        },
+    ).json()
+    assert client.get(f"/api/runs/{run['id']}/junit").status_code == 409
+    assert client.get(f"/api/runs/{run['id']}/sarif").status_code == 409
 
 
 def test_release_gate_is_unavailable_before_completion(

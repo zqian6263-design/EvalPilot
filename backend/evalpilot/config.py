@@ -50,10 +50,13 @@ class Settings:
     #: deterministically rather than guessing what was meant.
     llm_mode: str = "deterministic"
     llm_timeout_seconds: float = DEFAULT_LLM_TIMEOUT_SECONDS
+    judge_max_calls: int | None = None
+    judge_max_tokens: int | None = None
     sut_url: str | None = None
     sut_timeout_seconds: float = DEFAULT_SUT_TIMEOUT_SECONDS
     sut_offline: bool = False
     sut_cache_dir: Path | None = None
+    sut_discover_capabilities: bool = True
 
 
 def _resolve_db_path(raw: str | None) -> Path:
@@ -79,6 +82,16 @@ def _resolve_positive_float(raw: str | None, default: float) -> float:
     except ValueError:
         return default
     return value if value > 0 else default
+
+
+def _resolve_optional_positive_int(raw: str | None) -> int | None:
+    if raw is None or raw.strip() == "":
+        return None
+    try:
+        value = int(raw)
+    except ValueError:
+        return None
+    return value if value > 0 else None
 
 
 def _resolve_optional_path(raw: str | None, default: Path) -> Path:
@@ -132,11 +145,20 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         llm_timeout_seconds=_resolve_llm_timeout(
             source.get("EVALPILOT_LLM_TIMEOUT_SECONDS")
         ),
+        judge_max_calls=_resolve_optional_positive_int(
+            source.get("EVALPILOT_JUDGE_MAX_CALLS")
+        ),
+        judge_max_tokens=_resolve_optional_positive_int(
+            source.get("EVALPILOT_JUDGE_MAX_TOKENS")
+        ),
         sut_url=(source.get("EVALPILOT_SUT_URL") or "").strip() or None,
         sut_timeout_seconds=_resolve_positive_float(
             source.get("EVALPILOT_SUT_TIMEOUT_SECONDS"), DEFAULT_SUT_TIMEOUT_SECONDS
         ),
         sut_offline=_as_bool(source.get("EVALPILOT_SUT_OFFLINE"), False),
+        sut_discover_capabilities=_as_bool(
+            source.get("EVALPILOT_SUT_DISCOVERY"), True
+        ),
         sut_cache_dir=_resolve_optional_path(
             source.get("EVALPILOT_SUT_CACHE_DIR"),
             db_path.parent / "sut-cache",

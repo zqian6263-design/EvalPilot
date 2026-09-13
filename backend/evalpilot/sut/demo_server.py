@@ -197,6 +197,24 @@ def health() -> dict[str, object]:
     }
 
 
+@app.get("/capabilities")
+def capabilities() -> dict[str, object]:
+    return {
+        "contract_version": "1.0",
+        "versions": [BASELINE_VERSION, CANDIDATE_VERSION],
+        "interventions": [
+            COMPRESSION_DISABLED,
+            SECURITY_GUARD_ENABLED,
+        ],
+        "features": [
+            "citations",
+            "tool_calls",
+            "refusal",
+            "offline_cache",
+        ],
+    }
+
+
 @app.post("/v1/answer", response_model=DemoResponse)
 def answer(request: DemoRequest) -> DemoResponse:
     return _answer(request)

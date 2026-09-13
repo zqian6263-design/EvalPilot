@@ -68,6 +68,8 @@ def build_container(settings: Settings | None = None) -> Container:
     judge_callable = build_judge_callable(llm_runtime)
     evaluation_service = EvaluationService(
         judge=RubricJudge(judge_callable) if judge_callable is not None else None,
+        max_judge_calls=resolved.judge_max_calls,
+        max_judge_tokens=resolved.judge_max_tokens,
     )
     case_executor = None
     if resolved.sut_url:
@@ -76,6 +78,7 @@ def build_container(settings: Settings | None = None) -> Container:
             timeout_seconds=resolved.sut_timeout_seconds,
             offline=resolved.sut_offline,
             cache_dir=resolved.sut_cache_dir,
+            discover_capabilities=resolved.sut_discover_capabilities,
         ).execute
     runner = RunRunner(
         repo,

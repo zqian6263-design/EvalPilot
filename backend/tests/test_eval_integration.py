@@ -267,6 +267,10 @@ def test_report_exposes_the_paired_statistics(client: TestClient) -> None:
         "regression_confirmed",
         "regressed_scenarios",
         "control_scenarios",
+        "minimum_detectable_effect",
+        "required_matched_cases",
+        "observed_power",
+        "sample_size_adequate",
     }
     assert required <= set(metrics), f"missing metrics: {required - set(metrics)}"
 
@@ -276,6 +280,9 @@ def test_report_exposes_the_paired_statistics(client: TestClient) -> None:
     assert metrics["matched_scenarios"] == DEMO_CASE_COUNT
     assert metrics["baseline_mean"] == pytest.approx(1.0)
     assert metrics["candidate_mean"] < metrics["baseline_mean"]
+    assert metrics["minimum_detectable_effect"] >= 0
+    assert metrics["required_matched_cases"] >= 2
+    assert 0.0 <= metrics["observed_power"] <= 1.0
 
 
 def test_metric_values_are_the_engine_values_not_a_re_derivation(client: TestClient) -> None:

@@ -109,6 +109,85 @@ def test_http_contract_becomes_execution_result_evidence(
     assert (db.artifacts_dir / run.id / Path(trace.uri).name).exists()
 
 
+def test_capability_discovery_precedes_an_online_evaluation(tmp_path: Path) -> None:
+    _, db = _repository(tmp_path)
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url.path)
+        if request.url.path == "/capabilities":
+            return httpx.Response(
+                200,
+                json={
+                    "contract_version": "1.0",
+                    "versions": ["v1.0-baseline"],
+                    "interventions": ["compression_disabled"],
+                    "features": ["citations"],
+                },
+            )
+        return _canned_response(request)
+
+    executor = HttpCaseExecutor(
+        base_url="https://sut.example",
+        transport=httpx.MockTransport(handler),
+        discover_capabilities=True,
+    )
+    result = executor.execute(_case(), None, db)
+
+    assert seen == ["/capabilities", "/v1/answer"]
+    trace = next(item for item in result.evidence if item.kind == "trace")
+    assert trace.payload["capability_source"] == "declared"
+    assert trace.payload["capabilities"]["interventions"] == ["compression_disabled"]
+
+
+def test_capability_discovery_rejects_an_unadvertised_version(tmp_path: Path) -> None:
+    _, db = _repository(tmp_path)
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url.path)
+        return httpx.Response(
+            200,
+            json={
+                "contract_version": "1.0",
+                "versions": ["v9.9-unrelated"],
+                "interventions": ["compression_disabled"],
+                "features": [],
+            },
+        )
+
+    executor = HttpCaseExecutor(
+        base_url="https://sut.example",
+        transport=httpx.MockTransport(handler),
+        discover_capabilities=True,
+    )
+    with pytest.raises(SutError, match="does not advertise version"):
+        executor.execute(_case(), None, db)
+    assert seen == ["/capabilities"]
+
+
+def test_capability_discovery_falls_back_for_legacy_services(tmp_path: Path) -> None:
+    _, db = _repository(tmp_path)
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url.path)
+        if request.url.path == "/capabilities":
+            return httpx.Response(404, text="not found")
+        return _canned_response(request)
+
+    executor = HttpCaseExecutor(
+        base_url="https://sut.example",
+        transport=httpx.MockTransport(handler),
+        discover_capabilities=True,
+    )
+    result = executor.execute(_case(), None, db)
+
+    assert seen == ["/capabilities", "/v1/answer"]
+    trace = next(item for item in result.evidence if item.kind == "trace")
+    assert trace.payload["capability_source"] == "legacy"
+
+
 def test_invalid_sut_response_fails_loudly(tmp_path: Path) -> None:
     _, db = _repository(tmp_path)
     executor = HttpCaseExecutor(
@@ -192,6 +271,7 @@ def test_sut_settings_are_environment_backed(tmp_path: Path) -> None:
             "EVALPILOT_SUT_TIMEOUT_SECONDS": "7.5",
             "EVALPILOT_SUT_OFFLINE": "true",
             "EVALPILOT_SUT_CACHE_DIR": str(tmp_path / "cache"),
+            "EVALPILOT_SUT_DISCOVERY": "false",
         }
     )
 
@@ -199,6 +279,7 @@ def test_sut_settings_are_environment_backed(tmp_path: Path) -> None:
     assert settings.sut_timeout_seconds == 7.5
     assert settings.sut_offline is True
     assert settings.sut_cache_dir == tmp_path / "cache"
+    assert settings.sut_discover_capabilities is False
 
 
 def test_sut_timeout_defaults_are_stable() -> None:
@@ -206,6 +287,7 @@ def test_sut_timeout_defaults_are_stable() -> None:
     assert settings.sut_url is None
     assert settings.sut_timeout_seconds == DEFAULT_SUT_TIMEOUT_SECONDS
     assert settings.sut_offline is False
+    assert settings.sut_discover_capabilities is True
 
 
 def test_reference_sut_changes_only_the_candidate_revision() -> None:

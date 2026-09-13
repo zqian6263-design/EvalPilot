@@ -50,7 +50,11 @@ from evalpilot.evaluation.models import (
     SampleObservation,
     Severity,
 )
-from evalpilot.evaluation.service import ComparisonReport, EvaluationService
+from evalpilot.evaluation.service import (
+    ComparisonReport,
+    EvaluationService,
+    _JudgeBudget,
+)
 
 
 # --------------------------------------------------------------------------
@@ -875,6 +879,42 @@ def test_service_aggregates_judge_token_usage() -> None:
         "completion_tokens": 10,
         "total_tokens": 30,
     }
+
+
+def test_judge_call_budget_skips_further_calls() -> None:
+    case_id = str(uuid.uuid4())
+
+    async def metered(_request: JudgeRequest) -> JudgeResponse:
+        return JudgeResponse(
+            text=make_judge_json(score=0.8),
+            usage={"prompt_tokens": 6, "completion_tokens": 4, "total_tokens": 10},
+        )
+
+    service = EvaluationService(
+        judge=RubricJudge(judge_fn=metered),
+        max_judge_calls=1,
+    )
+    outcome = service.evaluate_case(
+        case_id=case_id,
+        expected=ExpectedBehavior(required_keywords=["a"]),
+        observations=[
+            observed(case_id, version="baseline", text="a"),
+            observed(case_id, version="candidate", text="a"),
+        ],
+        rubric="Score faithfulness.",
+    )
+
+    assert outcome.judge_usage["total_tokens"] == 10
+    assert outcome.judge_skipped == 1
+
+
+def test_judge_token_budget_exhaustion_is_observable() -> None:
+    budget = _JudgeBudget(max_tokens=10)
+    assert budget.reserve() is True
+    budget.record({"total_tokens": 10})
+    assert budget.exhausted is True
+    assert budget.reserve() is False
+    assert budget.skipped == 1
 
 
 def test_service_skips_the_judge_entirely_without_a_rubric():

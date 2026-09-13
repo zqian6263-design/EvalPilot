@@ -72,6 +72,8 @@ LLM_DATA_KEYS: frozenset[str] = frozenset(
         "authoritative",
         "replay_plan",
         "replay_plan_rejected",
+        "planner_attempts",
+        "planner_repaired",
     }
 )
 

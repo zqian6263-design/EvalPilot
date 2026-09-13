@@ -38,7 +38,12 @@ from evalpilot.llm.apply import (
     sanitize_rationale,
     sanitize_replay_interventions,
 )
-from evalpilot.llm.errors import LLMError, LLMTimeoutError
+from evalpilot.llm.errors import (
+    LLMError,
+    LLMResponseError,
+    LLMSchemaError,
+    LLMTimeoutError,
+)
 from evalpilot.llm.prompts import (
     HYPOTHESIS_KINDS,
     HYPOTHESIS_SCHEMA,
@@ -156,10 +161,31 @@ class LiveLLMAugmenter:
             ],
         )
 
-        try:
-            result = await self._complete_json(messages, HYPOTHESIS_SCHEMA)
-        except LLMError as exc:
-            self._fallback(recorder, step, root, _failure("hypotheses", exc))
+        result = None
+        last_repairable: Exception | None = None
+        planner_attempts = 0
+        for attempt in range(1, 3):
+            planner_attempts = attempt
+            try:
+                result = await self._complete_json(messages, HYPOTHESIS_SCHEMA)
+                break
+            except (LLMResponseError, LLMSchemaError) as exc:
+                # A malformed or schema-invalid response is repairable: retry
+                # once before abandoning the bounded planning path.
+                last_repairable = exc
+                continue
+            except LLMError as exc:
+                self._fallback(recorder, step, root, _failure("hypotheses", exc))
+                return {}
+        if result is None:
+            assert last_repairable is not None
+            self._fallback(
+                recorder,
+                step,
+                root,
+                _failure("hypotheses", last_repairable),
+                provenance={"planner_attempts": planner_attempts},
+            )
             return {}
 
         ordered_unique, _, _ = _service_helpers()
@@ -302,6 +328,8 @@ class LiveLLMAugmenter:
                 "replay_plan_rejected": replay_discarded,
                 "authoritative": False,
                 "deterministic_hypothesis_count": len(deterministic),
+                "planner_attempts": planner_attempts,
+                "planner_repaired": planner_attempts > 1,
                 # The step itself is model-generated, so it carries the same
                 # provenance its child steps do.
                 **result.provenance(),

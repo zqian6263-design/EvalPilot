@@ -44,6 +44,31 @@ same `ExecutionResult` shape used by the deterministic executor. Invalid JSON or
 a missing/wrong-typed field fails the run; it is never silently replaced by mock
 output.
 
+## Capability discovery
+
+Before an online evaluation starts, EvalPilot calls:
+
+```text
+GET {EVALPILOT_SUT_URL}/capabilities
+```
+
+Example response:
+
+```json
+{
+  "contract_version": "1.0",
+  "versions": ["v1.0-baseline", "v1.1-candidate"],
+  "interventions": ["compression_disabled", "security_guard_enabled"],
+  "features": ["citations", "tool_calls", "refusal", "offline_cache"]
+}
+```
+
+EvalPilot rejects an unadvertised version or intervention before sending an
+answer request. A 404 is treated as a legacy service and falls back to the
+original answer-only contract; this preserves compatibility while making
+capability declarations the preferred path. Capability discovery is skipped in
+offline mode, where the content-addressed replay cache is authoritative.
+
 ## Configuration
 
 ```text

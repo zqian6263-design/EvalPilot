@@ -44,6 +44,7 @@ from typing import Any, Literal
 
 from evalpilot import engine_mapping
 from evalpilot.clock import new_id
+from evalpilot.evaluation.power import paired_power_metrics
 from evalpilot.evaluation import (
     DEFAULT_REGRESSION_THRESHOLD,
     ComparisonDirection,
@@ -106,6 +107,8 @@ def _judge_metrics(report: ComparisonReport, *, enabled: bool) -> dict[str, Any]
         "calls": calls,
         "failures": report.judge_failures,
         "disagreements": disagreements,
+        "skipped": report.judge_skipped,
+        "budget_exhausted": report.judge_budget_exhausted,
         "usage": dict(report.judge_usage),
     }
 
@@ -172,6 +175,8 @@ class EvaluationService:
     threshold: float = DEFAULT_REGRESSION_THRESHOLD
     bootstrap_resamples: int = 2000
     judge: RubricJudge | None = None
+    max_judge_calls: int | None = None
+    max_judge_tokens: int | None = None
 
     async def evaluate_run_async(
         self,
@@ -193,6 +198,8 @@ class EvaluationService:
             threshold=self.threshold,
             bootstrap_resamples=self.bootstrap_resamples,
             seed=self.seed,
+            max_judge_calls=self.max_judge_calls,
+            max_judge_tokens=self.max_judge_tokens,
         )
 
         evidence = [item for items in evidence_by_case.values() for item in items]
@@ -513,7 +520,15 @@ def _metrics(
     moved = [v for v in verdicts if v.delta is not None and v.delta < 0]
     failing = [v for v in verdicts if v.candidate_score is not None and v.candidate_score < 1.0]
 
-    return {
+    power_metrics = paired_power_metrics(
+        [
+            v.candidate_score - v.baseline_score
+            for v in verdicts
+            if v.baseline_score is not None and v.candidate_score is not None
+        ],
+        threshold=comparison.threshold,
+    )
+    metrics = {
         "baseline_version": baseline_version,
         "candidate_version": candidate_version,
         "matched_scenarios": comparison.sample_size,
@@ -556,6 +571,8 @@ def _metrics(
         "trial_count": comparison.trial_count,
         "regression_confirmed": comparison.direction is ComparisonDirection.REGRESSION,
     }
+    metrics.update(power_metrics)
+    return metrics
 
 
 def _mean(values: list[float]) -> float:

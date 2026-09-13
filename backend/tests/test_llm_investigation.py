@@ -87,6 +87,20 @@ class StubProvider:
         return ""
 
 
+class RetryingProvider(StubProvider):
+    """Fails the first hypothesis schema call, then behaves normally."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.fail_once = True
+
+    async def complete_json(self, messages, schema, timeout_seconds=None):
+        if schema is HYPOTHESIS_SCHEMA and self.fail_once:
+            self.fail_once = False
+            raise LLMSchemaError("first hypothesis response was malformed")
+        return await super().complete_json(messages, schema, timeout_seconds)
+
+
 def live_runtime(provider) -> LLMRuntime:
     return LLMRuntime(
         mode=MODE_LIVE,
@@ -397,6 +411,24 @@ def test_an_unexecutable_model_plan_is_rejected(client: TestClient) -> None:
         if step["title"] == "Model-proposed risk hypotheses"
     )
     assert "not executable" in model_step["data"]["fallback_reason"]
+
+
+def test_a_repairable_model_response_is_retried_once(client: TestClient) -> None:
+    detail = _demo_run(client)
+    _, payload = _run_investigation(
+        client,
+        detail["run"]["id"],
+        provider=RetryingProvider(),
+    )
+
+    step = next(
+        step
+        for step in payload["steps"]
+        if step["title"] == "Model-proposed risk hypotheses"
+    )
+    assert step["data"]["planner_attempts"] == 2
+    assert step["data"]["planner_repaired"] is True
+    assert step["data"]["proposals"]
 
 
 def test_every_llm_step_records_its_provenance(client: TestClient) -> None:

@@ -1,0 +1,85 @@
+name: EvalPilot Release Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_base:
+        description: EvalPilot API base URL
+        required: true
+        default: http://127.0.0.1:8000/api
+      run_id:
+        description: Completed EvalPilot run id
+        required: true
+  repository_dispatch:
+    types: [evalpilot-release]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  security-events: write
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    env:
+      EVALPILOT_API_BASE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.api_base || inputs.api_base }}
+      EVALPILOT_RUN_ID: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.run_id || inputs.run_id }}
+      PR_NUMBER: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.pr_number || '' }}
+    steps:
+      - name: Download gate artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          curl -fsS "$EVALPILOT_API_BASE/runs/$EVALPILOT_RUN_ID/gate" -o artifacts/gate.json
+          curl -fsS "$EVALPILOT_API_BASE/runs/$EVALPILOT_RUN_ID/junit" -o artifacts/junit.xml
+          curl -fsS "$EVALPILOT_API_BASE/runs/$EVALPILOT_RUN_ID/sarif" -o artifacts/results.sarif
+          curl -fsS "$EVALPILOT_API_BASE/runs/$EVALPILOT_RUN_ID/report" -o artifacts/report.json
+
+      - name: Build summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          decision=$(jq -r '.decision' artifacts/gate.json)
+          exit_code=$(jq -r '.exit_code' artifacts/gate.json)
+          baseline=$(jq -r '.baseline_pass_rate' artifacts/gate.json)
+          candidate=$(jq -r '.candidate_pass_rate' artifacts/gate.json)
+          delta=$(jq -r '.mean_difference' artifacts/gate.json)
+          reasons=$(jq -r '.reasons | join(", ")' artifacts/gate.json)
+          {
+            echo "## EvalPilot Release Gate";
+            echo "";
+            echo "- Run: \`$EVALPILOT_RUN_ID\`";
+            echo "- Decision: **${decision^^}**";
+            echo "- Exit code: \`$exit_code\`";
+            echo "- Baseline pass rate: \`$baseline\`";
+            echo "- Candidate pass rate: \`$candidate\`";
+            echo "- Mean difference: \`$delta\`";
+            echo "- Reasons: \`$reasons\`";
+          } > artifacts/summary.md
+
+      - name: Upload CI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: evalpilot-release-gate
+          path: artifacts/
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: artifacts/results.sarif
+
+      - name: Comment on pull request
+        if: env.PR_NUMBER != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh pr comment "$PR_NUMBER" --body-file artifacts/summary.md
+
+      - name: Enforce release gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          code=$(jq -r '.exit_code' artifacts/gate.json)
+          exit "$code"

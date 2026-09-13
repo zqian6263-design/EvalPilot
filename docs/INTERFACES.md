@@ -78,6 +78,8 @@ Base path: `/api`
 - `POST /runs/{run_id}/cancel` -> cancel a run
 - `GET /runs/{run_id}/report` -> `Report`
 - `GET /runs/{run_id}/gate` -> `ReleaseGate` (exit codes: 0 allow, 1 review, 2 block)
+- `GET /runs/{run_id}/junit` -> JUnit XML for CI test reporters
+- `GET /runs/{run_id}/sarif` -> SARIF 2.1.0 for code scanning
 - `GET /runs/{run_id}/events` -> server-sent events or newline-delimited progress events for MVP
 - `GET /demo/seed` -> deterministic demo metadata only; no side effects
 
@@ -110,3 +112,6 @@ MVP uses SQLite. File-backed evidence is stored under `backend/data/artifacts/{r
 - `EVALPILOT_SUT_TIMEOUT_SECONDS`: per-request timeout; default `20`
 - `EVALPILOT_SUT_OFFLINE`: `true` replays only from cache and never opens a socket
 - `EVALPILOT_SUT_CACHE_DIR`: content-addressed response cache for offline replay
+- `EVALPILOT_SUT_DISCOVERY`: `true` validates advertised SUT versions and interventions before execution; default `true`
+- `EVALPILOT_JUDGE_MAX_CALLS`: optional maximum Judge calls per run
+- `EVALPILOT_JUDGE_MAX_TOKENS`: optional maximum persisted Judge tokens per run
