@@ -80,6 +80,7 @@ class CaseEvaluation(EvaluationModel):
     deterministic_scores_by_version: dict[str, float] = Field(default_factory=dict)
     judge_scores_by_version: dict[str, float] = Field(default_factory=dict)
     judge_failures: int = 0
+    judge_usage: dict[str, int] = Field(default_factory=dict)
     errors: int = 0
     missing_evidence: list[MissingEvidence] = Field(default_factory=list)
     #: Checks that failed on at least one trial, deduplicated in suite order.
@@ -108,6 +109,7 @@ class ComparisonReport(EvaluationModel):
     excluded_case_ids: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     judge_failures: int = 0
+    judge_usage: dict[str, int] = Field(default_factory=dict)
     generated_at: datetime = Field(default_factory=utc_now)
 
 
@@ -330,6 +332,7 @@ class EvaluationService:
             excluded_case_ids=excluded_case_ids,
             warnings=warnings,
             judge_failures=sum(e.judge_failures for e in evaluations),
+            judge_usage=_sum_usage(e.judge_usage for e in evaluations),
         )
 
     # ------------------------------------------------------------------
@@ -463,8 +466,9 @@ class EvaluationService:
 
         judge_score: float | None = None
         judge_failed = False
+        judge_usage: dict[str, int] | None = None
         if rubric and self.judge is not None:
-            judge_score, judge_failed = await self._judge_observation(
+            judge_score, judge_failed, judge_usage = await self._judge_observation(
                 observation,
                 question=question,
                 rubric=rubric,
@@ -488,6 +492,7 @@ class EvaluationService:
             deterministic=deterministic,
             judge=judge_score,
             judge_failed=judge_failed,
+            judge_usage=judge_usage,
             outcomes=outcomes,
         )
 
@@ -498,8 +503,8 @@ class EvaluationService:
         question: str | None,
         rubric: str,
         context: str | None,
-    ) -> tuple[float | None, bool]:
-        """Return ``(judge_score, failed)``; never raises."""
+    ) -> tuple[float | None, bool, dict[str, int] | None]:
+        """Return ``(judge_score, failed, usage)``; never raises."""
         assert self.judge is not None  # guarded by the caller
         request = JudgeRequest(
             case_id=observation.case_id,
@@ -510,10 +515,14 @@ class EvaluationService:
             context=context,
         )
         try:
-            output: JudgeOutput = await self.judge.judge(request)
+            if hasattr(self.judge, "judge_with_meta"):
+                output, response = await self.judge.judge_with_meta(request)
+            else:
+                output = await self.judge.judge(request)
+                response = None
         except JudgeError:
-            return None, True
-        return output.score, False
+            return None, True, None
+        return output.score, False, response.usage if response is not None else None
 
     @staticmethod
     def _aggregate_case(
@@ -532,6 +541,7 @@ class EvaluationService:
         failing: set[CheckKind] = set()
         errors = 0
         judge_failures = 0
+        judge_usage: dict[str, int] = {}
 
         for version, items in by_version.items():
             trial_counts[version] = len(items)
@@ -548,6 +558,7 @@ class EvaluationService:
             for item in items:
                 errors += int(item.errored)
                 judge_failures += int(item.judge_failed)
+                judge_usage = _merge_usage(judge_usage, item.judge_usage)
                 for outcome in item.outcomes:
                     if outcome.applicable and not outcome.passed:
                         failing.add(outcome.kind)
@@ -567,6 +578,7 @@ class EvaluationService:
             deterministic_scores_by_version=deterministic_scores,
             judge_scores_by_version=judge_scores,
             judge_failures=judge_failures,
+            judge_usage=judge_usage,
             errors=errors,
             missing_evidence=list(gaps.values()),
             failing_checks=sorted(failing, key=lambda kind: _CHECK_ORDER.index(kind)),
@@ -589,7 +601,16 @@ class EvaluationService:
 class _ScoredObservation:
     """One observation plus its scores. Internal to the service."""
 
-    __slots__ = ("observation", "score", "deterministic", "judge", "judge_failed", "errored", "outcomes")
+    __slots__ = (
+        "observation",
+        "score",
+        "deterministic",
+        "judge",
+        "judge_failed",
+        "judge_usage",
+        "errored",
+        "outcomes",
+    )
 
     def __init__(
         self,
@@ -599,6 +620,7 @@ class _ScoredObservation:
         deterministic: float | None = None,
         judge: float | None = None,
         judge_failed: bool = False,
+        judge_usage: dict[str, int] | None = None,
         errored: bool = False,
         outcomes: Sequence[CheckOutcome] | None = None,
     ) -> None:
@@ -607,6 +629,7 @@ class _ScoredObservation:
         self.deterministic = deterministic
         self.judge = judge
         self.judge_failed = judge_failed
+        self.judge_usage = dict(judge_usage or {})
         self.errored = errored
         self.outcomes = list(outcomes or [])
 
@@ -629,6 +652,21 @@ class _ScoredObservation:
                     )
                 )
         return gaps
+
+
+def _merge_usage(target: dict[str, int], source: Mapping[str, int]) -> dict[str, int]:
+    """Add one usage dictionary into another without losing token classes."""
+    for key, value in source.items():
+        target[key] = target.get(key, 0) + int(value)
+    return target
+
+
+def _sum_usage(values: Iterable[Mapping[str, int]]) -> dict[str, int]:
+    """Sum usage dictionaries, preserving keys such as prompt_tokens."""
+    total: dict[str, int] = {}
+    for value in values:
+        _merge_usage(total, value)
+    return total
 
 
 def _stable_unique(values: Iterable[str]) -> list[str]:

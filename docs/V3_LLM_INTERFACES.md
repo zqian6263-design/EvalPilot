@@ -65,7 +65,7 @@ When live mode is active:
 1. The LLM proposes risk hypotheses from the objective and observed failures.
 2. The LLM may choose one executable intervention per regressed scenario. The choice is validated against a closed vocabulary, executed by the counterfactual engine, and measured before it can affect a verdict.
 3. The LLM may produce a structured release rationale grounded in evidence ids.
-3. The LLM may score rubric-based qualitative dimensions.
+3. The LLM may score rubric-based qualitative dimensions; provider usage is persisted under `metrics.judge.usage`.
 4. Counterfactual results and blocking findings remain measured facts.
 
 Each LLM-generated step carries:

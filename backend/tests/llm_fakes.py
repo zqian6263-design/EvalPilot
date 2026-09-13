@@ -72,10 +72,12 @@ class ScriptedProvider:
         *,
         model: str = "fake-model",
         call_id: str = "fake-call-id",
+        usage: dict[str, int] | None = None,
     ) -> None:
         self.responses = list(responses) or [{}]
         self.model = model
         self.call_id = call_id
+        self.usage = usage
         self.calls: list[list[Message]] = []
         self.schemas: list[dict[str, Any]] = []
 
@@ -100,6 +102,7 @@ class ScriptedProvider:
             model=self.model,
             call_id=self.call_id,
             provider=self.name,
+            usage=self.usage,
         )
 
     async def complete_text(

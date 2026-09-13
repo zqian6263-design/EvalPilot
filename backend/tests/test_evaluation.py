@@ -33,6 +33,7 @@ from evalpilot.evaluation.judge import (
     DEFAULT_RUBRIC,
     JudgeError,
     JudgeOutput,
+    JudgeResponse,
     RubricJudge,
 )
 from evalpilot.evaluation.models import (
@@ -843,6 +844,37 @@ def test_service_blends_deterministic_and_judge_scores_when_a_rubric_is_given():
     assert outcome.deterministic_scores_by_version["baseline"] == pytest.approx(0.0)
     assert outcome.scores_by_version["baseline"] == pytest.approx(0.3)
     assert outcome.judge_failures == 0
+
+
+def test_service_aggregates_judge_token_usage() -> None:
+    case_id = str(uuid.uuid4())
+
+    async def metered(_request: JudgeRequest) -> JudgeResponse:
+        return JudgeResponse(
+            text=make_judge_json(score=0.8),
+            usage={
+                "prompt_tokens": 10,
+                "completion_tokens": 5,
+                "total_tokens": 15,
+            },
+        )
+
+    service = EvaluationService(judge=RubricJudge(judge_fn=metered))
+    outcome = service.evaluate_case(
+        case_id=case_id,
+        expected=ExpectedBehavior(required_keywords=["a"]),
+        observations=[
+            observed(case_id, version="baseline", text="a"),
+            observed(case_id, version="candidate", text="a"),
+        ],
+        rubric="Score faithfulness.",
+    )
+
+    assert outcome.judge_usage == {
+        "prompt_tokens": 20,
+        "completion_tokens": 10,
+        "total_tokens": 30,
+    }
 
 
 def test_service_skips_the_judge_entirely_without_a_rubric():

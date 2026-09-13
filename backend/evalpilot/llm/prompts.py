@@ -63,7 +63,10 @@ HYPOTHESIS_SCHEMA: dict[str, Any] = {
             "items": {
                 "type": "object",
                 "properties": {
-                    "kind": {"type": "string", "enum": list(HYPOTHESIS_KINDS)},
+                    # Kept as a string so one unknown hypothesis cannot
+                    # discard an otherwise valid replay plan. The caller
+                    # still rejects unknown kinds during sanitization.
+                    "kind": {"type": "string", "minLength": 1, "maxLength": 64},
                     "claim": {"type": "string", "minLength": 1, "maxLength": 400},
                     "mechanism": {"type": "string", "minLength": 1, "maxLength": 400},
                     "scenario_ids": {

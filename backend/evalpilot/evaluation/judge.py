@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import math
+from dataclasses import dataclass
 from typing import Any, Awaitable, Callable
 
 from pydantic import ValidationError
@@ -28,8 +29,20 @@ DEFAULT_RUBRIC = (
     "unsupported claims, contradictions, and unsafe compliance."
 )
 
-#: An async callable that turns a judge request into raw model text.
-JudgeCallable = Callable[[JudgeRequest], Awaitable[str]]
+@dataclass(frozen=True)
+class JudgeResponse:
+    """Raw judge text plus optional provider usage metadata."""
+
+    text: str
+    usage: dict[str, int] | None = None
+    model: str | None = None
+    call_id: str | None = None
+    provider: str | None = None
+
+
+#: An async callable that turns a judge request into raw model text or a
+#: response carrying that text plus provider usage.
+JudgeCallable = Callable[[JudgeRequest], Awaitable[str | JudgeResponse]]
 
 _FENCE = "```"
 
@@ -111,7 +124,14 @@ class RubricJudge:
         self.criteria = list(criteria or [])
 
     async def judge(self, request: JudgeRequest) -> JudgeOutput:
-        """Score one answer, returning a validated verdict.
+        """Score one answer, returning a validated verdict."""
+        output, _ = await self.judge_with_meta(request)
+        return output
+
+    async def judge_with_meta(
+        self, request: JudgeRequest
+    ) -> tuple[JudgeOutput, JudgeResponse | None]:
+        """Score one answer and preserve provider usage when available.
 
         Raises:
             JudgeError: if the callable raises, or its output is unusable.
@@ -121,12 +141,19 @@ class RubricJudge:
         except Exception as exc:  # noqa: BLE001 - the callable is untrusted
             raise JudgeError(f"judge call failed: {exc}") from exc
 
-        if not isinstance(raw, str):
+        if isinstance(raw, JudgeResponse):
+            response = raw
+            text = raw.text
+        elif isinstance(raw, str):
+            response = None
+            text = raw
+        else:
             raise JudgeError(
-                f"Judge output failed schema validation: expected str, got {type(raw).__name__}"
+                "Judge output failed schema validation: expected str or "
+                f"JudgeResponse, got {type(raw).__name__}"
             )
 
-        return parse_judge_output(raw)
+        return parse_judge_output(text), response
 
 
 def build_judge_prompt(request: JudgeRequest) -> str:

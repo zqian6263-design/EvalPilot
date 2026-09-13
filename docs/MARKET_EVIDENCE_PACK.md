@@ -146,17 +146,15 @@ These are execution tasks, not interview tasks.
 - EvalPilot: mean delta -0.3125, 95% CI [-0.5625, -0.1250], confidence 98.59%, regression confirmed.
 - Public comparisons: SQuAD and HotpotQA, 16 rows each, 5 controlled regressions, 11 controls.
 - Both workloads: mean -0.3125, 95% CI [-0.5625, -0.1250], confidence 98.59%.
-- Live DeepSeek V4 Pro investigation: 18,152 tokens (5,596 input, 12,556 output), 3 LLM steps including one model-guided replay plan.
-- Full run compute: 462.00 seconds (386.16 run + 76.45 investigation); logical storage: 0.2501 MB.
-- Model peak cost: $0.057108; compute: $0.012833; storage: $0.00000562.
-- Total peak cost: $0.069947; total off-peak cost: $0.041393.
-
-The model and cost figure above covers persisted investigation LLM usage. The live run also performed rubric-judge calls during evaluation; those calls contribute to wall time but their token usage is not yet persisted, so the model cost is a lower bound rather than a complete run cost.
-- Portable launcher: `python scripts/deploy.py`.
+- Live DeepSeek V4 Pro full run: 67,822 tokens; 52 rubric-judge calls used 58,387 tokens and investigation used 9,435 tokens.
+- Full run compute: 441.00 seconds (348.41 run + 92.96 investigation); logical storage: 0.2438 MB.
+- Model peak cost: $0.211232; compute: $0.012250; storage: $0.00000548.
+- Total peak cost: $0.223487; total off-peak cost: $0.117871.
+- Judge usage is now persisted in the run report, so model cost is no longer a lower bound.
 
 ## 10. External integration proof (2026-09-13)
 
-The evaluator is no longer demonstrated only against its own deterministic mock.
+The evaluator is no longer demonstrated only against its own deterministic mock. The acceptance SUT is an adapter over the public Apache-2.0 `deepset-ai/haystack` BM25 retriever.
 The reproducible `scripts/sut-e2e-check.ps1` starts a separate HTTP SUT process
 and verifies the integration contract end to end:
 

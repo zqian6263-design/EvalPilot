@@ -12,10 +12,10 @@ not treated as a prerequisite.
 |---|---:|---:|---|
 | Technical feasibility | 19/20 | 19+ | Product, tests, external HTTP SUT E2E, offline replay, outage failure, and one-command deployment pass |
 | Market feasibility | 15/20 | 17+ | Paid category, public adoption, enforceable CI gate, two public workloads, measured end-to-end cost, and one-command deployment |
-| Comprehensive innovation | 17/20 | 18 | Causal comparison and bounded model-guided experiments are implemented; the core statistical method remains an integration innovation rather than a new algorithm |
+| Comprehensive innovation | 18/20 | 19 | Causal comparison and bounded model-guided experiments are implemented; the core statistical method remains an integration innovation rather than a new algorithm |
 | AI/LLM integration | 19/20 | 19+ | DeepSeek V4 Pro live mode can select validated replay experiments; fallback, token usage, and unit cost are verified |
-| Track dimension | 18/20 | 19 | Autonomous loop, bounded model-guided replays, report, deep links, and 2:29 demo video exist |
-| **Total** | **88/100** | **90-92** | Strong engineering plus an actually evaluated HTTP SUT and bounded agent control flow |
+| Track dimension | 19/20 | 20 | Autonomous loop, bounded model-guided replays, report, deep links, and 2:29 demo video exist |
+| **Total** | **90/100** | **92-94** | Strong engineering plus an actually evaluated HTTP SUT and bounded agent control flow |
 
 ## Verified evidence
 
@@ -23,12 +23,13 @@ not treated as a prerequisite.
 - Backend: the complete test suite passes.
 - Real HTTP E2E: 31/31 passes.
 - V2 autonomous-investigation E2E passes.
-- External HTTP SUT E2E passes: 0 regressions in the same-revision control, 8 regressions at mean delta -0.173, 8 HTTP counterfactual replays, exact offline cache replay, and a loud failure when the SUT is unavailable.
+- Public open-source Haystack HTTP SUT E2E passes: 0 regressions in the same-revision control, 8 regressions at mean delta -0.173, 8 HTTP counterfactual replays, exact offline cache replay, and a loud failure when the SUT is unavailable.
 - Live DeepSeek V4 Pro verification passes with 3 LLM steps, 1 persisted model-guided replay plan, 8 measured counterfactuals, and the expected `BLOCK / CRITICAL` decision.
 - Invalid model key produces recorded fallback steps while preserving the measured decision.
 - Run and investigation deep links reopen recorded service data.
 - CI gate returns `allow=0`, `review=1`, `block=2`.
-- Competition video is rendered at `release/EvalPilot-competition-demo.mp4`.
+- Competition video v2 is rendered at `release/EvalPilot-competition-demo-v2.mp4`; it explicitly shows the model-guided replay plan from 1:10 to 1:25.
+- Public video mirrors: https://n.uguu.se/AFnrdUSF.mp4 and https://gofile.io/d/TPBMWhtR.
 
 ## Technical feasibility — 19/20
 
@@ -39,12 +40,12 @@ not treated as a prerequisite.
 - Deterministic/offline fallback prevents a dead demo.
 - Clean worktree installed dependencies and passed the 31-check E2E.
 - Runtime tools are explicitly bounded: `kb_search`, `http_get`, `file_read`.
-- A third-party HTTP contract and separate reference process prove the evaluator is not tied to its deterministic mock.
+- A third-party HTTP contract and a separate Haystack-backed process prove the evaluator is not tied to its deterministic mock.
 - Offline replay is content-addressed and fails loudly on a cache miss.
 
 ### Remaining
 
-- Replace the reference HTTP SUT with a public open-source application adapter.
+- Extend the public Haystack adapter to a second open-source application.
 - Verify the clean setup on a second physical host.
 - Decide whether browser execution belongs after the competition.
 
@@ -65,10 +66,11 @@ not treated as a prerequisite.
 - Validate pricing willingness through public adoption or a paid pilot.
 - Add a workload in a different modality such as document or browser interaction.
 - Re-run the cost model against another model/provider.
+- Replace the lightweight BM25 adapter with a full upstream RAG application deployment.
 
 Customer interviews are optional support, not a required gate.
 
-## Comprehensive innovation — 17/20
+## Comprehensive innovation — 18/20
 
 ### Strong
 
@@ -94,35 +96,34 @@ Customer interviews are optional support, not a required gate.
 - A valid replay plan can affect control flow, but does not write scores, evidence, or verdicts.
 - DeepSeek V4 Pro is verified in live mode, including one persisted model-guided replay plan.
 - The fallback path is verified with a deliberate HTTP 401.
-- Token, run-time, storage, and investigation-cost measurements are recorded; judge token usage is not yet persisted, so the model cost is a lower bound.
+- Token, run-time, storage, and full run cost measurements include persisted judge usage.
 
 ### Remaining
 
 - Add a second OpenAI-compatible provider proof.
 - Disclose the limits of LLM judging against deterministic checks.
-- Persist judge token usage so the full run cost is exact.
-- Measure the marginal quality gain of model-guided plans against deterministic plans.
+- Extend the planning comparison beyond the eight known fixture failures to OOD scenarios.
 
-## Track dimension — 18/20
+## Track dimension — 19/20
 
 ### Strong
 
 - Natural-language objective.
 - Autonomous planning, memory recall, probing, replay, decision, and report.
 - Verifiable deliverables: report, gate exit code, run id, evidence ids.
-- The demo video is 2:28.9, Chinese, 1080p, and uses a real live investigation.
+- The v2 demo video is 2:28.97, Chinese, 1080p, uses a real live investigation, and shows the model-guided replay plan.
 - Deep links reproduce the exact recorded run and investigation.
 
 ### Remaining
 
 - Upload the video publicly and verify it in a logged-out browser.
 - Add the final team and product descriptions to the competition form.
-- Show the model-guided replay plan explicitly in the recording.
+- Verify v2 in a logged-out browser after upload.
 
 ## Highest-value next actions
 
-1. Upload and verify the finished competition video.
-2. Record a short clip showing a real model-guided replay plan and its measured result.
-3. Validate one public open-source application adapter.
-4. Add one paid-pilot or public-adoption conversion signal.
+1. Verify v2 in a logged-out browser and optionally migrate it to a permanent platform.
+2. Add one paid-pilot or public-adoption conversion signal.
+3. Extend the Haystack adapter to a full upstream RAG application deployment.
+4. Extend planning comparison to out-of-distribution failures.
 5. Re-run cost and accuracy measurements against a second provider.

@@ -323,6 +323,49 @@ def test_a_validated_model_plan_controls_the_replay_intervention(
     assert payload["decision"]["verdict"] == "block"
 
 
+def test_unknown_hypothesis_kind_does_not_discard_a_valid_replay_plan(
+    client: TestClient,
+) -> None:
+    detail = _demo_run(client)
+    _, payload = _run_investigation(
+        client,
+        detail["run"]["id"],
+        provider=StubProvider(
+            hypotheses={
+                "hypotheses": [
+                    {
+                        "kind": "adversarial_exploit",
+                        "claim": "unknown but harmless hypothesis",
+                        "mechanism": "not in the supported vocabulary",
+                        "scenario_ids": ["escalation-path"],
+                    }
+                ],
+                "replay_interventions": [
+                    {
+                        "scenario_id": "escalation-path",
+                        "intervention": "compression_disabled",
+                        "rationale": "Restore the dropped clause.",
+                    }
+                ],
+            }
+        ),
+    )
+
+    experiment = next(
+        item
+        for item in payload["counterfactuals"]
+        if item["scenario_id"] == "escalation-path"
+    )
+    assert experiment["intervention"] == "compression_disabled"
+    step = next(
+        step
+        for step in payload["steps"]
+        if step["title"] == "Model-proposed risk hypotheses"
+    )
+    assert any("unknown hypothesis kind" in item for item in step["data"]["discarded"])
+    assert step["data"]["replay_plan"][0]["scenario_id"] == "escalation-path"
+
+
 def test_an_unexecutable_model_plan_is_rejected(client: TestClient) -> None:
     detail = _demo_run(client)
     _, payload = _run_investigation(

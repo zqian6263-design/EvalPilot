@@ -3,7 +3,7 @@
     Prove that EvalPilot evaluates a real external HTTP SUT, not only its mock.
 
 .DESCRIPTION
-    Starts the reference SUT in a separate process, points the backend at it
+    Starts the public Haystack SUT in a separate process, points the backend at it
     through EVALPILOT_SUT_URL, and verifies four things with live API results:
 
       1. A v1.1-versus-v1.1 negative control reports no regression.
@@ -44,6 +44,7 @@ $processes = [System.Collections.Generic.List[object]]::new()
 $summary = [ordered]@{
     started_at = (Get-Date).ToUniversalTime().ToString('o')
     sut_url = $sutUrl
+    sut_engine = 'haystack-ai'
     database = $dbPath
     cache_dir = $cacheDir
 }
@@ -184,14 +185,15 @@ try {
     Write-Host "`n-- Start the external SUT"
     $env:PYTHONPATH = $backendDir
     $sutProcess = Start-ProcessChecked `
-        -name 'reference-sut' `
-        -arguments @('-m', 'uvicorn', 'evalpilot.sut.demo_server:app', '--host', '127.0.0.1', '--port', "$SutPort", '--log-level', 'warning') `
+        -name 'public-haystack-sut' `
+        -arguments @('-m', 'uvicorn', 'evalpilot.sut.haystack_server:app', '--host', '127.0.0.1', '--port', "$SutPort", '--log-level', 'warning') `
         -workingDirectory $backendDir `
         -stdoutLog (Join-Path $workDir 'sut.out.log') `
         -stderrLog (Join-Path $workDir 'sut.err.log')
     $sutHealthy = Wait-Http "$sutUrl/health" 45
-    Step 'the independent HTTP SUT is healthy' $sutHealthy (Server-Tail $sutProcess.stdout $sutProcess.stderr)
-    if (-not $sutHealthy) { throw 'reference SUT did not become healthy' }
+    $sutHealth = if ($sutHealthy) { Invoke-RestMethod -Uri "$sutUrl/health" -TimeoutSec 10 } else { $null }
+    Step 'the public open-source Haystack SUT is healthy' ($sutHealthy -and $sutHealth.engine -eq 'haystack-ai') (Server-Tail $sutProcess.stdout $sutProcess.stderr)
+    if (-not $sutHealthy) { throw 'public Haystack SUT did not become healthy' }
 
     Write-Host "`n-- Start EvalPilot against the HTTP SUT"
     $onlineBackend = Start-EvalPilotBackend `

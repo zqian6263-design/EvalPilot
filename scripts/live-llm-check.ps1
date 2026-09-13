@@ -52,6 +52,7 @@ if ($report -notmatch 'Model release rationale') { throw 'report has no model ra
 
 [pscustomobject]@{
     runtime_mode = $runtime.mode
+    run_id = $run.id
     model = $runtime.model
     investigation = $detail.investigation.id
     llm_steps = $llmSteps.Count

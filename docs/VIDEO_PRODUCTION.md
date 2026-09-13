@@ -1,6 +1,8 @@
 # EvalPilot Competition Video Production
 
-Status: rendered at `release/EvalPilot-competition-demo.mp4` (2:28.9, 1920x1080, 30fps).
+Status: v2 rendered at `release/EvalPilot-competition-demo-v2.mp4` (2:28.97, 1920x1080, 30fps); v1 remains at `release/EvalPilot-competition-demo.mp4`.
+
+The v2 cut inserts `release/EvalPilot-model-plan-slide.png` from 1:10 to 1:25. It shows the actual DeepSeek V4 Pro replay plan, the 8/8 comparison with deterministic planning, token cost, and the validation boundary. Public mirrors: https://n.uguu.se/AFnrdUSF.mp4 (direct MP4, temporary) and https://gofile.io/d/TPBMWhtR (public download page, backup). Replace with Bilibili/YouTube after login for a permanent submission link.
 
 Target duration: 2 minutes 30 seconds  
 Language: Chinese  
@@ -65,6 +67,7 @@ Show:
 - risk hypotheses;
 - historical incident recall;
 - probe actions;
+- the model-guided replay plan;
 - counterfactual replays;
 - compression restores seven scenarios;
 - security guard restores one scenario.

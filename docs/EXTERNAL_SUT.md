@@ -61,10 +61,14 @@ inputs.
 `EVALPILOT_SUT_OFFLINE=true` never opens a socket. A cache hit replays the exact
 recorded response; a cache miss fails the run loudly.
 
-## Reference SUT
+## Public open-source SUT adapter
 
-`backend/evalpilot/sut/demo_server.py` is a separate FastAPI process. It
-implements the published contract and models two deployable revisions:
+The acceptance path uses `backend/evalpilot/sut/haystack_server.py`, a separate
+FastAPI process backed by the public Apache-2.0 project
+[`deepset-ai/haystack`](https://github.com/deepset-ai/haystack). The retriever is
+Haystack's real in-memory BM25 implementation, pinned by
+`backend/requirements.txt`; EvalPilot's normal deterministic path never imports
+it. The adapter models two deployable revisions around that public retriever:
 
 - `v1.0-baseline` returns complete retrieved answers.
 - `v1.1-candidate` applies a compression pass and can disclose a demo secret on
@@ -75,7 +79,7 @@ Start it independently:
 ```powershell
 $env:PYTHONPATH = (Resolve-Path backend)
 .venv\Scripts\python.exe -m uvicorn `
-  evalpilot.sut.demo_server:app --host 127.0.0.1 --port 8010
+  evalpilot.sut.haystack_server:app --host 127.0.0.1 --port 8010
 ```
 
 Then start EvalPilot with:
@@ -91,7 +95,8 @@ python scripts/deploy.py
 .\scripts\sut-e2e-check.ps1
 ```
 
-The check starts the SUT and three isolated backend configurations. It verifies:
+The check starts the Haystack-backed SUT and three isolated backend
+configurations. It verifies:
 
 1. `v1.1-candidate` versus `v1.1-candidate` reports zero mean delta and no
    regressed scenario.

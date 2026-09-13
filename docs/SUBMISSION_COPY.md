@@ -79,3 +79,5 @@ EvalPilot 面向 AI 产品与研究团队，解决模型、Prompt、检索、记
 - Release decision: BLOCK, CRITICAL.
 - Market ROI and pricing assumptions from `docs/MARKET_STRATEGY.md`.
 - Runtime badge: deterministic vs live LLM mode.
+
+演示视频：<https://n.uguu.se/AFnrdUSF.mp4>（备用：<https://gofile.io/d/TPBMWhtR>）

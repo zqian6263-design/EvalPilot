@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from evalpilot.evaluation.judge import JudgeResponse
 from evalpilot.llm.prompts import build_judge_prompt
 from evalpilot.llm.providers import LLMProvider
 from evalpilot.llm.runtime import LLMRuntime
@@ -56,7 +57,7 @@ class ProviderJudge:
             runtime.timeout_seconds if timeout_seconds is None else timeout_seconds
         )
 
-    async def __call__(self, request: Any) -> str:
+    async def __call__(self, request: Any) -> JudgeResponse:
         messages = build_judge_prompt(
             question=str(getattr(request, "question", "") or ""),
             answer_text=str(getattr(request, "answer_text", "") or ""),
@@ -76,7 +77,13 @@ class ProviderJudge:
         )
         # Re-serialize so the judge's own validator sees JSON text, exactly as
         # it would from any other adapter. One validation path, not two.
-        return json.dumps(result.payload)
+        return JudgeResponse(
+            text=json.dumps(result.payload),
+            usage=result.usage,
+            model=result.model,
+            call_id=result.call_id,
+            provider=result.provider,
+        )
 
 
 __all__ = ["ProviderJudge", "build_judge_callable"]

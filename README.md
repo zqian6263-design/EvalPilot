@@ -9,6 +9,12 @@
 - 演示场景：企业知识库问答 / 智能客服
 - 状态：可运行 MVP，前端、后端、评测引擎和端到端验收已打通
 
+## 演示视频
+
+- 直接 MP4：<https://n.uguu.se/AFnrdUSF.mp4>
+- 备用下载页：<https://gofile.io/d/TPBMWhtR>
+- 本地成片：`release/EvalPilot-competition-demo-v2.mp4`
+
 ## 核心能力
 
 - 自动生成正常、边界和对抗测试用例。
@@ -61,6 +67,7 @@ python scripts/deploy.py --stop
 .\scripts\e2e-check.ps1
 .\scripts\v2-e2e-check.ps1
 .\scripts\sut-e2e-check.ps1
+.venv\Scripts\python.exe backend\scripts\planning_quality_check.py
 $env:PYTHONPATH = (Resolve-Path backend)
 .venv\Scripts\python.exe backend\scripts\public_workload_check.py
 .\scripts\measure-live-cost.ps1 -RunId <run-id>

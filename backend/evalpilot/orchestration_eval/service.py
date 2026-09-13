@@ -86,7 +86,7 @@ _SEVERITY_LABELS = {
 }
 
 
-def _judge_metrics(report: ComparisonReport, *, enabled: bool) -> dict[str, int | bool]:
+def _judge_metrics(report: ComparisonReport, *, enabled: bool) -> dict[str, Any]:
     """Summarise judge participation without changing the measured verdict."""
     calls = sum(len(item.judge_scores_by_version) for item in report.case_evaluations)
     disagreements = 0
@@ -106,6 +106,7 @@ def _judge_metrics(report: ComparisonReport, *, enabled: bool) -> dict[str, int 
         "calls": calls,
         "failures": report.judge_failures,
         "disagreements": disagreements,
+        "usage": dict(report.judge_usage),
     }
 
 

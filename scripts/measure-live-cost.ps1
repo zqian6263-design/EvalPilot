@@ -30,6 +30,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $base = "http://127.0.0.1:$BackendPort/api"
 $run = Invoke-RestMethod "$base/runs/$RunId" -TimeoutSec 60
+$runReport = Invoke-RestMethod "$base/runs/$RunId/report" -TimeoutSec 60
 
 if (-not $InvestigationId) {
     $investigation = Invoke-RestMethod -Method POST -Uri "$base/investigations" -ContentType 'application/json' -Body (@{
@@ -53,9 +54,16 @@ if ($detail.investigation.status -ne 'completed') {
 }
 
 $usageSteps = @($detail.steps | Where-Object { $_.data.usage })
-$prompt = ($usageSteps | ForEach-Object { [int]$_.data.usage.prompt_tokens } | Measure-Object -Sum).Sum
-$completion = ($usageSteps | ForEach-Object { [int]$_.data.usage.completion_tokens } | Measure-Object -Sum).Sum
-$total = ($usageSteps | ForEach-Object { [int]$_.data.usage.total_tokens } | Measure-Object -Sum).Sum
+$investigationPrompt = ($usageSteps | ForEach-Object { [int]$_.data.usage.prompt_tokens } | Measure-Object -Sum).Sum
+$investigationCompletion = ($usageSteps | ForEach-Object { [int]$_.data.usage.completion_tokens } | Measure-Object -Sum).Sum
+$investigationTotal = ($usageSteps | ForEach-Object { [int]$_.data.usage.total_tokens } | Measure-Object -Sum).Sum
+$judgeUsage = $runReport.metrics.judge.usage
+$judgePrompt = if ($null -ne $judgeUsage -and $null -ne $judgeUsage.prompt_tokens) { [int]$judgeUsage.prompt_tokens } else { 0 }
+$judgeCompletion = if ($null -ne $judgeUsage -and $null -ne $judgeUsage.completion_tokens) { [int]$judgeUsage.completion_tokens } else { 0 }
+$judgeTotal = if ($null -ne $judgeUsage -and $null -ne $judgeUsage.total_tokens) { [int]$judgeUsage.total_tokens } else { 0 }
+$prompt = [int]$investigationPrompt + $judgePrompt
+$completion = [int]$investigationCompletion + $judgeCompletion
+$total = [int]$investigationTotal + $judgeTotal
 
 $runSeconds = ([datetimeoffset]$run.run.completed_at - [datetimeoffset]$run.run.created_at).TotalSeconds
 $investigationSeconds = ([datetimeoffset]$detail.investigation.completed_at - [datetimeoffset]$detail.investigation.created_at).TotalSeconds
@@ -78,6 +86,10 @@ $storageCost = $storageGb * $StorageGbMonthRate * $StorageRetentionMonths
     risk = $detail.decision.risk_level
     model = ($usageSteps | Select-Object -First 1).data.model
     usage_steps = $usageSteps.Count
+    judge_calls = [int]$runReport.metrics.judge.calls
+    judge_prompt_tokens = $judgePrompt
+    judge_completion_tokens = $judgeCompletion
+    judge_total_tokens = $judgeTotal
     prompt_tokens = $prompt
     completion_tokens = $completion
     total_tokens = $total

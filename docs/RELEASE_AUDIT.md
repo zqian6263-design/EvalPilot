@@ -24,7 +24,7 @@ additional product breadth.
 | Deliberate live failure fallback | Pass | invalid key -> HTTP 401 -> 2 fallback steps -> BLOCK/CRITICAL |
 | Public claims aligned | Pass | current tool surface documented as kb_search/http_get/file_read |
 | Reproducible run/investigation deep links | Pass | #console&run=<id> and #investigation&run=<id>&inv=<id> open recorded service data in seconds |
-| Competition video | Pass | `release/EvalPilot-competition-demo.mp4`, 1920x1080, 30fps, 2:28.9, Chinese narration |
+| Competition video | Pass | `release/EvalPilot-competition-demo-v2.mp4`, 1920x1080, 30fps, 2:28.97, Chinese narration, model-plan panel at 1:10-1:25 |
 | CI release gate | Pass | GET /api/runs/{id}/gate and scripts/ci-gate.ps1 return exit codes 0/1/2 |
 
 ## Verified now
@@ -70,7 +70,7 @@ risk: critical
 
 ## Remaining before submission
 
-- Upload the finished video and verify it plays in a logged-out browser.
+- Public MP4: https://n.uguu.se/AFnrdUSF.mp4; backup: https://gofile.io/d/TPBMWhtR. Verify in a logged-out browser and migrate to a permanent platform if available.
 - Submit the updated team description and detailed product description.
 - Complete public-market and integration experiments; interviews are optional.
 

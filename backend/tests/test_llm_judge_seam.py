@@ -17,7 +17,12 @@ import json
 
 from evalpilot.config import load_settings
 from evalpilot.container import build_container
-from evalpilot.evaluation.judge import JudgeError, RubricJudge, parse_judge_output
+from evalpilot.evaluation.judge import (
+    JudgeError,
+    JudgeResponse,
+    RubricJudge,
+    parse_judge_output,
+)
 from evalpilot.evaluation.models import JudgeRequest
 from evalpilot.llm.judge_adapter import ProviderJudge, build_judge_callable
 from evalpilot.llm.runtime import MODE_LIVE, LLMRuntime, build_runtime
@@ -91,6 +96,31 @@ def test_the_judge_scores_from_a_valid_provider_response() -> None:
     assert "Thirty days from delivery." in prompt
 
 
+def test_provider_usage_survives_the_judge_adapter() -> None:
+    payload = {
+        "score": 0.8,
+        "confidence": 0.6,
+        "rationale": "Grounded and direct.",
+        "criteria": [{"name": "grounding", "score": 0.9, "rationale": "Cited."}],
+    }
+    provider = ScriptedProvider(
+        [payload],
+        usage={"prompt_tokens": 12, "completion_tokens": 7, "total_tokens": 19},
+    )
+    judge = RubricJudge(build_judge_callable(_runtime(provider)))
+
+    output, response = asyncio.run(judge.judge_with_meta(REQUEST))
+
+    assert output.score == 0.8
+    assert response is not None
+    assert response.usage == {
+        "prompt_tokens": 12,
+        "completion_tokens": 7,
+        "total_tokens": 19,
+    }
+    assert response.model == "fake-model"
+
+
 def test_a_schema_violation_raises_judge_error() -> None:
     provider = ScriptedProvider([{"score": 5.0}])
     judge = RubricJudge(build_judge_callable(_runtime(provider)))
@@ -141,8 +171,43 @@ def test_the_adapter_reserializes_for_one_validation_path() -> None:
     provider = ScriptedProvider([{"score": 0.5, "rationale": "ok"}])
     adapter = ProviderJudge(provider, runtime=_runtime(provider))
     raw = asyncio.run(adapter(REQUEST))
-    assert isinstance(raw, str)
-    assert parse_judge_output(raw).score == 0.5
+    assert isinstance(raw, JudgeResponse)
+    assert parse_judge_output(raw.text).score == 0.5
+
+
+def test_orchestration_persists_aggregate_judge_usage() -> None:
+    import asyncio
+
+    baseline = _judge_case("baseline", "refund within 30 days", "baseline-case")
+    candidate = _judge_case("candidate", "refund within 30 days", "candidate-case")
+    evidence_by_case = {
+        baseline.id: [_judge_evidence(baseline)],
+        candidate.id: [_judge_evidence(candidate)],
+    }
+
+    async def metered(_request):
+        return JudgeResponse(
+            text=json.dumps({"score": 1.0, "rationale": "ok"}),
+            usage={
+                "prompt_tokens": 11,
+                "completion_tokens": 3,
+                "total_tokens": 14,
+            },
+        )
+
+    outcome = asyncio.run(
+        EvaluationService(judge=RubricJudge(judge_fn=metered)).evaluate_run_async(
+            run_id="judge-usage-run",
+            cases=[baseline, candidate],
+            evidence_by_case=evidence_by_case,
+        )
+    )
+
+    assert outcome.metrics["judge"]["usage"] == {
+        "prompt_tokens": 22,
+        "completion_tokens": 6,
+        "total_tokens": 28,
+    }
 
 
 def test_deterministic_container_installs_no_judge(settings) -> None:
@@ -257,5 +322,6 @@ def test_orchestration_passes_question_and_rubric_to_the_judge() -> None:
         "calls": 2,
         "failures": 0,
         "disagreements": 0,
+        "usage": {},
     }
     assert outcome.cases[0].candidate_status == "failed"
