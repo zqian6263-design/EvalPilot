@@ -66,6 +66,7 @@ class Intervention(str, enum.Enum):
     UNICODE_NORMALIZATION_RESTORED = "unicode_normalization_restored"
     MEMORY_SCOPE_RESTORED = "memory_scope_restored"
     CACHE_BYPASS_ENABLED = "cache_bypass_enabled"
+    IDENTITY_METADATA_STRIPPED = "identity_metadata_stripped"
     NONE = "none"
 
     @classmethod

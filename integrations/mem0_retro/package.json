@@ -1,0 +1,13 @@
+{
+  "name": "evalpilot-mem0-retrospective",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic HTTP adapter for the public mem0ai 3.1.0 -> 3.1.1 tenant-isolation retrospective.",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "mem0-buggy": "npm:mem0ai@3.1.0",
+    "mem0-fixed": "npm:mem0ai@3.1.1"
+  }
+}

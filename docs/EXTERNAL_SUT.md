@@ -115,6 +115,24 @@ $env:EVALPILOT_SUT_URL = 'http://127.0.0.1:8010'
 python scripts/deploy.py
 ```
 
+## External workload manifests
+
+Set ``EVALPILOT_WORKLOAD_FILE`` to a JSON workload to replace the built-in
+knowledge-base fixtures for one backend process. The manifest contains scenario
+ids, questions, categories, expected keywords, and optional investigation
+metadata. The built-in demo remains the default when the variable is unset.
+
+A public retrospective over ``mem0ai`` 3.1.1 -> 3.1.0 uses this path:
+
+```powershell
+.\scripts\p1-mem0-retro-check.ps1
+```
+
+It installs the public npm releases, starts the deterministic HTTP SUT, checks a
+same-version control, detects three tenant-isolation regressions, and verifies
+three ``identity_metadata_stripped`` counterfactual root causes. See
+``docs/P1_PUBLIC_RETROSPECTIVE.md`` for the evidence and limitations.
+
 ## Reproducible acceptance
 
 ```powershell

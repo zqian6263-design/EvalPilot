@@ -356,6 +356,10 @@ p {
   text-decoration: none;
 }
 
+.evidence-grid .evidence-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
 .evidence-card:hover {
   border-color: #84adff;
   box-shadow: var(--shadow);

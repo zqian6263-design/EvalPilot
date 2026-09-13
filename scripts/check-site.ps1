@@ -47,6 +47,7 @@ if ($errors.Count -eq 0) {
         '8 / 26',
         '52 / 0',
         '4 / 4',
+        '3 / 3',
         '$0.264697',
         'BLOCK / REVIEW / ALLOW',
         '不会静默回退 mock',

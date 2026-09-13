@@ -11,8 +11,12 @@ safety, and security clauses while preserving ordinary answers.
 
 from __future__ import annotations
 
+import json
+import os
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -119,6 +123,14 @@ class SupportScenario:
     # Candidate-version defect. Empty means the candidate behaves like the baseline.
     candidate_drops: tuple[str, ...] = ()
     candidate_leaks: tuple[str, ...] = ()
+    # Optional workload metadata used by investigations that are not the
+    # bundled knowledge-base demo. Defaults keep every existing fixture
+    # unchanged.
+    hypothesis_domain: str = "generic"
+    hypothesis_kind: str = "change_under_review"
+    hypothesis_title: str = "the version change under review caused the regression"
+    suggested_intervention: str | None = None
+    probe_action: str | None = None
 
     def answer_candidates(self) -> tuple[str, ...]:
         """Factual assertions the answer is allowed to make for this scenario.
@@ -391,8 +403,76 @@ SUPPORT_SCENARIOS: tuple[SupportScenario, ...] = (
 )
 
 
+def _load_workload(path: Path) -> tuple[SupportScenario, ...]:
+    """Load a public or customer workload without changing built-in fixtures."""
+    try:
+        payload: Any = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot load workload {path}: {exc}") from exc
+
+    items = payload.get("scenarios") if isinstance(payload, dict) else payload
+    if not isinstance(items, list) or not items:
+        raise ValueError(f"workload {path} must contain a non-empty scenarios list")
+
+    scenarios: list[SupportScenario] = []
+    seen: set[str] = set()
+    allowed_categories = {"normal", "boundary", "adversarial", "regression"}
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            raise ValueError(f"workload scenario {index} must be an object")
+        scenario_id = str(item.get("scenario_id") or "").strip()
+        question = str(item.get("question") or "").strip()
+        if not scenario_id or not question:
+            raise ValueError(f"workload scenario {index} needs scenario_id and question")
+        if scenario_id in seen:
+            raise ValueError(f"duplicate scenario_id in workload: {scenario_id}")
+        category = str(item.get("category") or "normal")
+        if category not in allowed_categories:
+            raise ValueError(f"invalid category for {scenario_id}: {category}")
+        scenarios.append(
+            SupportScenario(
+                scenario_id=scenario_id,
+                question=question,
+                category=category,
+                difficulty=float(item.get("difficulty", 0.5)),
+                expected_doc_ids=tuple(str(value) for value in item.get("expected_doc_ids", [])),
+                must_include=tuple(str(value) for value in item.get("must_include", [])),
+                must_avoid=tuple(str(value) for value in item.get("must_avoid", [])),
+                expects_refusal=bool(item.get("expects_refusal", False)),
+                candidate_drops=tuple(str(value) for value in item.get("candidate_drops", [])),
+                candidate_leaks=tuple(str(value) for value in item.get("candidate_leaks", [])),
+                hypothesis_domain=str(item.get("hypothesis_domain") or "generic"),
+                hypothesis_kind=str(item.get("hypothesis_kind") or "change_under_review"),
+                hypothesis_title=str(
+                    item.get("hypothesis_title")
+                    or "the version change under review caused the regression"
+                ),
+                suggested_intervention=(
+                    str(item["suggested_intervention"]).strip()
+                    if item.get("suggested_intervention")
+                    else None
+                ),
+                probe_action=(
+                    str(item["probe_action"]).strip()
+                    if item.get("probe_action")
+                    else None
+                ),
+            )
+        )
+        seen.add(scenario_id)
+    return tuple(scenarios)
+
+
+def active_scenarios() -> tuple[SupportScenario, ...]:
+    """Return the process workload, or the built-in demo fixtures by default."""
+    configured = (os.environ.get("EVALPILOT_WORKLOAD_FILE") or "").strip()
+    if not configured:
+        return SUPPORT_SCENARIOS
+    return _load_workload(Path(configured).expanduser().resolve())
+
+
 def scenario_by_id(scenario_id: str) -> SupportScenario:
-    for scenario in SUPPORT_SCENARIOS:
+    for scenario in active_scenarios():
         if scenario.scenario_id == scenario_id:
             return scenario
     raise KeyError(scenario_id)

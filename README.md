@@ -39,6 +39,7 @@
 - GitHub Webhook 支持 HMAC 校验和 PR 发布门禁回写。
 - 支持 Judge 调用/token 预算和配对样本功效诊断。
 - 外部 SUT 通过能力发现声明支持的版本、干预和证据能力。
+- 支持 `EVALPILOT_WORKLOAD_FILE` 外部工作负载：不修改内置 fixture 即可评测公开应用的历史版本回归。
 
 ## 快速开始
 
@@ -79,6 +80,7 @@ python scripts/deploy.py --stop
 .\scripts\e2e-check.ps1
 .\scripts\v2-e2e-check.ps1
 .\scripts\sut-e2e-check.ps1
+.\scripts\p1-mem0-retro-check.ps1
 .venv\Scripts\python.exe backend\scripts\planning_quality_check.py
 .venv\Scripts\python.exe backend\scripts\planning_ood_check.py
 .venv\Scripts\python.exe backend\scripts\ood_replay_check.py

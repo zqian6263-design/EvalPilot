@@ -1,0 +1,75 @@
+{
+  "workload_id": "mem0-tenant-isolation-retrospective",
+  "source_issue": "https://github.com/mem0ai/mem0/issues/6342",
+  "source_fix": "https://github.com/mem0ai/mem0/pull/6343",
+  "baseline_version": "mem0ai-3.1.1",
+  "candidate_version": "mem0ai-3.1.0",
+  "scenarios": [
+    {
+      "scenario_id": "tenant-metadata-overwrite",
+      "question": "Tenant A stores a memory. An update tries to move metadata.user_id to tenant B. Which tenant can read the memory afterwards?",
+      "category": "adversarial",
+      "difficulty": 0.86,
+      "expected_doc_ids": ["mem0-identity-scope"],
+      "must_include": ["owner_visible=true", "foreign_visible=false"],
+      "must_avoid": ["foreign_visible=true"],
+      "hypothesis_domain": "security",
+      "hypothesis_kind": "memory_identity_scope",
+      "hypothesis_title": "update metadata can overwrite immutable tenant identity fields",
+      "suggested_intervention": "identity_metadata_stripped",
+      "probe_action": "Replay the memory update with identity metadata stripped and verify the original tenant retains access."
+    },
+    {
+      "scenario_id": "tenant-identity-injection",
+      "question": "A run-scoped memory is updated with user_id and agent_id metadata. Can the injected scopes read a memory that never belonged to them?",
+      "category": "adversarial",
+      "difficulty": 0.84,
+      "expected_doc_ids": ["mem0-identity-scope"],
+      "must_include": ["run_visible=true", "injected_user_visible=false", "injected_agent_visible=false"],
+      "must_avoid": ["injected_user_visible=true"],
+      "hypothesis_domain": "security",
+      "hypothesis_kind": "memory_identity_scope",
+      "hypothesis_title": "update metadata can inject new identity scopes",
+      "suggested_intervention": "identity_metadata_stripped",
+      "probe_action": "Strip identity keys from update metadata and verify no new user or agent scope is granted."
+    },
+    {
+      "scenario_id": "tenant-camelcase-alias-injection",
+      "question": "A run-scoped memory is updated with camelCase userId and agentId aliases. Do those aliases grant a new tenant scope?",
+      "category": "adversarial",
+      "difficulty": 0.82,
+      "expected_doc_ids": ["mem0-identity-scope"],
+      "must_include": ["run_visible=true", "camel_user_visible=false", "camel_agent_visible=false"],
+      "must_avoid": ["camel_user_visible=true"],
+      "hypothesis_domain": "security",
+      "hypothesis_kind": "memory_identity_scope",
+      "hypothesis_title": "camelCase identity aliases bypass metadata sanitization",
+      "suggested_intervention": "identity_metadata_stripped",
+      "probe_action": "Strip both snake_case and camelCase identity aliases, then verify only the original run scope resolves."
+    },
+    {
+      "scenario_id": "normal-metadata-update-control",
+      "question": "A tenant updates only ordinary metadata such as category and priority. Does the memory remain readable by the original tenant?",
+      "category": "normal",
+      "difficulty": 0.20,
+      "expected_doc_ids": ["mem0-identity-scope"],
+      "must_include": ["owner_visible=true", "category_updated=true"]
+    },
+    {
+      "scenario_id": "same-tenant-metadata-control",
+      "question": "A tenant updates metadata with its own unchanged user_id. Does the memory remain readable by that tenant?",
+      "category": "boundary",
+      "difficulty": 0.24,
+      "expected_doc_ids": ["mem0-identity-scope"],
+      "must_include": ["owner_visible=true", "foreign_visible=false"]
+    },
+    {
+      "scenario_id": "run-scope-unmodified-control",
+      "question": "A run-scoped memory is stored without an identity metadata update. Is it still isolated to its original run scope?",
+      "category": "normal",
+      "difficulty": 0.18,
+      "expected_doc_ids": ["mem0-identity-scope"],
+      "must_include": ["run_visible=true", "foreign_visible=false"]
+    }
+  ]
+}

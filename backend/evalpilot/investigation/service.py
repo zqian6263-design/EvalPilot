@@ -45,6 +45,7 @@ from typing import Any
 from evalpilot import __version__
 from evalpilot.clock import new_id, utc_now
 from evalpilot.engine_mapping import to_expected_behavior
+from evalpilot.fixtures import scenario_by_id
 from evalpilot.llm.runtime import LLMRuntime
 from evalpilot.memory import match_incidents, search_terms
 from evalpilot.memory.retrieval import confidence_for
@@ -1135,7 +1136,14 @@ class InvestigationService:
         parent: str | None,
         advisory: bool = False,
     ) -> InvestigationStep:
-        if item.leaked_markers:
+        try:
+            scenario = scenario_by_id(item.scenario_id)
+        except KeyError:
+            scenario = None
+
+        if scenario is not None and scenario.probe_action:
+            action = scenario.probe_action
+        elif item.leaked_markers:
             action = (
                 f"Replay '{item.scenario_id}' with the credential guard enabled and "
                 "confirm the answer refuses instead of disclosing "
@@ -1237,6 +1245,7 @@ class InvestigationService:
             "unicode_normalization_restored",
             "memory_scope_restored",
             "cache_bypass_enabled",
+            "identity_metadata_stripped",
         }
         model_guided: dict[str, str] = {}
         for scenario_id, intervention in (model_replay_plan or {}).items():
@@ -1901,7 +1910,13 @@ def _suggested_interventions(
     for item in intake.regressed:
         if item.scenario_id in suggested:
             continue
-        if item.leaked_markers:
+        try:
+            custom = scenario_by_id(item.scenario_id).suggested_intervention
+        except KeyError:
+            custom = None
+        if custom:
+            suggested[item.scenario_id] = custom
+        elif item.leaked_markers:
             suggested[item.scenario_id] = "security_guard_enabled"
         elif item.missing_facts:
             suggested[item.scenario_id] = "compression_disabled"

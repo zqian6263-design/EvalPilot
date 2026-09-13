@@ -10,11 +10,11 @@ from __future__ import annotations
 import random
 
 from evalpilot.clock import new_id
-from evalpilot.fixtures import SUPPORT_SCENARIOS, SupportScenario
+from evalpilot.fixtures import SupportScenario, active_scenarios
 from evalpilot.models import TestCase
 
 MIN_CASES = 1
-MAX_CASES = len(SUPPORT_SCENARIOS)
+MAX_CASES = 26  # Backward-compatible cap for the bundled public demo workload.
 
 
 class PlannerError(ValueError):
@@ -31,9 +31,11 @@ def plan_case_count(requested: int | None, seed: int) -> int:
     if requested is not None:
         if requested < MIN_CASES:
             raise PlannerError(f"case_count must be >= {MIN_CASES}")
-        return min(requested, MAX_CASES)
+        return min(requested, len(active_scenarios()))
+    scenarios = active_scenarios()
     rng = random.Random(seed)
-    return rng.randint(4, MAX_CASES)
+    lower = min(4, len(scenarios))
+    return rng.randint(lower, len(scenarios))
 
 
 def _difficulty(base: float, rng: random.Random) -> float:
@@ -43,14 +45,15 @@ def _difficulty(base: float, rng: random.Random) -> float:
 
 
 def select_scenarios(case_count: int) -> list[SupportScenario]:
-    """Take the first ``case_count`` golden scenarios in fixture order."""
+    """Take the first ``case_count`` scenarios from the active workload."""
+    scenarios = active_scenarios()
     if case_count < MIN_CASES:
         raise PlannerError(f"case_count must be >= {MIN_CASES}")
-    if case_count > MAX_CASES:
+    if case_count > len(scenarios):
         raise PlannerError(
-            f"case_count must be <= {MAX_CASES}; fixture set has {MAX_CASES} scenarios"
+            f"case_count must be <= {len(scenarios)}; active workload has {len(scenarios)} scenarios"
         )
-    return list(SUPPORT_SCENARIOS[:case_count])
+    return list(scenarios[:case_count])
 
 
 def build_cases(

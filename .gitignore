@@ -20,3 +20,6 @@ coverage/
 # Generated competition media; uploaded separately and not stored in Git.
 release/
 
+
+# Local state created by the mem0 retrospective adapter.
+integrations/mem0_retro/memory.db
