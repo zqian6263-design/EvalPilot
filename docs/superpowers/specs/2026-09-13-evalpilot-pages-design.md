@@ -181,12 +181,12 @@ iframe 必须有明确标题、懒加载和固定宽高比。第三方播放器�
 - 步骤：
   1. `actions/checkout@v7`
   2. `actions/configure-pages@v6`
-  3. `actions/upload-pages-artifact@v4`，路径为 `site/`
+  3. `actions/upload-pages-artifact@v5`，路径为 `site/`
   4. `actions/deploy-pages@v5`
 - 部署环境：`github-pages`。
 - 部署失败必须让 workflow 失败，不能显示为“已发布”。
 
-实现前需核对 action 的主版本仍受 GitHub 官方支持；若仓库现行版本策略不同，以 GitHub 官方当前稳定主版本为准，并在计划中明确。
+已通过上游 Git 标签核对 action 主版本：`checkout@v7`、`configure-pages@v6`、`upload-pages-artifact@v5`、`deploy-pages@v5`。
 
 ### 5.4 Search metadata
 
