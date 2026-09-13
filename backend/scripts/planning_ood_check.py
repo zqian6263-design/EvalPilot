@@ -195,6 +195,8 @@ def main() -> None:
         result["model"] = {
             **score(plan),
             "llm_calls": 1,
+            "prompt_tokens": int((usage or {}).get("prompt_tokens") or 0),
+            "completion_tokens": int((usage or {}).get("completion_tokens") or 0),
             "tokens": int((usage or {}).get("total_tokens") or 0),
             "model_name": model,
             "plan": plan,

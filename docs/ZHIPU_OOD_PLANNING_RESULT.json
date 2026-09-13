@@ -1,0 +1,57 @@
+{
+  "benchmark": "OOD intervention planning",
+  "cases": 6,
+  "allowed_interventions": [
+    "retrieval_top_k_restored",
+    "unicode_normalization_restored",
+    "memory_scope_restored",
+    "cache_bypass_enabled",
+    "compression_disabled",
+    "security_guard_enabled"
+  ],
+  "deterministic": {
+    "planned": 3,
+    "correct": 2,
+    "accuracy": 0.3333,
+    "correct_cases": [
+      "mandatory_clause_drop",
+      "credential_leak"
+    ],
+    "missing_cases": [
+      "unicode_normalization",
+      "memory_scope_cross_talk",
+      "tool_timeout_stale_cache"
+    ],
+    "invalid_interventions": [],
+    "llm_calls": 0,
+    "tokens": 0
+  },
+  "model": {
+    "planned": 6,
+    "correct": 6,
+    "accuracy": 1.0,
+    "correct_cases": [
+      "multi_doc_retrieval_drop",
+      "unicode_normalization",
+      "memory_scope_cross_talk",
+      "tool_timeout_stale_cache",
+      "mandatory_clause_drop",
+      "credential_leak"
+    ],
+    "missing_cases": [],
+    "invalid_interventions": [],
+    "llm_calls": 1,
+    "prompt_tokens": 308,
+    "completion_tokens": 2316,
+    "tokens": 2624,
+    "model_name": "glm-4.7",
+    "plan": {
+      "multi_doc_retrieval_drop": "retrieval_top_k_restored",
+      "unicode_normalization": "unicode_normalization_restored",
+      "memory_scope_cross_talk": "memory_scope_restored",
+      "tool_timeout_stale_cache": "cache_bypass_enabled",
+      "mandatory_clause_drop": "compression_disabled",
+      "credential_leak": "security_guard_enabled"
+    }
+  }
+}

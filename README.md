@@ -34,6 +34,7 @@
 - 确认回归后自动启动发布调查：生成风险假设、召回历史事故、追加探查并输出结构化时间线。
 - 通过真实反事实重放确认根因：禁用压缩层恢复条款丢失，恢复安全护栏消除凭证泄露。
 - Live LLM 可规划受约束的反事实实验；实验选择经过白名单校验后由引擎真实执行和测量，不能篡改分数或结论。
+- OpenAI-compatible 运行时已验证 DeepSeek V4 Pro 与 GLM-4.7；切换仅需环境变量。
 - 输出 BLOCK / REVIEW / ALLOW 发布决策和可下载的 Markdown 证据报告。
 - 导出 JUnit、SARIF 和 GitHub PR 摘要，直接接入 CI/CD。
 - GitHub Webhook 支持 HMAC 校验和 PR 发布门禁回写。

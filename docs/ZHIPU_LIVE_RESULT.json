@@ -1,0 +1,59 @@
+{
+  "provider": "zhipu",
+  "base_url_host": "open.bigmodel.cn",
+  "model": "glm-4.7",
+  "configuration": {
+    "timeout_seconds": 240,
+    "judge_max_calls": 4,
+    "judge_max_tokens": 20000
+  },
+  "run": {
+    "id": "26566b59-a269-4df0-a88a-b2fe3dc4d6c6",
+    "matched_scenarios": 26,
+    "run_seconds": 177.0,
+    "decision": "block",
+    "risk_level": "critical"
+  },
+  "investigation": {
+    "id": "e5fd0b46-f368-421b-8c9b-b1ad70badd8a",
+    "status": "completed",
+    "duration_seconds": 127.33,
+    "llm_steps": 4,
+    "model_plan_steps": 1,
+    "counterfactuals": 8,
+    "decision": "block",
+    "risk_level": "critical"
+  },
+  "usage": {
+    "judge_calls": 4,
+    "judge_failures": 0,
+    "judge_skipped": 48,
+    "judge_prompt_tokens": 1134,
+    "judge_completion_tokens": 8644,
+    "judge_total_tokens": 9778,
+    "investigation_prompt_tokens": 5864,
+    "investigation_completion_tokens": 9963,
+    "investigation_total_tokens": 15827,
+    "prompt_tokens": 6998,
+    "completion_tokens": 18607,
+    "total_tokens": 25605
+  },
+  "cost": {
+    "currency": "CNY",
+    "pricing_source": "https://open.bigmodel.cn/pricing",
+    "pricing_date": "2026-09-13",
+    "input_cny_per_million": 3.0,
+    "output_cny_per_million": 14.0,
+    "model_cost_cny": 0.281492,
+    "model_cost_usd_at_7_2": 0.039096,
+    "compute_seconds": 304.33,
+    "compute_cost_usd_at_0_10_per_hour": 0.008453,
+    "storage_cost_usd_at_0_25mb_1_month": 0.00000562,
+    "estimated_total_usd": 0.047555
+  },
+  "reliability": {
+    "first_attempt_with_90_second_timeout": "two LLM calls failed or fell back; measured decision remained block/critical",
+    "second_attempt_with_240_second_timeout": "model hypotheses, model-guided plan, and model rationale were persisted",
+    "decision_override": false
+  }
+}

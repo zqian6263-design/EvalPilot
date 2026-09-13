@@ -107,6 +107,7 @@ Customer interviews are optional support, not a required gate.
 - Structured JSON validation and deterministic fallback exist.
 - A valid replay plan can affect control flow, but does not write scores, evidence, or verdicts.
 - DeepSeek V4 Pro is verified in live mode, including one persisted model-guided replay plan.
+- GLM-4.7 is verified through the same OpenAI-compatible seam: 6/6 OOD planning, persisted model hypotheses/plan/rationale, and unchanged BLOCK/CRITICAL decision after a timeout-fallback rehearsal.
 - The fallback path is verified with a deliberate HTTP 401.
 - Token, run-time, storage, and full run cost measurements include persisted judge usage.
 
