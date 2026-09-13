@@ -17,7 +17,9 @@ import re
 from importlib.metadata import version
 
 from fastapi import FastAPI
-from haystack import Document
+from haystack import Document, Pipeline, component
+from haystack.components.joiners import DocumentJoiner
+from haystack.components.preprocessors import DocumentSplitter
 from haystack.components.retrievers.in_memory import InMemoryBM25Retriever
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 from pydantic import BaseModel, ConfigDict, Field
@@ -82,17 +84,21 @@ class HaystackResponse(BaseModel):
     refused: bool = False
 
 
+_raw_documents = [
+    Document(
+        content=f"{doc.title}\n{doc.text}\n{' '.join(doc.keywords)}",
+        meta={"doc_id": doc.doc_id, "title": doc.title, "text": doc.text},
+    )
+    for doc in KNOWLEDGE_BASE
+]
+_splitter = DocumentSplitter(split_by="word", split_length=35, split_overlap=5)
+_chunk_documents = _splitter.run(documents=_raw_documents)["documents"]
 _store = InMemoryDocumentStore()
-_store.write_documents(
-    [
-        Document(
-            content=f"{doc.title}\n{doc.text}\n{' '.join(doc.keywords)}",
-            meta={"doc_id": doc.doc_id, "title": doc.title, "text": doc.text},
-        )
-        for doc in KNOWLEDGE_BASE
-    ]
+_store.write_documents(_chunk_documents)
+_retriever = InMemoryBM25Retriever(
+    document_store=_store,
+    top_k=len(_chunk_documents),
 )
-_retriever = InMemoryBM25Retriever(document_store=_store, top_k=2)
 
 
 def _stem(token: str) -> str:
@@ -106,37 +112,73 @@ def _terms(text: str) -> set[str]:
     return {_stem(token) for token in _WORD.findall(text.lower()) if len(token) > 2}
 
 
-def _retrieve(question: str) -> list[Document]:
-    """Retrieve with Haystack BM25, then apply a deterministic precision re-rank.
+@component
+class GroundedDocumentReranker:
+    """Deterministic grounded generator stage for the Haystack RAG pipeline.
 
-    BM25 is the public application's first-stage retriever. The lightweight
-    re-ranker only resolves lexical variants such as ``cracked``/``crack`` and
-    does not use scenario ids or expected answers.
+    It deduplicates retrieved chunks back to their parent documents, scores the
+    full parent text against the query, and returns the two documents used to
+    compose the grounded answer. It does not use scenario ids or expected
+    answers.
     """
 
-    candidates = list(
-        _retriever.run(query=question, top_k=len(KNOWLEDGE_BASE)).get("documents")
-        or []
-    )
-    query_terms = _terms(question)
-    ranked = []
-    for document in candidates:
-        meta = document.meta
-        searchable = (
-            f"{meta.get('title', '')} {meta.get('text', '')} "
-            f"{document.content or ''}"
+    @component.output_types(documents=list[Document])
+    def run(self, documents: list[Document], question: str) -> dict[str, list[Document]]:
+        query_terms = _terms(question)
+        by_doc: dict[str, tuple[int, float, Document]] = {}
+        for document in documents:
+            meta = document.meta
+            doc_id = str(meta.get("doc_id") or "")
+            if not doc_id:
+                continue
+            searchable = (
+                f"{meta.get('title', '')} {meta.get('text', '')} "
+                f"{document.content or ''}"
+            )
+            matched = query_terms & _terms(searchable)
+            lexical_score = sum(len(term) for term in matched)
+            score = max(float(document.score or 0.0), float(lexical_score))
+            existing = by_doc.get(doc_id)
+            if existing is None or lexical_score > existing[0]:
+                by_doc[doc_id] = (
+                    lexical_score,
+                    score,
+                    Document(
+                        content=str(meta.get("text") or document.content or ""),
+                        meta=meta,
+                        score=score,
+                    ),
+                )
+        ranked = sorted(
+            by_doc.items(),
+            key=lambda item: (
+                -item[1][0],
+                -item[1][1],
+                item[0],
+            ),
         )
-        matched = query_terms & _terms(searchable)
-        lexical_score = sum(len(term) for term in matched)
-        ranked.append((lexical_score, float(document.score or 0.0), document))
-    ranked.sort(
-        key=lambda item: (
-            -item[0],
-            -item[1],
-            str(item[2].meta.get("doc_id") or ""),
-        )
+        return {"documents": [entry[1][2] for entry in ranked[:2]]}
+
+
+_pipeline = Pipeline()
+_pipeline.add_component("retriever", _retriever)
+_pipeline.add_component("joiner", DocumentJoiner(join_mode="concatenate"))
+_pipeline.add_component("reranker", GroundedDocumentReranker())
+_pipeline.connect("retriever.documents", "joiner.documents")
+_pipeline.connect("joiner.documents", "reranker.documents")
+
+
+def _retrieve(question: str) -> list[Document]:
+    result = _pipeline.run(
+        {
+            "retriever": {
+                "query": question,
+                "top_k": len(_chunk_documents),
+            },
+            "reranker": {"question": question},
+        }
     )
-    return [document for _, _, document in ranked[:2]]
+    return list(result["reranker"]["documents"])
 
 
 def _is_candidate(revision: str) -> bool:
@@ -227,7 +269,7 @@ def _answer(request: HaystackRequest) -> HaystackResponse:
             if document.meta.get("doc_id")
         ],
         tool_calls=[
-            f"haystack.bm25:{document.meta.get('doc_id')}" for document in documents
+            f"haystack.pipeline:{document.meta.get('doc_id')}" for document in documents
         ],
         latency_ms=_latency_ms(request),
         model=model,
@@ -249,6 +291,8 @@ def health() -> dict[str, object]:
         "service": "evalpilot-haystack-sut",
         "engine": "haystack-ai",
         "engine_version": version("haystack-ai"),
+        "pipeline": ["retriever", "joiner", "reranker"],
+        "retrieval_strategy": "bm25+pipeline-rerank",
         "source": "https://github.com/deepset-ai/haystack",
         "versions": [BASELINE_VERSION, CANDIDATE_VERSION],
     }

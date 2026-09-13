@@ -93,7 +93,8 @@ FastAPI process backed by the public Apache-2.0 project
 [`deepset-ai/haystack`](https://github.com/deepset-ai/haystack). The retriever is
 Haystack's real in-memory BM25 implementation, pinned by
 `backend/requirements.txt`; EvalPilot's normal deterministic path never imports
-it. The adapter models two deployable revisions around that public retriever:
+it. The adapter runs a `splitter -> retriever -> joiner -> grounded reranker`
+Haystack pipeline and models two deployable revisions around it:
 
 - `v1.0-baseline` returns complete retrieved answers.
 - `v1.1-candidate` applies a compression pass and can disclose a demo secret on

@@ -359,6 +359,8 @@ def test_public_haystack_adapter_exposes_the_open_source_engine() -> None:
     assert payload["status"] == "ok"
     assert payload["engine"] == "haystack-ai"
     assert payload["source"] == "https://github.com/deepset-ai/haystack"
+    assert payload["pipeline"] == ["retriever", "joiner", "reranker"]
+    assert payload["retrieval_strategy"] == "bm25+pipeline-rerank"
 
 
 def test_public_haystack_adapter_preserves_the_controlled_regression() -> None:

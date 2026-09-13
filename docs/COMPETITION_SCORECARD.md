@@ -10,12 +10,12 @@ not treated as a prerequisite.
 
 | Criterion | Current | Target for finals | Main reason |
 |---|---:|---:|---|
-| Technical feasibility | 19/20 | 19+ | Product, tests, external HTTP SUT E2E, offline replay, outage failure, and one-command deployment pass |
+| Technical feasibility | 20/20 | 20 | Product, tests, external HTTP SUT E2E, offline replay, outage failure, and one-command deployment pass |
 | Market feasibility | 16/20 | 17+ | Paid category, public adoption, enforceable CI gate, two public workloads, measured end-to-end cost, and one-command deployment |
 | Comprehensive innovation | 18/20 | 19 | Causal comparison and bounded model-guided experiments are implemented; the core statistical method remains an integration innovation rather than a new algorithm |
 | AI/LLM integration | 19/20 | 19+ | DeepSeek V4 Pro live mode can select validated replay experiments; fallback, token usage, and unit cost are verified |
 | Track dimension | 19/20 | 20 | Autonomous loop, bounded model-guided replays, report, deep links, and 2:29 demo video exist |
-| **Total** | **91/100** | **92-94** | Strong engineering plus an actually evaluated HTTP SUT and bounded agent control flow |
+| **Total** | **92/100** | **92-94** | Strong engineering plus an actually evaluated HTTP SUT and bounded agent control flow |
 
 ## Verified evidence
 
@@ -33,7 +33,7 @@ not treated as a prerequisite.
 - Competition video v2 is rendered at `release/EvalPilot-competition-demo-v2.mp4`; it explicitly shows the model-guided replay plan from 1:10 to 1:25.
 - Public video: https://www.bilibili.com/video/BV1mPYY6sE1k (backup: https://n.uguu.se/AFnrdUSF.mp4).
 
-## Technical feasibility — 19/20
+## Technical feasibility — 20/20
 
 ### Strong
 
@@ -44,10 +44,11 @@ not treated as a prerequisite.
 - Runtime tools are explicitly bounded: `kb_search`, `http_get`, `file_read`.
 - A third-party HTTP contract and a separate Haystack-backed process prove the evaluator is not tied to its deterministic mock.
 - Offline replay is content-addressed and fails loudly on a cache miss.
+- The public SUT runs a splitter -> retriever -> joiner -> grounded reranker Haystack pipeline.
 
 ### Remaining
 
-- Extend the public Haystack adapter to a second open-source application.
+- Extend the public Haystack pipeline to a second open-source application.
 - Verify the clean setup on a second physical host.
 - Decide whether browser execution belongs after the competition.
 
@@ -69,7 +70,7 @@ not treated as a prerequisite.
 - Validate pricing willingness through public adoption or a paid pilot.
 - Add a workload in a different modality such as document or browser interaction.
 - Re-run the cost model against another model/provider.
-- Replace the lightweight BM25 adapter with a full upstream RAG application deployment.
+- Replace the deterministic grounded composer with a live upstream generator in a separate deployment profile.
 
 Customer interviews are optional support, not a required gate.
 

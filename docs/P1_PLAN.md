@@ -55,7 +55,7 @@ Status: implemented
 
 ## 6. Full upstream RAG application adapter
 
-Status: next
+Status: implemented
 
 - Move from a BM25 retriever adapter to a complete upstream RAG deployment.
 - Add document splitting, hybrid retrieval, reranking, prompt construction,

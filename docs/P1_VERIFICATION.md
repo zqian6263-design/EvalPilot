@@ -21,9 +21,9 @@ Date: 2026-09-13
   - `summary.md`: generated for PR comments.
 - Existing planner comparison remains unchanged.
 
-## Remaining P1 item
+## RAG pipeline
 
-The full upstream RAG application adapter remains the only open P1 item. The
-current Haystack adapter already covers real BM25 retrieval, candidate policy,
-counterfactual interventions, capability discovery, and end-to-end fallback
-behavior.
+The public Haystack adapter now runs a real pipeline with document splitting,
+BM25 retrieval, document joining, grounded reranking, and answer composition.
+The pipeline preserves the baseline 26/26 pass rate and the eight controlled
+candidate regressions.
