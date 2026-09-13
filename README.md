@@ -1,5 +1,8 @@
 # EvalPilot
 
+[![CI](https://github.com/zqian6263-design/EvalPilot/actions/workflows/ci.yml/badge.svg)](https://github.com/zqian6263-design/EvalPilot/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 **AI 应用回归评测数字员工**。输入产品需求和版本变更，自动规划测试、调用工具执行、采集证据，并用匹配样本和统计置信区间判断是否存在真实能力回归。
 
 ## 当前状态
