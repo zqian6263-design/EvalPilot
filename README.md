@@ -28,6 +28,7 @@
 - Live LLM 可规划受约束的反事实实验；实验选择经过白名单校验后由引擎真实执行和测量，不能篡改分数或结论。
 - 输出 BLOCK / REVIEW / ALLOW 发布决策和可下载的 Markdown 证据报告。
 - 导出 JUnit、SARIF 和 GitHub PR 摘要，直接接入 CI/CD。
+- GitHub Webhook 支持 HMAC 校验和 PR 发布门禁回写。
 - 支持 Judge 调用/token 预算和配对样本功效诊断。
 - 外部 SUT 通过能力发现声明支持的版本、干预和证据能力。
 
@@ -71,6 +72,7 @@ python scripts/deploy.py --stop
 .\scripts\v2-e2e-check.ps1
 .\scripts\sut-e2e-check.ps1
 .venv\Scripts\python.exe backend\scripts\planning_quality_check.py
+.venv\Scripts\python.exe backend\scripts\planning_ood_check.py
 $env:PYTHONPATH = (Resolve-Path backend)
 .venv\Scripts\python.exe backend\scripts\public_workload_check.py
 .\scripts\measure-live-cost.ps1 -RunId <run-id>

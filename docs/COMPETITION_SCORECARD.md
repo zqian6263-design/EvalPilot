@@ -11,11 +11,11 @@ not treated as a prerequisite.
 | Criterion | Current | Target for finals | Main reason |
 |---|---:|---:|---|
 | Technical feasibility | 20/20 | 20 | Product, tests, external HTTP SUT E2E, offline replay, outage failure, and one-command deployment pass |
-| Market feasibility | 16/20 | 17+ | Paid category, public adoption, enforceable CI gate, two public workloads, measured end-to-end cost, and one-command deployment |
-| Comprehensive innovation | 18/20 | 19 | Causal comparison and bounded model-guided experiments are implemented; the core statistical method remains an integration innovation rather than a new algorithm |
+| Market feasibility | 17/20 | 18+ | Paid category, public adoption, enforceable CI gate, two public workloads, measured end-to-end cost, and one-command deployment |
+| Comprehensive innovation | 19/20 | 20 | Causal comparison and bounded model-guided experiments are implemented; the core statistical method remains an integration innovation rather than a new algorithm |
 | AI/LLM integration | 19/20 | 19+ | DeepSeek V4 Pro live mode can select validated replay experiments; fallback, token usage, and unit cost are verified |
 | Track dimension | 19/20 | 20 | Autonomous loop, bounded model-guided replays, report, deep links, and 2:29 demo video exist |
-| **Total** | **92/100** | **92-94** | Strong engineering plus an actually evaluated HTTP SUT and bounded agent control flow |
+| **Total** | **94/100** | **95-97** | Strong engineering plus an actually evaluated HTTP SUT and bounded agent control flow |
 
 ## Verified evidence
 
@@ -52,7 +52,7 @@ not treated as a prerequisite.
 - Verify the clean setup on a second physical host.
 - Decide whether browser execution belongs after the competition.
 
-## Market feasibility — 16/20
+## Market feasibility — 17/20
 
 ### Strong
 
@@ -61,6 +61,8 @@ not treated as a prerequisite.
 - EvalPilot has a clear wedge: release decision, not another observability dashboard.
 - `GET /api/runs/{run_id}/gate` provides a real CI integration; exit codes `0/1/2` enforce it automatically.
 - JUnit, SARIF 2.1.0, GitHub Actions, and PR summary export paths are implemented.
+- GitHub webhook with HMAC verification can write the gate result to a PR.
+- Release Audit generation and a public competitor capability matrix are published.
 - Pricing and revenue motions are explicit: release audit, team subscription, enterprise self-host.
 - Two public workloads and a measured unit-economics model are published.
 - A separate HTTP SUT proves the integration is not limited to the bundled fixture.
@@ -68,13 +70,14 @@ not treated as a prerequisite.
 ### Remaining
 
 - Validate pricing willingness through public adoption or a paid pilot.
+- Convert the GitHub integration into a public repository install or fork.
 - Add a workload in a different modality such as document or browser interaction.
 - Re-run the cost model against another model/provider.
 - Replace the deterministic grounded composer with a live upstream generator in a separate deployment profile.
 
 Customer interviews are optional support, not a required gate.
 
-## Comprehensive innovation — 18/20
+## Comprehensive innovation — 19/20
 
 ### Strong
 
@@ -84,6 +87,7 @@ Customer interviews are optional support, not a required gate.
 - Historical incidents become reusable regression memory.
 - Live mode can select a bounded replay experiment, which is then executed and measured rather than trusted.
 - Naive pass-rate delta versus EvalPilot is documented on SQuAD, HotpotQA, and the enterprise workload.
+- OOD planning benchmark: deterministic rules 2/6; DeepSeek V4 Pro 6/6 at 1,359 tokens.
 
 ### Remaining
 

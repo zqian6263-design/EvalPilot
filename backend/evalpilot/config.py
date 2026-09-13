@@ -57,6 +57,9 @@ class Settings:
     sut_offline: bool = False
     sut_cache_dir: Path | None = None
     sut_discover_capabilities: bool = True
+    github_webhook_secret: str | None = None
+    github_token: str | None = None
+    github_api_url: str = "https://api.github.com"
 
 
 def _resolve_db_path(raw: str | None) -> Path:
@@ -163,4 +166,9 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
             source.get("EVALPILOT_SUT_CACHE_DIR"),
             db_path.parent / "sut-cache",
         ),
+        github_webhook_secret=source.get("EVALPILOT_GITHUB_WEBHOOK_SECRET") or None,
+        github_token=source.get("EVALPILOT_GITHUB_TOKEN") or None,
+        github_api_url=(
+            source.get("EVALPILOT_GITHUB_API_URL") or "https://api.github.com"
+        ).rstrip("/"),
     )

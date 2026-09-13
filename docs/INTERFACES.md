@@ -80,6 +80,7 @@ Base path: `/api`
 - `GET /runs/{run_id}/gate` -> `ReleaseGate` (exit codes: 0 allow, 1 review, 2 block)
 - `GET /runs/{run_id}/junit` -> JUnit XML for CI test reporters
 - `GET /runs/{run_id}/sarif` -> SARIF 2.1.0 for code scanning
+- `POST /integrations/github/webhook` -> verified GitHub event that can comment a gate result on a PR
 - `GET /runs/{run_id}/events` -> server-sent events or newline-delimited progress events for MVP
 - `GET /demo/seed` -> deterministic demo metadata only; no side effects
 
@@ -115,3 +116,6 @@ MVP uses SQLite. File-backed evidence is stored under `backend/data/artifacts/{r
 - `EVALPILOT_SUT_DISCOVERY`: `true` validates advertised SUT versions and interventions before execution; default `true`
 - `EVALPILOT_JUDGE_MAX_CALLS`: optional maximum Judge calls per run
 - `EVALPILOT_JUDGE_MAX_TOKENS`: optional maximum persisted Judge tokens per run
+- `EVALPILOT_GITHUB_WEBHOOK_SECRET`: HMAC secret for GitHub webhook verification
+- `EVALPILOT_GITHUB_TOKEN`: token used only to write PR comments
+- `EVALPILOT_GITHUB_API_URL`: GitHub or GitHub Enterprise API base URL

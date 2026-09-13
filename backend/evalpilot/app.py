@@ -14,6 +14,7 @@ from evalpilot.container import Container, build_container
 from evalpilot.routes import ci_export as ci_routes
 from evalpilot.routes import demo as demo_routes
 from evalpilot.routes import events as event_routes
+from evalpilot.routes import github as github_routes
 from evalpilot.routes import health as health_routes
 from evalpilot.routes import investigations as investigation_routes
 from evalpilot.routes import memory as memory_routes
@@ -50,6 +51,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(run_routes.router, prefix="/api", tags=["runs"])
     app.include_router(report_routes.router, prefix="/api", tags=["reports"])
     app.include_router(ci_routes.router, prefix="/api", tags=["ci"])
+    app.include_router(github_routes.router, prefix="/api", tags=["github"])
     app.include_router(event_routes.router, prefix="/api", tags=["events"])
     app.include_router(demo_routes.router, prefix="/api", tags=["demo"])
     app.include_router(
