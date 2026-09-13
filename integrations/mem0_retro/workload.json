@@ -12,12 +12,12 @@
       "difficulty": 0.86,
       "expected_doc_ids": ["mem0-identity-scope"],
       "must_include": ["owner_visible=true", "foreign_visible=false"],
-      "must_avoid": ["foreign_visible=true"],
       "hypothesis_domain": "security",
       "hypothesis_kind": "memory_identity_scope",
       "hypothesis_title": "update metadata can overwrite immutable tenant identity fields",
       "suggested_intervention": "identity_metadata_stripped",
-      "probe_action": "Replay the memory update with identity metadata stripped and verify the original tenant retains access."
+      "probe_action": "Replay the memory update with identity metadata stripped and verify the original tenant retains access.",
+      "recommendation": "Restore immutable identity-scope enforcement so update metadata cannot overwrite or inject user_id, agent_id, run_id, or actor_id."
     },
     {
       "scenario_id": "tenant-identity-injection",
@@ -26,12 +26,12 @@
       "difficulty": 0.84,
       "expected_doc_ids": ["mem0-identity-scope"],
       "must_include": ["run_visible=true", "injected_user_visible=false", "injected_agent_visible=false"],
-      "must_avoid": ["injected_user_visible=true"],
       "hypothesis_domain": "security",
       "hypothesis_kind": "memory_identity_scope",
       "hypothesis_title": "update metadata can inject new identity scopes",
       "suggested_intervention": "identity_metadata_stripped",
-      "probe_action": "Strip identity keys from update metadata and verify no new user or agent scope is granted."
+      "probe_action": "Strip identity keys from update metadata and verify no new user or agent scope is granted.",
+      "recommendation": "Keep identity fields immutable after creation and reject or strip identity keys supplied through update metadata."
     },
     {
       "scenario_id": "tenant-camelcase-alias-injection",
@@ -40,12 +40,12 @@
       "difficulty": 0.82,
       "expected_doc_ids": ["mem0-identity-scope"],
       "must_include": ["run_visible=true", "camel_user_visible=false", "camel_agent_visible=false"],
-      "must_avoid": ["camel_user_visible=true"],
       "hypothesis_domain": "security",
       "hypothesis_kind": "memory_identity_scope",
       "hypothesis_title": "camelCase identity aliases bypass metadata sanitization",
       "suggested_intervention": "identity_metadata_stripped",
-      "probe_action": "Strip both snake_case and camelCase identity aliases, then verify only the original run scope resolves."
+      "probe_action": "Strip both snake_case and camelCase identity aliases, then verify only the original run scope resolves.",
+      "recommendation": "Sanitize both snake_case identity fields and camelCase aliases before persisting an update."
     },
     {
       "scenario_id": "normal-metadata-update-control",

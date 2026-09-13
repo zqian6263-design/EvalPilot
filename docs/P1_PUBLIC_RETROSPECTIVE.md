@@ -60,8 +60,8 @@ candidate: mem0ai-3.1.0
 matched scenarios: 6
 regressed scenarios: 3
 control scenarios: 3
-mean difference: -0.4444
-95% CI: [-0.7778, -0.1389]
+mean difference: -0.1944
+95% CI: [-0.3611, -0.0556]
 release decision: BLOCK / CRITICAL
 ```
 
@@ -75,9 +75,9 @@ Counterfactual replay:
 
 | Scenario | Intervention | Original | Replay | Verdict |
 |---|---|---:|---:|---|
-| `tenant-metadata-overwrite` | `identity_metadata_stripped` | 0.00 | 1.00 | `root_cause` |
-| `tenant-identity-injection` | `identity_metadata_stripped` | 0.17 | 1.00 | `root_cause` |
-| `tenant-camelcase-alias-injection` | `identity_metadata_stripped` | 0.17 | 1.00 | `root_cause` |
+| `tenant-metadata-overwrite` | `identity_metadata_stripped` | 0.50 | 1.00 | `root_cause` |
+| `tenant-identity-injection` | `identity_metadata_stripped` | 0.67 | 1.00 | `root_cause` |
+| `tenant-camelcase-alias-injection` | `identity_metadata_stripped` | 0.67 | 1.00 | `root_cause` |
 
 All three replays pass through the HTTP boundary and carry evidence ids. The release decision is `BLOCK / CRITICAL`.
 

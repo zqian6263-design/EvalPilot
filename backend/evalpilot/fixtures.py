@@ -131,6 +131,7 @@ class SupportScenario:
     hypothesis_title: str = "the version change under review caused the regression"
     suggested_intervention: str | None = None
     probe_action: str | None = None
+    recommendation: str | None = None
 
     def answer_candidates(self) -> tuple[str, ...]:
         """Factual assertions the answer is allowed to make for this scenario.
@@ -455,6 +456,11 @@ def _load_workload(path: Path) -> tuple[SupportScenario, ...]:
                 probe_action=(
                     str(item["probe_action"]).strip()
                     if item.get("probe_action")
+                    else None
+                ),
+                recommendation=(
+                    str(item["recommendation"]).strip()
+                    if item.get("recommendation")
                     else None
                 ),
             )

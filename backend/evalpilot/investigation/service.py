@@ -232,6 +232,7 @@ class ScenarioFinding:
     candidate_case_id: str
     baseline_evidence: tuple[str, ...]
     candidate_evidence: tuple[str, ...]
+    recommendation: str | None = None
 
     @property
     def regressed(self) -> bool:
@@ -1650,6 +1651,14 @@ class InvestigationService:
 # --------------------------------------------------------------------------
 
 
+def _scenario_exists(scenario_id: str) -> bool:
+    try:
+        scenario_by_id(scenario_id)
+    except KeyError:
+        return False
+    return True
+
+
 def _scenario_findings(
     cases: list[TestCase],
     evidence_by_case: dict[str, list[Evidence]],
@@ -1694,6 +1703,11 @@ def _scenario_findings(
                 ),
                 candidate_evidence=tuple(
                     item.id for item in evidence_by_case.get(candidate.id, [])
+                ),
+                recommendation=(
+                    scenario_by_id(verdict.scenario_id).recommendation
+                    if _scenario_exists(verdict.scenario_id)
+                    else None
                 ),
             )
         )
@@ -1853,7 +1867,13 @@ def _actions(
             "compress at clause granularity so a dropped clause is a test failure "
             "rather than a silent omission."
         )
-    if drops:
+    generic_drops: list[ScenarioFinding] = []
+    for item in drops:
+        if item.recommendation:
+            actions.append(item.recommendation)
+        else:
+            generic_drops.append(item)
+    if generic_drops:
         actions.append(compression)
     if disclosures:
         actions.append(DISCLOSURE_RECOMMENDATION)

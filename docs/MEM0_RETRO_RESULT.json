@@ -5,8 +5,8 @@
   "source_fix": "https://github.com/mem0ai/mem0/pull/6343",
   "baseline_version": "mem0ai-3.1.1",
   "candidate_version": "mem0ai-3.1.0",
-  "regression_run_id": "6862f691-d7aa-4294-b638-77a649ad2546",
-  "investigation_id": "bc5734c3-212b-43e3-8a98-e1ebecce6d02",
+  "regression_run_id": "08fe2606-5ff1-42f1-8600-c390ec67f185",
+  "investigation_id": "e70c3f7b-d05e-4aba-bbe5-dbbe8aeeecf7",
   "matched_scenarios": 6,
   "regressed_scenarios": [
     "tenant-camelcase-alias-injection",
@@ -18,36 +18,36 @@
     "run-scope-unmodified-control",
     "same-tenant-metadata-control"
   ],
-  "mean_difference": -0.4444444444444445,
+  "mean_difference": -0.19444444444444445,
   "ci": [
-    -0.7777777777777778,
-    -0.1388888888888889
+    -0.36111111111111116,
+    -0.05555555555555556
   ],
   "decision": "block",
   "risk_level": "critical",
   "counterfactuals": [
     {
       "scenario_id": "tenant-metadata-overwrite",
-      "verdict": "root_cause",
-      "original_score": 0.0,
+      "intervention": "identity_metadata_stripped",
       "counterfactual_score": 1.0,
-      "intervention": "identity_metadata_stripped"
+      "verdict": "root_cause",
+      "original_score": 0.5
     },
     {
       "scenario_id": "tenant-identity-injection",
-      "verdict": "root_cause",
-      "original_score": 0.16666666666666666,
+      "intervention": "identity_metadata_stripped",
       "counterfactual_score": 1.0,
-      "intervention": "identity_metadata_stripped"
+      "verdict": "root_cause",
+      "original_score": 0.6666666666666666
     },
     {
       "scenario_id": "tenant-camelcase-alias-injection",
-      "verdict": "root_cause",
-      "original_score": 0.16666666666666666,
+      "intervention": "identity_metadata_stripped",
       "counterfactual_score": 1.0,
-      "intervention": "identity_metadata_stripped"
+      "verdict": "root_cause",
+      "original_score": 0.6666666666666666
     }
   ],
-  "report": "D:\\z工程文件\\EvalPilot\\.runtime\\p1-mem0-retro-8f258080068649e09f8a286cd98c47ca\\investigation-report.md",
-  "completed_at": "2026-09-13T12:14:31.1549073Z"
+  "report": "D:\\z工程文件\\EvalPilot\\.runtime\\p1-mem0-retro-f3d025ae47f742aebf01624958dfa7dd\\investigation-report.md",
+  "completed_at": "2026-09-13T12:29:40.7686362Z"
 }
