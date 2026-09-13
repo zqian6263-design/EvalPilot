@@ -8,6 +8,8 @@
 
 公开产品站：<https://zqian6263-design.github.io/EvalPilot/>
 
+初赛提交包：`submission/README.md`（表单文案、9 页 PPTX/PDF、证据索引和模拟评审）
+
 ## 当前状态
 
 - 赛道：AI+超级智能体（高校组）

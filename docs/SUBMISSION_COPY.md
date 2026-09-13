@@ -8,6 +8,14 @@
 
 **EvalPilot｜AI 应用回归评测与自主发布质量官**
 
+## Submission package
+
+- Public product site: https://zqian6263-design.github.io/EvalPilot/
+- Form-ready copy: `submission/FORM_COPY.md`
+- Evaluator guide: `submission/EVALUATOR_GUIDE.md`
+- Evidence index: `submission/EVIDENCE_INDEX.csv`
+- Initial pitch deck: `submission/EvalPilot-Initial-Submission.pdf`
+
 ## One-line pitch
 
 EvalPilot is an autonomous release-quality digital employee: it confirms whether an AI version change caused a real regression, replays the failure to identify the root cause, and blocks unsafe releases with an evidence-backed report.
@@ -58,9 +66,11 @@ EvalPilot 面向 AI 产品与研究团队，解决模型、Prompt、检索、记
 - Deliverable: BLOCK / REVIEW / ALLOW decision plus Markdown evidence report.
 - End-to-end loop: version change -> regression confirmation -> root cause -> release gate -> learning memory.
 
-## Demo URL
+## Demo URLs
 
-`http://127.0.0.1:5173/#investigation&demo`
+- Product site: https://zqian6263-design.github.io/EvalPilot/
+- Video: https://www.bilibili.com/video/BV1mPYY6sE1k
+- Local source run: `http://127.0.0.1:5173/#investigation&demo` after `python scripts/deploy.py`
 
 ## Video outline
 

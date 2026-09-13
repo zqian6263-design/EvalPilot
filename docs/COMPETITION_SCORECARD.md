@@ -131,6 +131,10 @@ Customer interviews are optional support, not a required gate.
 - Add the final team and product descriptions to the competition form.
 - Verify the Bilibili page from a logged-out browser after review completes.
 
+## P0 submission review update
+
+An independent role-based blind review was completed on 2026-09-13. Its conservative estimate is **93-95 / 100**, with **94 / 100** most likely. Technical feasibility is 20/20; the remaining uncertainty is concentrated in market feasibility because there is still no paid customer, paid pilot, external installation count, or conversion signal. The submission package is ready in `submission/`, and no additional product feature should be added before the initial deadline.
+
 ## Highest-value next actions
 
 1. Submit the competition form with `https://www.bilibili.com/video/BV1mPYY6sE1k`.

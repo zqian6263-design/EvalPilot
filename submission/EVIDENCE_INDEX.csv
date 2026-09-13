@@ -1,0 +1,13 @@
+criterion,claim,measured_evidence,source,how_to_verify,boundary
+技术可行性,"可运行 MVP，一条命令启动，外部 HTTP SUT 已完成端到端验收","31/31 HTTP E2E；公开 Haystack SUT；离线回放一致；SUT 故障显式失败","docs/P0_VERIFICATION.md; docs/EXTERNAL_SUT.md; scripts/sut-e2e-check.ps1",运行 .\scripts\sut-e2e-check.ps1,"同一物理机验收，不等于第二台物理机或生产环境"
+技术可行性,"后端、前端和发布门禁均有自动测试","后端 388 passed / 1 skipped；前端 153 passed；类型检查和构建通过","docs/PAGES_VERIFICATION.md; .github/workflows/ci.yml",运行后端与前端测试脚本或查看 GitHub Actions,"测试通过证明当前实现稳定，不证明所有未知应用都适配"
+市场可行性,"LLM 评测与质量运营已有公开预算品类","LangSmith、Braintrust、Langfuse、DeepEval、Galileo、Patronus 等公开价格","docs/MARKET_EVIDENCE_PACK.md; docs/COMPETITOR_MATRIX.md",打开证据包中的公开价格链接,"证明预算类别存在，不证明客户会选择 EvalPilot"
+市场可行性,"存在可量化的运行成本和可接入的发布流程","$0.264697 peak / $0.138935 off-peak；52 Judge calls；78,695 tokens；CI exit 0/1/2","docs/MARKET_EVIDENCE_PACK.md; docs/CI_INTEGRATION.md",查看成本测量与 scripts/ci-gate.ps1,"成本基于已记录场景和价格假设，不是通用报价"
+市场可行性,"发布门禁可以与现有 CI/CD 融合，而非替换监控平台","REST API、JUnit、SARIF 2.1.0、GitHub Actions、HMAC Webhook、PR 回写","docs/CI_INTEGRATION.md; docs/GITHUB_WEBHOOK.md",查看接口与测试记录,"Webhook 已测试，不代表已经部署到外部客户生产仓库"
+综合创新性,"使用匹配样本和不确定性区分真实回归与噪声","26 matched scenarios + 18 controls；mean delta -0.173；95% CI [-0.288, -0.077]","docs/PUBLIC_OPEN_SOURCE_CASE.md; docs/P0_VERIFICATION.md",运行 SUT E2E 或查看公开案例,"当前证据覆盖公开受控案例"
+综合创新性,"反事实重放可以确认具体变更是否导致失败","8 次 HTTP replay；压缩层恢复 7 个，恢复安全护栏消除 1 个；OOD 4/4","docs/OOD_REPLAY_RESULT.json; docs/P2_PLUS_VERIFICATION.md",运行 ood_replay_check.py 或 SUT E2E,"干预词表为已实现的可执行集合，不是任意代码级自动修复"
+AI 大模型结合,"DeepSeek V4 Pro 参与自主规划，但不能覆盖实测结果","模型规划 8/8；确定性规则 8/8；1 个 persisted model-guided plan；3 个 LLM steps","docs/OOD_PLANNING_COMPARISON.md; docs/P0_VERIFICATION.md; docs/V3_LLM_INTERFACES.md",运行规划比较脚本或查看 live run 记录,"模型规划是可选扩展；确定性模式仍可完成闭环"
+AI 大模型结合,"LLM Judge 有明确评分协议和可校准接口","52 Judge calls；token/调用预算；MAE、bias、Pearson、exact agreement 校准工具","docs/JUDGE_CALIBRATION.md; backend/tests/test_power.py",运行 judge_calibration.py 使用人工评分 CSV,"当前仓库不伪造人工标签，真实校准样本仍需外部提供"
+赛道维度,"任务从自然语言目标推进到可验收交付物","Brief -> plan -> tools -> evidence -> decision -> report -> gate -> memory","docs/V2_INTERFACES.md; docs/DEMO_SCENARIO.md",打开产品站或本地执行确定性 demo,"端到端闭环已实现，浏览器执行仍属于 roadmap"
+赛道维度,"结果可直接验收，不是只给自然语言建议","BLOCK/REVIEW/ALLOW、Markdown、JUnit、SARIF、PR 回写、exit code 0/1/2","docs/RELEASE_AUDIT.md; docs/CI_INTEGRATION.md; scripts/ci-gate.ps1",调用 GET /api/runs/{run_id}/gate,"退出码依赖完成且持久化的 run"
+赛道维度,"公开演示和产品入口无需安装即可审阅","产品站；2:28.97 B 站视频；GitHub Release；109 个后端/前端相关验证记录","https://zqian6263-design.github.io/EvalPilot/ ; release/EvalPilot-competition-demo-v2.mp4",打开产品站、视频和 Release,"视频中展示的是已实现的 2:29 演示流程"
