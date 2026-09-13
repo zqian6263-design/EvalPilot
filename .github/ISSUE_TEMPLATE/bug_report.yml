@@ -1,0 +1,34 @@
+name: Bug report
+description: Report a reproducible problem
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Include commands, run id, commit/tag, and relevant artifacts.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: EvalPilot version/commit
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Never paste API keys, tokens, or private customer data.
