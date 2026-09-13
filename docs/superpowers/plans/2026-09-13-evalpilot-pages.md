@@ -1,6 +1,6 @@
 # EvalPilot Public Pages Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Publish a fast, Chinese-language, evidence-first EvalPilot product site on GitHub Pages.
 
@@ -34,7 +34,7 @@
 - Consumes: the future `site/` directory and workflow-controlled repository layout.
 - Produces: exit code `0` when all structural, claim, security, and internal-link checks pass; exit code `1` with every violation printed otherwise.
 
-- [ ] **Step 1: Write the failing checker**
+- [x] **Step 1: Write the failing checker**
 
 Create a PowerShell script that:
 
@@ -47,13 +47,13 @@ Create a PowerShell script that:
 7. Resolves every relative `href` and `src`, failing on missing files.
 8. Prints all failures and exits `1`; otherwise prints `Site checks passed.` and exits `0`.
 
-- [ ] **Step 2: Run the failing check**
+- [x] **Step 2: Run the failing check**
 
 Run: `pwsh -NoProfile -File .\scripts\check-site.ps1`
 
 Expected: exit code `1` with six missing-file failures.
 
-- [ ] **Step 3: Commit the checker**
+- [x] **Step 3: Commit the checker**
 
 ```powershell
 git add scripts/check-site.ps1
@@ -72,7 +72,7 @@ git commit -m "test: add public site acceptance checks"
 - Consumes: EvalPilot facts and links already present in `README.md`, `PRODUCT.md`, and `docs/`.
 - Produces: one static document with sections `product`, `problem`, `loop`, `evidence`, `architecture`, `demo`, `start`, plus its stylesheet and favicon.
 
-- [ ] **Step 1: Implement the complete HTML contract**
+- [x] **Step 1: Implement the complete HTML contract**
 
 The page must contain, in order:
 
@@ -92,7 +92,7 @@ final CTA and footer: GitHub, Release, License, Security
 
 Use `<h1>` once. Use `<h2>` for major sections and `<h3>` for cards. Keep all user-visible copy concise and Chinese-first. Use exact evidence values and limitations from the spec. Do not add unsupported customer or commercial claims.
 
-- [ ] **Step 2: Implement the visual system**
+- [x] **Step 2: Implement the visual system**
 
 Create `site/styles.css` using the exact tokens from the spec:
 
@@ -124,17 +124,17 @@ Requirements:
 - `prefers-reduced-motion` overrides;
 - no gradients, neon glow, particle effects, or decorative animation.
 
-- [ ] **Step 3: Add `site/favicon.svg`**
+- [x] **Step 3: Add `site/favicon.svg`**
 
 Use a blue rounded square, a white shield/pilot outline, and three white horizontal evidence lines. Keep the SVG standalone, small, and readable at 16px.
 
-- [ ] **Step 4: Run the checker**
+- [x] **Step 4: Run the checker**
 
 Run: `pwsh -NoProfile -File .\scripts\check-site.ps1`
 
 Expected: only the three missing support-file failures until Task 3; no HTML, claim, secret, or internal-link failure.
 
-- [ ] **Step 5: Commit the main page**
+- [x] **Step 5: Commit the main page**
 
 ```powershell
 git add site/index.html site/styles.css site/favicon.svg
@@ -154,7 +154,7 @@ git commit -m "feat: add EvalPilot public product page"
 - Consumes: production URL from the spec.
 - Produces: crawler metadata and a static fallback page that links to the site root, GitHub, and Release.
 
-- [ ] **Step 1: Create exact metadata files**
+- [x] **Step 1: Create exact metadata files**
 
 `site/robots.txt`:
 
@@ -173,21 +173,21 @@ Sitemap: https://zqian6263-design.github.io/EvalPilot/sitemap.xml
 </urlset>
 ```
 
-- [ ] **Step 2: Create `site/404.html`**
+- [x] **Step 2: Create `site/404.html`**
 
 Use the same language, favicon, stylesheet, header/button classes, and visual system as the main page. Include noindex, a single `<h1>`, a short explanation, and buttons for site root, GitHub, and Release.
 
-- [ ] **Step 3: Add fallback styles**
+- [x] **Step 3: Add fallback styles**
 
 Add a centered `.not-found` panel with a minimum viewport height, readable muted paragraph, and the existing button actions. Keep it single-column on mobile.
 
-- [ ] **Step 4: Run the checker**
+- [x] **Step 4: Run the checker**
 
 Run: `pwsh -NoProfile -File .\scripts\check-site.ps1`
 
 Expected: `Site checks passed.`
 
-- [ ] **Step 5: Commit metadata and fallback page**
+- [x] **Step 5: Commit metadata and fallback page**
 
 ```powershell
 git add site/robots.txt site/sitemap.xml site/404.html site/styles.css
@@ -204,7 +204,7 @@ git commit -m "feat: add product site metadata and 404"
 - Consumes: validated `site/` artifact and confirmed official Pages actions.
 - Produces: automatic deployment on `main` and visible README/spec links.
 
-- [ ] **Step 1: Create `.github/workflows/pages.yml`**
+- [x] **Step 1: Create `.github/workflows/pages.yml`**
 
 ```yaml
 name: Pages
@@ -247,7 +247,7 @@ jobs:
         uses: actions/deploy-pages@v5
 ```
 
-- [ ] **Step 2: Add the public link to README**
+- [x] **Step 2: Add the public link to README**
 
 Insert immediately after the License badge:
 
@@ -261,7 +261,7 @@ Insert immediately before `## 当前状态`:
 公开产品站：<https://zqian6263-design.github.io/EvalPilot/>
 ```
 
-- [ ] **Step 3: Mark the spec approved**
+- [x] **Step 3: Mark the spec approved**
 
 Change the status line to:
 
@@ -269,7 +269,7 @@ Change the status line to:
 Status: Approved and implemented
 ```
 
-- [ ] **Step 4: Run the checker and inspect the workflow**
+- [x] **Step 4: Run the checker and inspect the workflow**
 
 Run:
 
@@ -280,7 +280,7 @@ git diff --check
 
 Expected: `Site checks passed.` and no whitespace errors.
 
-- [ ] **Step 5: Commit deployment files**
+- [x] **Step 5: Commit deployment files**
 
 ```powershell
 git add .github/workflows/pages.yml README.md docs/superpowers/specs/2026-09-13-evalpilot-pages-design.md
@@ -299,7 +299,7 @@ git commit -m "ci: deploy public product site"
 - Consumes: completed `site/`.
 - Produces: local HTTP, screenshot, link, secret, and responsive-layout evidence before publication.
 
-- [ ] **Step 1: Run structural and HTTP checks**
+- [x] **Step 1: Run structural and HTTP checks**
 
 Run:
 
@@ -318,13 +318,13 @@ try {
 
 Expected: `STATUS=200` and body length greater than `10000`.
 
-- [ ] **Step 2: Check external URLs with GET**
+- [x] **Step 2: Check external URLs with GET**
 
 Run GET checks for the Bilibili video, player iframe base, GitHub repository, Release, four evidence files, LICENSE, and SECURITY. Record status codes to `.runtime/pages-link-check.txt`.
 
 Expected: every URL returns `200` or an authenticated-player redirect that resolves to `200`.
 
-- [ ] **Step 3: Produce desktop and mobile screenshots**
+- [x] **Step 3: Produce desktop and mobile screenshots**
 
 Start `python -m http.server 4173 --directory site` and capture:
 
@@ -333,7 +333,7 @@ Start `python -m http.server 4173 --directory site` and capture:
 
 Use an installed Chromium-family browser in headless mode. Visually inspect both screenshots for clipping, overlap, unreadable text, unwanted horizontal scroll, and misleading visual emphasis.
 
-- [ ] **Step 4: Verify no forbidden content**
+- [x] **Step 4: Verify no forbidden content**
 
 Run:
 
@@ -343,7 +343,7 @@ rg -n "sk-[A-Za-z0-9]|ghp_[A-Za-z0-9]|D:\\|C:\\|localhost" site
 
 Expected: no match.
 
-- [ ] **Step 5: Commit any visual fixes**
+- [x] **Step 5: Commit any visual fixes**
 
 ```powershell
 git add site scripts/check-site.ps1
@@ -362,21 +362,21 @@ If no files changed, skip this commit.
 - Consumes: green CI, green Pages workflow, and public production URL.
 - Produces: GitHub Pages enabled, Homepage updated, and a durable verification record.
 
-- [ ] **Step 1: Push implementation and watch workflows**
+- [x] **Step 1: Push implementation and watch workflows**
 
 Run: `git push origin main`
 
 Expected: CI and Pages workflows start for the pushed commit.
 
-- [ ] **Step 2: Enable and verify GitHub Pages with workflow source**
+- [x] **Step 2: Enable and verify GitHub Pages with workflow source**
 
 Use GitHub CLI if available; otherwise use the GitHub REST API. Required final setting is `build_type: workflow`. Do not print or persist any token in command output.
 
-- [ ] **Step 3: Wait for successful deployment**
+- [x] **Step 3: Wait for successful deployment**
 
 Verify the Pages workflow concludes `success` and its deployment URL is `https://zqian6263-design.github.io/EvalPilot/`.
 
-- [ ] **Step 4: Verify the public page**
+- [x] **Step 4: Verify the public page**
 
 Run:
 
@@ -388,11 +388,11 @@ $response.Content | Select-String -Pattern 'AI 应用回归评测与自主发布
 
 Expected: HTTP `200`, body greater than `10000`, and all required strings present.
 
-- [ ] **Step 5: Update repository Homepage**
+- [x] **Step 5: Update repository Homepage**
 
 Set `homepageUrl` to `https://zqian6263-design.github.io/EvalPilot/` through the authenticated GitHub API. Confirm by reading repository metadata without exposing credentials.
 
-- [ ] **Step 6: Record verification**
+- [x] **Step 6: Record verification**
 
 Create `docs/PAGES_VERIFICATION.md` containing:
 
@@ -414,7 +414,7 @@ Date: 2026-09-13
 
 Replace every `pass` only after the corresponding evidence exists.
 
-- [ ] **Step 7: Commit the verification record and push**
+- [x] **Step 7: Commit the verification record and push**
 
 ```powershell
 git add docs/PAGES_VERIFICATION.md
