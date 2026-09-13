@@ -70,7 +70,7 @@ risk: critical
 
 ## Remaining before submission
 
-- Public MP4: https://n.uguu.se/AFnrdUSF.mp4; backup: https://gofile.io/d/TPBMWhtR. Verify in a logged-out browser and migrate to a permanent platform if available.
+- Public Bilibili video: https://www.bilibili.com/video/BV1mPYY6sE1k; direct backup: https://n.uguu.se/AFnrdUSF.mp4.
 - Submit the updated team description and detailed product description.
 - Complete public-market and integration experiments; interviews are optional.
 

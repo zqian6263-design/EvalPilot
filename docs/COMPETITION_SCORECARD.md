@@ -20,16 +20,17 @@ not treated as a prerequisite.
 ## Verified evidence
 
 - Frontend: 153 tests pass; TypeScript check and production build pass.
+- Clean-worktree acceptance: full backend suite, 31/31 basic E2E, V2 investigation E2E, and public Haystack SUT E2E all pass.
 - Backend: the complete test suite passes.
 - Real HTTP E2E: 31/31 passes.
 - V2 autonomous-investigation E2E passes.
 - Public open-source Haystack HTTP SUT E2E passes: 0 regressions in the same-revision control, 8 regressions at mean delta -0.173, 8 HTTP counterfactual replays, exact offline cache replay, and a loud failure when the SUT is unavailable.
-- Live DeepSeek V4 Pro verification passes with 3 LLM steps, 1 persisted model-guided replay plan, 8 measured counterfactuals, and the expected `BLOCK / CRITICAL` decision.
+- Same live run verifies 3 LLM steps, 1 persisted model-guided replay plan, 52 Judge calls, 8 measured counterfactuals, and the expected `BLOCK / CRITICAL` decision.
 - Invalid model key produces recorded fallback steps while preserving the measured decision.
 - Run and investigation deep links reopen recorded service data.
 - CI gate returns `allow=0`, `review=1`, `block=2`.
 - Competition video v2 is rendered at `release/EvalPilot-competition-demo-v2.mp4`; it explicitly shows the model-guided replay plan from 1:10 to 1:25.
-- Public video mirrors: https://n.uguu.se/AFnrdUSF.mp4 and https://gofile.io/d/TPBMWhtR.
+- Public video: https://www.bilibili.com/video/BV1mPYY6sE1k (backup: https://n.uguu.se/AFnrdUSF.mp4).
 
 ## Technical feasibility — 19/20
 

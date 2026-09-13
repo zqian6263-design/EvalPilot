@@ -39,7 +39,7 @@
 ## Submission materials
 
 - Product name, team description, and detailed description are finalized.
-- Two- to three-minute demo video is publicly accessible without login: https://n.uguu.se/AFnrdUSF.mp4 (backup: https://gofile.io/d/TPBMWhtR).
+- Two- to three-minute demo video is publicly accessible without login: https://www.bilibili.com/video/BV1mPYY6sE1k (backup: https://n.uguu.se/AFnrdUSF.mp4).
 - PPT or PDF matches the live product.
 - GitHub or code archive contains setup instructions.
 - All claims in the pitch are demonstrated in the product or clearly labeled as roadmap.

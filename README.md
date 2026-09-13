@@ -11,8 +11,8 @@
 
 ## 演示视频
 
-- 直接 MP4：<https://n.uguu.se/AFnrdUSF.mp4>
-- 备用下载页：<https://gofile.io/d/TPBMWhtR>
+- B站：<https://www.bilibili.com/video/BV1mPYY6sE1k>
+- 直链备用：<https://n.uguu.se/AFnrdUSF.mp4>
 - 本地成片：`release/EvalPilot-competition-demo-v2.mp4`
 
 ## 核心能力

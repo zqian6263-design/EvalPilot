@@ -146,11 +146,11 @@ These are execution tasks, not interview tasks.
 - EvalPilot: mean delta -0.3125, 95% CI [-0.5625, -0.1250], confidence 98.59%, regression confirmed.
 - Public comparisons: SQuAD and HotpotQA, 16 rows each, 5 controlled regressions, 11 controls.
 - Both workloads: mean -0.3125, 95% CI [-0.5625, -0.1250], confidence 98.59%.
-- Live DeepSeek V4 Pro full run: 67,822 tokens; 52 rubric-judge calls used 58,387 tokens and investigation used 9,435 tokens.
-- Full run compute: 441.00 seconds (348.41 run + 92.96 investigation); logical storage: 0.2438 MB.
-- Model peak cost: $0.211232; compute: $0.012250; storage: $0.00000548.
-- Total peak cost: $0.223487; total off-peak cost: $0.117871.
-- Judge usage is now persisted in the run report, so model cost is no longer a lower bound.
+- Live DeepSeek V4 Pro full run: 78,695 tokens; 52 rubric-judge calls used 61,202 tokens and the investigation used 17,493 tokens with 3 LLM steps and 1 model-guided replay plan.
+- Full run compute: 474.00 seconds (410.94 run + 63.20 investigation); logical storage: 0.2500 MB.
+- Model peak cost: $0.251525; compute: $0.013167; storage: $0.00000562.
+- Total peak cost: $0.264697; total off-peak cost: $0.138935.
+- Judge usage is persisted in the run report, and model planning plus Judge cost were verified in the same live run.
 
 ## 10. External integration proof (2026-09-13)
 
