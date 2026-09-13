@@ -106,3 +106,7 @@ MVP uses SQLite. File-backed evidence is stored under `backend/data/artifacts/{r
 - `EVALPILOT_LLM_MODEL`: default model name
 - `EVALPILOT_ENABLE_PYTHON_TOOL`: `false` by default
 - `EVALPILOT_DEMO_MODE`: `true` enables deterministic fixtures
+- `EVALPILOT_SUT_URL`: optional external system-under-test base URL; when set, runs use the HTTP contract in `docs/EXTERNAL_SUT.md`
+- `EVALPILOT_SUT_TIMEOUT_SECONDS`: per-request timeout; default `20`
+- `EVALPILOT_SUT_OFFLINE`: `true` replays only from cache and never opens a socket
+- `EVALPILOT_SUT_CACHE_DIR`: content-addressed response cache for offline replay

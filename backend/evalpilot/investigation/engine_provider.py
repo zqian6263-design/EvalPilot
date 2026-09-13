@@ -13,6 +13,7 @@ fabricated root-cause claim.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from evalpilot.counterfactual import (
@@ -20,6 +21,7 @@ from evalpilot.counterfactual import (
     CounterfactualTarget,
     Intervention,
 )
+from evalpilot.executor import ExecutionResult
 from evalpilot.models import Evidence
 from evalpilot.repository import Repository
 
@@ -53,10 +55,12 @@ class EngineCounterfactualProvider:
         repo: Repository,
         engine: CounterfactualEngine | None = None,
         fallback: DeterministicProvider | None = None,
+        executor: Callable[..., ExecutionResult] | None = None,
     ) -> None:
         self.repo = repo
         self.engine = engine or CounterfactualEngine(
-            source=RepositoryReadingSource(repo)
+            source=RepositoryReadingSource(repo),
+            executor=executor,
         )
         self.fallback = fallback or DeterministicProvider()
 
@@ -66,6 +70,7 @@ class EngineCounterfactualProvider:
 
         try:
             case = self.repo.get_test_case(request.test_case_id)
+            run = self.repo.get_run(request.run_id)
         except Exception:
             return self.fallback.attempt(request)
 
@@ -84,6 +89,7 @@ class EngineCounterfactualProvider:
                     intervention=intervention,
                     expected=case.expected,
                     question=request.question,
+                    version_label=run.candidate_version,
                     original_evidence_ids=list(request.evidence_ids),
                     original_score=request.original_score,
                     failing_checks=list(request.failed_checks),

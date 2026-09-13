@@ -111,6 +111,63 @@ def sanitize_hypotheses(
     return hypotheses, discarded
 
 
+def sanitize_replay_interventions(
+    payload: Mapping[str, Any],
+    *,
+    known_scenarios: set[str],
+    allowed_interventions: Sequence[str],
+) -> tuple[list[dict[str, str]], list[str]]:
+    """Return the replay actions the execution layer is allowed to run.
+
+    A replay choice is a proposed experiment, not a finding. It still has to
+    name a regressed scenario that exists in this run and an intervention that
+    the counterfactual engine can actually execute; invalid choices are
+    rejected and recorded rather than guessed into a valid-looking plan.
+    """
+    raw = payload.get("replay_interventions")
+    accepted: list[dict[str, str]] = []
+    rejected: list[str] = []
+    if raw is None:
+        return accepted, rejected
+    if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes)):
+        return accepted, ["replay_interventions was not an array"]
+
+    allowed = set(allowed_interventions)
+    seen: set[str] = set()
+    for item in raw:
+        if not isinstance(item, Mapping):
+            rejected.append("replay intervention was not an object")
+            continue
+        scenario_id = _text(item.get("scenario_id"), 128)
+        intervention = _text(item.get("intervention"), 64)
+        rationale = _text(item.get("rationale"), 300)
+        if scenario_id not in known_scenarios:
+            rejected.append(
+                f"replay intervention cited unknown scenario {scenario_id!r}"
+            )
+            continue
+        if scenario_id in seen:
+            rejected.append(f"duplicate replay intervention for {scenario_id!r}")
+            continue
+        if intervention not in allowed:
+            rejected.append(
+                f"replay intervention {intervention!r} is not executable"
+            )
+            continue
+        if not rationale:
+            rejected.append(f"replay intervention for {scenario_id!r} had no rationale")
+            continue
+        seen.add(scenario_id)
+        accepted.append(
+            {
+                "scenario_id": scenario_id,
+                "intervention": intervention,
+                "rationale": rationale,
+            }
+        )
+    return accepted, rejected
+
+
 def sanitize_rationale(
     payload: Mapping[str, Any],
     *,
@@ -157,4 +214,8 @@ def sanitize_rationale(
     }
 
 
-__all__ = ["sanitize_hypotheses", "sanitize_rationale"]
+__all__ = [
+    "sanitize_hypotheses",
+    "sanitize_rationale",
+    "sanitize_replay_interventions",
+]

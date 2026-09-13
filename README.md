@@ -19,6 +19,7 @@
 - 区分“统计上确认的整体回归”和“局部真实回归”，不会把噪声说成结论。
 - 确认回归后自动启动发布调查：生成风险假设、召回历史事故、追加探查并输出结构化时间线。
 - 通过真实反事实重放确认根因：禁用压缩层恢复条款丢失，恢复安全护栏消除凭证泄露。
+- Live LLM 可规划受约束的反事实实验；实验选择经过白名单校验后由引擎真实执行和测量，不能篡改分数或结论。
 - 输出 BLOCK / REVIEW / ALLOW 发布决策和可下载的 Markdown 证据报告。
 
 ## 快速开始
@@ -59,6 +60,7 @@ python scripts/deploy.py --stop
 .\scripts\test-frontend.ps1
 .\scripts\e2e-check.ps1
 .\scripts\v2-e2e-check.ps1
+.\scripts\sut-e2e-check.ps1
 $env:PYTHONPATH = (Resolve-Path backend)
 .venv\Scripts\python.exe backend\scripts\public_workload_check.py
 .\scripts\measure-live-cost.ps1 -RunId <run-id>

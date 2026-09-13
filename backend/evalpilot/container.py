@@ -19,6 +19,7 @@ from evalpilot.memory import seed_incidents
 from evalpilot.orchestration_eval.service import EvaluationService
 from evalpilot.repository import Repository
 from evalpilot.runner import RunRunner
+from evalpilot.sut import HttpCaseExecutor
 from evalpilot.tools import ToolPolicy, ToolRegistry
 
 
@@ -68,12 +69,26 @@ def build_container(settings: Settings | None = None) -> Container:
     evaluation_service = EvaluationService(
         judge=RubricJudge(judge_callable) if judge_callable is not None else None,
     )
-    runner = RunRunner(repo, db, resolved, evaluation_service)
+    case_executor = None
+    if resolved.sut_url:
+        case_executor = HttpCaseExecutor(
+            base_url=resolved.sut_url,
+            timeout_seconds=resolved.sut_timeout_seconds,
+            offline=resolved.sut_offline,
+            cache_dir=resolved.sut_cache_dir,
+        ).execute
+    runner = RunRunner(
+        repo,
+        db,
+        resolved,
+        evaluation_service,
+        case_executor=case_executor,
+    )
     investigation_runner = InvestigationService(
         repo,
         settings=resolved,
         evaluation_service=evaluation_service,
-        provider=EngineCounterfactualProvider(repo=repo),
+        provider=EngineCounterfactualProvider(repo=repo, executor=case_executor),
         llm_runtime=llm_runtime,
     )
     return Container(

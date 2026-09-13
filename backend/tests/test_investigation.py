@@ -834,6 +834,21 @@ def test_decision_does_not_let_the_aggregate_hide_the_cases(client: TestClient) 
         assert "per-scenario evidence" in decision.summary
 
 
+def test_decision_records_aggregate_and_per_case_basis(client: TestClient) -> None:
+    """A block must say which evidence class actually authorized it."""
+    detail = finished_investigation(client)
+    run_report = client.get(
+        f"/api/runs/{detail['investigation']['run_id']}/report"
+    ).json()
+    data = steps_of(detail, "decision")[0]["data"]
+
+    assert data["aggregate_direction"] == run_report["metrics"]["direction"]
+    assert data["aggregate_regression_confirmed"] is run_report["metrics"][
+        "regression_confirmed"
+    ]
+    assert data["block_rests_on_per_case_evidence"] is True
+
+
 def test_decision_is_deterministic(client: TestClient) -> None:
     """Two investigations over two identical runs reach the same decision."""
     first = finished_investigation(client)

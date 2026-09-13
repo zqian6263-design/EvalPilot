@@ -26,6 +26,16 @@
 - A failure path is shown clearly and does not freeze the UI.
 - README documents exact setup commands and a 3-minute demo flow.
 
+## External SUT and bounded agent control
+
+- `scripts/sut-e2e-check.ps1` passes against a separate HTTP process.
+- The same-revision control reports zero regressed scenarios.
+- The baseline/candidate run reports eight regressed scenarios with a confirmed interval.
+- Counterfactual replay traverses the HTTP boundary.
+- Offline replay reproduces the same result with the SUT stopped.
+- A cache miss with the SUT unavailable fails loudly and never falls back to the mock.
+- A live LLM replay plan can change the executed intervention only after allowlist validation; measured results remain authoritative.
+
 ## Submission materials
 
 - Product name, team description, and detailed description are finalized.

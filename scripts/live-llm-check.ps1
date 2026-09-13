@@ -43,6 +43,7 @@ if ($detail.investigation.status -ne 'completed') { throw "investigation did not
 $llmSteps = @($detail.steps | Where-Object { $_.data.source -eq 'llm' })
 if ($llmSteps.Count -eq 0) { throw 'no LLM-generated investigation step was persisted' }
 if (-not ($llmSteps | Where-Object { $_.data.model -eq $runtime.model })) { throw 'LLM steps do not name the configured model' }
+$planSteps = @($llmSteps | Where-Object { $_.title -eq 'Model-guided counterfactual plan' })
 if ($detail.decision.verdict -ne 'block' -or $detail.decision.risk_level -ne 'critical') { throw 'measured release decision changed in live mode' }
 if (@($detail.counterfactuals).Count -lt 8) { throw 'counterfactual results are missing' }
 
@@ -54,6 +55,7 @@ if ($report -notmatch 'Model release rationale') { throw 'report has no model ra
     model = $runtime.model
     investigation = $detail.investigation.id
     llm_steps = $llmSteps.Count
+    model_plan_steps = $planSteps.Count
     decision = $detail.decision.verdict
     risk = $detail.decision.risk_level
     counterfactuals = @($detail.counterfactuals).Count

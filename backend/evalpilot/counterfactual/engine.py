@@ -54,13 +54,13 @@ change to the engine's contract, not a configuration.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 from evalpilot import engine_mapping
 from evalpilot.clock import new_id, utc_now
 from evalpilot.evaluation import run_deterministic_checks
 from evalpilot.evaluation.checks import applicable_score
-from evalpilot.executor import execute_case
+from evalpilot.executor import ExecutionResult, execute_case
 from evalpilot.fixtures import scenario_by_id
 from evalpilot.models import Evidence, TestCase
 from evalpilot.tools import ToolRegistry
@@ -118,9 +118,11 @@ class CounterfactualEngine:
         source: InvestigationReadingSource,
         registry: ToolRegistry | None = None,
         confidence_threshold: float = 0.9,
+        executor: Callable[..., ExecutionResult] | None = None,
     ) -> None:
         self.source = source
         self.confidence_threshold = confidence_threshold
+        self.executor = executor or execute_case
         # No python tool: a replay must not be able to execute arbitrary input
         # (``CLAUDE.md`` non-negotiable #4).
         self.registry = registry or ToolRegistry(enable_python=False)
@@ -227,7 +229,11 @@ class CounterfactualEngine:
                 run_id=target.run_id,
                 title=f"{target.scenario_id} [candidate]",
                 category=scenario.category,  # type: ignore[arg-type]
-                input={"scenario_id": target.scenario_id, "question": question},
+                input={
+                    "scenario_id": target.scenario_id,
+                    "question": question,
+                    "version_label": target.version_label or "candidate",
+                },
                 expected=expected,
                 difficulty=scenario.difficulty,
                 status="failed",
@@ -256,7 +262,7 @@ class CounterfactualEngine:
         reading source satisfies that one method, and passing it keeps this
         package's dependency surface at exactly the protocol it already needs.
         """
-        executed = execute_case(case, self.registry, self.source, intervention=intervention)  # type: ignore[arg-type]
+        executed = self.executor(case, self.registry, self.source, intervention=intervention)
         output = executed.output
 
         # ``execute_case`` returns its evidence rather than persisting it — the

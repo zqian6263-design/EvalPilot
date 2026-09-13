@@ -105,3 +105,11 @@ that a green result means something a reviewer can rely on:
 - `scripts/start-all.ps1` — the start/stop/status script the check drives.
 - `frontend/TRANSPORT.md` — the assumptions these checks exercise.
 - `docs/INTERFACES.md` — the frozen contract the assertions are written against.
+
+## External HTTP SUT
+
+Run `scripts/sut-e2e-check.ps1` to start a separate FastAPI SUT and three
+isolated EvalPilot backends. The script verifies the same-revision negative
+control, the confirmed regression, HTTP-boundary counterfactual replay, exact
+offline cache replay, and a loud failure on an uncached run while the SUT is
+stopped. The contract is documented in `docs/EXTERNAL_SUT.md`.

@@ -146,8 +146,24 @@ These are execution tasks, not interview tasks.
 - EvalPilot: mean delta -0.3125, 95% CI [-0.5625, -0.1250], confidence 98.59%, regression confirmed.
 - Public comparisons: SQuAD and HotpotQA, 16 rows each, 5 controlled regressions, 11 controls.
 - Both workloads: mean -0.3125, 95% CI [-0.5625, -0.1250], confidence 98.59%.
-- Live DeepSeek V4 Pro investigation: 18,075 tokens (5,377 input, 12,698 output).
-- Full run compute: 176.52 seconds; logical storage: 0.2506 MB.
-- Model peak cost: $0.057382; compute: $0.004889; storage: $0.00000563.
-- Total peak cost: $0.062276; total off-peak cost: $0.033585.
+- Live DeepSeek V4 Pro investigation: 18,152 tokens (5,596 input, 12,556 output), 3 LLM steps including one model-guided replay plan.
+- Full run compute: 462.00 seconds (386.16 run + 76.45 investigation); logical storage: 0.2501 MB.
+- Model peak cost: $0.057108; compute: $0.012833; storage: $0.00000562.
+- Total peak cost: $0.069947; total off-peak cost: $0.041393.
 - Portable launcher: `python scripts/deploy.py`.
+
+## 10. External integration proof (2026-09-13)
+
+The evaluator is no longer demonstrated only against its own deterministic mock.
+The reproducible `scripts/sut-e2e-check.ps1` starts a separate HTTP SUT process
+and verifies the integration contract end to end:
+
+- same-revision control: 0 regressed scenarios, mean delta 0;
+- baseline vs candidate: 8 regressed scenarios, mean delta -0.173;
+- 8 counterfactual replays executed through the HTTP boundary with trace evidence;
+- cached workload replay with the SUT stopped reproduced the same result offline;
+- an uncached workload with the SUT unavailable failed loudly instead of silently
+  falling back to the mock.
+
+This is integration and deployment evidence, not customer willingness-to-pay.
+The commercial evidence gap remains a paid pilot or public open-source adoption.

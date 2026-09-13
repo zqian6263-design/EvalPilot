@@ -14,7 +14,7 @@ live
   any LLM failure falls back to deterministic behavior with an explicit warning
 ```
 
-The release decision remains evidence- and counterfactual-driven. The LLM may propose hypotheses and explain results; it may not override the measured replay verdict or invent evidence.
+The release decision remains evidence- and counterfactual-driven. The LLM may propose hypotheses, choose a bounded replay experiment, and explain results. Its experiment choice affects control flow but is executed and measured by the engine; the model may not override the measured verdict or invent evidence.
 
 ## Environment
 
@@ -63,7 +63,8 @@ The API must not return the API key or full credentials.
 When live mode is active:
 
 1. The LLM proposes risk hypotheses from the objective and observed failures.
-2. The LLM may produce a structured release rationale grounded in evidence ids.
+2. The LLM may choose one executable intervention per regressed scenario. The choice is validated against a closed vocabulary, executed by the counterfactual engine, and measured before it can affect a verdict.
+3. The LLM may produce a structured release rationale grounded in evidence ids.
 3. The LLM may score rubric-based qualitative dimensions.
 4. Counterfactual results and blocking findings remain measured facts.
 
@@ -91,5 +92,6 @@ If an LLM request fails, the investigation still completes using deterministic l
 - Tests run with no key and no network.
 - A fake provider proves live-mode planning and rationale integration.
 - Missing/invalid key falls back without failing the investigation.
-- Existing 26-case regression and counterfactual results remain unchanged.
+- Existing 26-case regression and counterfactual results remain unchanged when no replay plan is supplied.
+- A valid model replay plan changes the executed intervention; an invalid or unexecutable plan is rejected and recorded.
 - Runtime status confirms the configured mode and never exposes secrets.

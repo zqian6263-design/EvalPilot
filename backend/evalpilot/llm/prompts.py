@@ -40,11 +40,18 @@ HYPOTHESIS_KINDS: tuple[str, ...] = (
 #: Verdicts the model may echo back. It may not introduce one.
 RELEASE_VERDICTS: tuple[str, ...] = ("block", "review", "allow")
 RISK_LEVELS: tuple[str, ...] = ("critical", "high", "medium", "low")
+#: Counterfactual interventions the execution engine can actually apply.
+REPLAY_INTERVENTIONS: tuple[str, ...] = (
+    "compression_disabled",
+    "security_guard_enabled",
+)
 
 #: Output caps. A rationale is a paragraph, not an essay.
 MAX_HYPOTHESES = 4
 MAX_RECOMMENDATIONS = 6
 MAX_RATIONALE_CHARS = 1200
+MAX_REPLAY_DECISIONS = 40
+MAX_REPLAY_RATIONALE_CHARS = 300
 
 #: The schema for a risk-hypothesis proposal.
 HYPOTHESIS_SCHEMA: dict[str, Any] = {
@@ -66,6 +73,27 @@ HYPOTHESIS_SCHEMA: dict[str, Any] = {
                     "confidence": {"type": "number", "minimum": 0, "maximum": 1},
                 },
                 "required": ["kind", "claim", "mechanism", "scenario_ids"],
+                "additionalProperties": False,
+            },
+        },
+        "replay_interventions": {
+            "type": "array",
+            "maxItems": MAX_REPLAY_DECISIONS,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "scenario_id": {"type": "string", "minLength": 1},
+                    "intervention": {
+                        "type": "string",
+                        "enum": list(REPLAY_INTERVENTIONS),
+                    },
+                    "rationale": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": MAX_REPLAY_RATIONALE_CHARS,
+                    },
+                },
+                "required": ["scenario_id", "intervention", "rationale"],
                 "additionalProperties": False,
             },
         },
@@ -109,13 +137,19 @@ _SYSTEM_PLANNER = (
     "verdict, or the evidence ids. They are inputs, not your output.\n"
     "- Cite only scenario ids that appear in the input, and cite at least one "
     "for every hypothesis.\n"
+    "- For each regressed scenario, also choose one allowed replay "
+    "intervention that should be executed next. The system will run it; "
+    "your choice is a test plan, not evidence of causation.\n"
     "- Do not include private reasoning. State the claim and the mechanism.\n"
     "Write every human-readable claim, mechanism and discarded text in Simplified Chinese. "
     "Keep scenario ids and enum values exactly as supplied.\n"
     "Reply with JSON only, shaped exactly as: "
     '{"hypotheses": [{"kind": "<kind>", "claim": "<text>", '
     '"mechanism": "<text>", "scenario_ids": ["<scenario_id>"], '
-    '"confidence": <0..1>}], "discarded": ["<text>"]}'
+    '"confidence": <0..1>}], "replay_interventions": '
+    '[{"scenario_id": "<scenario_id>", "intervention": '
+    '"<compression_disabled|security_guard_enabled>", '
+    '"rationale": "<text>"}], "discarded": ["<text>"]}'
 )
 
 _SYSTEM_DECISION = (
@@ -194,6 +228,13 @@ def build_hypothesis_prompt(
         f"'unrelated_change' or 'measurement_artifact' when the evidence points "
         "away from the change under review. Leave \"hypotheses\" empty if the "
         "measured failures are fully explained.",
+        "",
+        "Replay plan: choose exactly one intervention for every regressed "
+        "scenario above, returned in \"replay_interventions\". Allowed "
+        f"interventions: {_join(REPLAY_INTERVENTIONS)}. The experiment is "
+        "executed after this call and measured by the same deterministic "
+        "checks; an intervention that does not recover the failure will "
+        "not be treated as a root cause.",
     ]
     return [
         {"role": "system", "content": _SYSTEM_PLANNER},
@@ -304,6 +345,7 @@ __all__ = [
     "MAX_RECOMMENDATIONS",
     "RATIONALE_SCHEMA",
     "RELEASE_VERDICTS",
+    "REPLAY_INTERVENTIONS",
     "RISK_LEVELS",
     "build_hypothesis_prompt",
     "build_judge_prompt",

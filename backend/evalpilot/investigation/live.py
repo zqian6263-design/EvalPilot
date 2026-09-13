@@ -1,7 +1,8 @@
 """Live-mode augmentation for the investigation engine.
 
-Everything the investigation does with a model lives here, and all of it is
-*additive*. :class:`~evalpilot.investigation.service.InvestigationService`
+Everything the investigation does with a model lives here. Model output can
+affect control flow only through a bounded, validated replay plan; it never
+writes a measured value. :class:`~evalpilot.investigation.service.InvestigationService`
 produces the deterministic steps exactly as before; this module adds two more
 beside them when — and only when — a provider is installed:
 
@@ -32,12 +33,17 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from evalpilot.llm.apply import sanitize_hypotheses, sanitize_rationale
+from evalpilot.llm.apply import (
+    sanitize_hypotheses,
+    sanitize_rationale,
+    sanitize_replay_interventions,
+)
 from evalpilot.llm.errors import LLMError, LLMTimeoutError
 from evalpilot.llm.prompts import (
     HYPOTHESIS_KINDS,
     HYPOTHESIS_SCHEMA,
     RATIONALE_SCHEMA,
+    REPLAY_INTERVENTIONS,
     build_hypothesis_prompt,
     build_rationale_prompt,
 )
@@ -71,6 +77,7 @@ def _service_helpers():
 
 #: The two steps live mode adds.
 MODEL_HYPOTHESES_TITLE = "Model-proposed risk hypotheses"
+MODEL_REPLAY_PLAN_TITLE = "Model-guided counterfactual plan"
 MODEL_REASONING_TITLE = "Model release rationale"
 
 
@@ -93,15 +100,15 @@ class LiveLLMAugmenter:
         root: InvestigationStep,
         intake: Any,
         deterministic: dict[str, InvestigationStep],
-    ) -> None:
-        """Ask for additional risk hypotheses. No-op when offline.
+    ) -> dict[str, str]:
+        """Ask for risk hypotheses and a bounded replay plan.
 
-        Additive by construction: the deterministic hypotheses stay on their
-        own steps. A proposal cannot become a blocking finding, change a
-        score, or enter the release decision.
+        A valid replay choice can affect which experiment the execution layer
+        runs next. It cannot write a score or verdict: the chosen experiment is
+        executed and its measured result is what enters the decision.
         """
         if not self.runtime.live:
-            return
+            return {}
 
         objective = self.repo.get_investigation(root.investigation_id).objective
         known_scenarios = {item.scenario_id for item in intake.scenarios}
@@ -153,7 +160,7 @@ class LiveLLMAugmenter:
             result = await self._complete_json(messages, HYPOTHESIS_SCHEMA)
         except LLMError as exc:
             self._fallback(recorder, step, root, _failure("hypotheses", exc))
-            return
+            return {}
 
         ordered_unique, _, _ = _service_helpers()
         proposals, discarded = sanitize_hypotheses(
@@ -161,19 +168,26 @@ class LiveLLMAugmenter:
             known_scenarios=known_scenarios,
             known_kinds=HYPOTHESIS_KINDS,
         )
-        if not proposals:
+        regressed_scenarios = {item.scenario_id for item in intake.regressed}
+        replay_plan, replay_discarded = sanitize_replay_interventions(
+            result.payload,
+            known_scenarios=regressed_scenarios,
+            allowed_interventions=REPLAY_INTERVENTIONS,
+        )
+        if not proposals and not replay_plan:
+            reasons = [*discarded, *replay_discarded]
             self._fallback(
                 recorder,
                 step,
                 root,
                 (
-                    "the model proposed no hypothesis citing a scenario in this run"
-                    if not discarded
-                    else "every model hypothesis was discarded: " + "; ".join(discarded)
+                    "the model proposed no usable hypothesis or replay action"
+                    if not reasons
+                    else "every model contribution was discarded: " + "; ".join(reasons)
                 ),
                 provenance=result.provenance(),
             )
-            return
+            return {}
 
         created: list[dict[str, Any]] = []
         for proposal in proposals:
@@ -228,21 +242,64 @@ class LiveLLMAugmenter:
                 }
             )
 
-        if not created:
+        plan_map: dict[str, str] = {}
+        if replay_plan:
+            plan_ids = {entry["scenario_id"] for entry in replay_plan}
+            plan_scenarios = [
+                item for item in intake.regressed if item.scenario_id in plan_ids
+            ]
+            plan_evidence = ordered_unique(
+                eid
+                for item in plan_scenarios
+                for eid in item.regression_evidence()
+            )
+            if plan_evidence:
+                plan_map = {
+                    entry["scenario_id"]: entry["intervention"]
+                    for entry in replay_plan
+                }
+                recorder.open(
+                    InvestigationStepKind.COUNTERFACTUAL,
+                    MODEL_REPLAY_PLAN_TITLE,
+                    (
+                        f"The model proposed {len(replay_plan)} bounded counterfactual "
+                        "experiment(s). Each choice is executed and measured; it is "
+                        "not treated as causal until the replay recovers the failure."
+                    ),
+                    data={
+                        "source": SOURCE_LLM,
+                        "model": result.model,
+                        "llm_call_id": result.call_id,
+                        "replay_plan": replay_plan,
+                        "authoritative": False,
+                    },
+                    evidence_ids=plan_evidence,
+                    parent_id=root.id,
+                    status=StepStatus.COMPLETED,
+                )
+            else:
+                replay_discarded.append(
+                    "the replay plan had no evidence linked to its scenarios"
+                )
+                replay_plan = []
+
+        if not created and not plan_map:
             self._fallback(
                 recorder,
                 step,
                 root,
-                "no model hypothesis could cite existing evidence",
+                "no model contribution could cite existing evidence",
                 provenance=result.provenance(),
             )
-            return
+            return {}
 
         self._merge(
             step,
             {
                 "proposals": created,
                 "discarded": discarded,
+                "replay_plan": replay_plan,
+                "replay_plan_rejected": replay_discarded,
                 "authoritative": False,
                 "deterministic_hypothesis_count": len(deterministic),
                 # The step itself is model-generated, so it carries the same
@@ -254,22 +311,29 @@ class LiveLLMAugmenter:
             step,
             (
                 f"The model proposed {len(created)} additional hypothesis(es) "
-                f"alongside the {len(deterministic)} the deterministic analysis "
-                "formed. They are advisory: the release decision is still built "
-                "from the measured scenarios and the counterfactual replay."
+                f"and {len(plan_map)} bounded replay experiment(s) alongside "
+                f"the {len(deterministic)} deterministic hypothesis(es). The "
+                "release decision still comes from measured scenarios and "
+                "counterfactual results."
             ),
         )
         self._event(
             root.investigation_id,
             EventType.TASK_COMPLETED,
-            f"{len(created)} model-proposed risk hypothesis(es) recorded as advisory.",
+            (
+                f"{len(created)} model hypothesis(es) and {len(plan_map)} "
+                "model-guided replay experiment(s) recorded as advisory."
+            ),
             {
                 "model": result.model,
                 "llm_call_id": result.call_id,
                 "kinds": [item["kind"] for item in created],
+                "replay_plan": replay_plan,
+                "replay_plan_rejected": replay_discarded,
                 "discarded": discarded,
             },
         )
+        return plan_map
 
     async def rationale(
         self,
@@ -525,6 +589,7 @@ def _failure(phase: str, exc: BaseException) -> str:
 __all__ = [
     "LiveLLMAugmenter",
     "MODEL_HYPOTHESES_TITLE",
+    "MODEL_REPLAY_PLAN_TITLE",
     "MODEL_REASONING_TITLE",
     "SOURCE_DETERMINISTIC",
     "SOURCE_LLM",

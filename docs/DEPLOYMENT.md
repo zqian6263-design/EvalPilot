@@ -49,3 +49,10 @@ Exit codes: `0 allow`, `1 review`, `2 block`.
 The script reads persisted token usage, run/investigation wall time, and logical
 storage size, then computes model, compute, storage, and total costs. Rates are
 parameters so they can be replaced with a provider's published prices.
+
+## External HTTP SUT
+
+Set `EVALPILOT_SUT_URL` to evaluate a separately deployed application through
+the contract in `docs/EXTERNAL_SUT.md`. The default deterministic executor is
+used only when that variable is unset. External-SUT acceptance is reproducible
+with `./scripts/sut-e2e-check.ps1`.

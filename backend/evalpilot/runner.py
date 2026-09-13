@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable
 from typing import Any
 
 from evalpilot.clock import utc_now
@@ -23,7 +24,7 @@ from evalpilot.config import Settings
 from evalpilot.db import Database
 from evalpilot.orchestration_eval.service import EvaluationService
 from evalpilot.evaluator import persist_evidence
-from evalpilot.executor import execute_case
+from evalpilot.executor import ExecutionResult, execute_case
 from evalpilot.models import (
     TERMINAL_RUN_STATUSES,
     Evidence,
@@ -72,14 +73,16 @@ class RunRunner:
         db: Database,
         settings: Settings,
         evaluation_service: EvaluationService | None = None,
+        case_executor: Callable[..., ExecutionResult] | None = None,
     ) -> None:
         self.repo = repo
         self.db = db
         self.settings = settings
-        # No judge by default: the seeded demo runs with no model and no
-        # network, and the fixture executor does not record the question text a
-        # judge needs. The parameter is the seam for injecting one.
+        # The container injects a judge only in live mode. Deterministic mode
+        # therefore keeps the offline demo byte-for-byte unchanged, while the
+        # evaluation seam still receives question text and rubric when enabled.
         self.evaluation_service = evaluation_service or EvaluationService()
+        self.case_executor = case_executor or execute_case
 
     # -- public API ---------------------------------------------------------
 
@@ -194,8 +197,23 @@ class RunRunner:
         registry = ToolRegistry(enable_python=self.settings.enable_python_tool)
         evidence_by_case: dict[str, list[Evidence]] = {}
 
-        for index, case in enumerate(cases, start=1):
+        for index, stored_case in enumerate(cases, start=1):
             self._check_active(run_id)
+            # ``case.version`` is the comparison arm; the run label is the
+            # deployable revision the external SUT must execute. Keep both:
+            # reports pair on the arm, while HTTP SUTs receive the label.
+            case = stored_case.model_copy(
+                update={
+                    "input": {
+                        **stored_case.input,
+                        "version_label": (
+                            run.baseline_version
+                            if stored_case.version == "baseline"
+                            else run.candidate_version
+                        ),
+                    }
+                }
+            )
             self.repo.update_test_case(case.id, "running", None)
             self.repo.append_event(
                 run_id,
@@ -210,7 +228,7 @@ class RunRunner:
             )
             await self._pause()
 
-            result = execute_case(case, registry, self.db)
+            result = self.case_executor(case, registry, self.db, None)
             persist_evidence(self.repo, result.evidence)
             evidence_by_case[case.id] = result.evidence
             self.repo.update_test_case(

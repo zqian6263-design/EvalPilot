@@ -555,12 +555,20 @@ class InvestigationService:
             hypotheses = self._risk_hypotheses(
                 recorder, root, intake, matches, incidents
             )
-            await self.augmenter.hypotheses(recorder, root, intake, hypotheses)
+            model_replay_plan = await self.augmenter.hypotheses(
+                recorder, root, intake, hypotheses
+            )
             self._investigating(recorder, root, intake)
             self._probing(recorder, root, intake, hypotheses)
             self._replaying(recorder, root, investigation_id)
             counterfactuals = self._counterfactuals(
-                recorder, root, investigation_id, intake, matches, incidents
+                recorder,
+                root,
+                investigation_id,
+                intake,
+                matches,
+                incidents,
+                model_replay_plan=model_replay_plan,
             )
             decision = self._deciding(
                 recorder,
@@ -1217,8 +1225,17 @@ class InvestigationService:
         intake: RunIntake,
         matches: list[MemoryMatch],
         incidents: dict[str, HistoricalIncident],
+        model_replay_plan: dict[str, str] | None = None,
     ) -> list[CounterfactualExperiment]:
         suggested = _suggested_interventions(matches, incidents, intake)
+        planned = dict(suggested)
+        regressed_ids = {item.scenario_id for item in intake.regressed}
+        executable = {"compression_disabled", "security_guard_enabled"}
+        model_guided: dict[str, str] = {}
+        for scenario_id, intervention in (model_replay_plan or {}).items():
+            if scenario_id in regressed_ids and intervention in executable:
+                planned[scenario_id] = intervention
+                model_guided[scenario_id] = intervention
         experiments: list[CounterfactualExperiment] = []
 
         for item in intake.regressed:
@@ -1237,7 +1254,7 @@ class InvestigationService:
                 failure_kind=(
                     "credential_disclosure" if item.leaked_markers else "dropped_clause"
                 ),
-                suggested_intervention=suggested.get(item.scenario_id),  # type: ignore[arg-type]
+                suggested_intervention=planned.get(item.scenario_id),  # type: ignore[arg-type]
             )
             for attempt in self.provider.attempt(request):
                 experiment = CounterfactualExperiment(
@@ -1279,6 +1296,13 @@ class InvestigationService:
             data={
             "verdicts": tally,
             "dominant_intervention": _dominant_intervention(experiments),
+            "model_guided_interventions": model_guided,
+            "intervention_sources": {
+                item.scenario_id: (
+                    "llm" if item.scenario_id in model_guided else "deterministic"
+                )
+                for item in intake.regressed
+            },
             "experiments": [
             {
             "scenario_id": experiment.scenario_id,
@@ -1360,6 +1384,13 @@ class InvestigationService:
             "blocking_findings": list(decision.blocking_findings),
             "blocking_scenarios": blocking_scenarios,
             "recommended_actions": list(decision.recommended_actions),
+            "aggregate_direction": intake.direction,
+            "aggregate_regression_confirmed": bool(
+                intake.report.metrics.get("regression_confirmed")
+            ),
+            "block_rests_on_per_case_evidence": bool(
+                blocking_ids and decision.verdict == "block"
+            ),
             },
             evidence_ids=cited,
             parent_id=root.id,

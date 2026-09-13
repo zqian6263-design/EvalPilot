@@ -70,6 +70,8 @@ LLM_DATA_KEYS: frozenset[str] = frozenset(
         "fallback_reason",
         "provider",
         "authoritative",
+        "replay_plan",
+        "replay_plan_rejected",
     }
 )
 

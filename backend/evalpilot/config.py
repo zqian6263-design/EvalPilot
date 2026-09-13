@@ -25,6 +25,7 @@ def _as_bool(raw: str | None, default: bool) -> bool:
 
 #: Default per-request LLM timeout in seconds, per ``docs/V3_LLM_INTERFACES.md``.
 DEFAULT_LLM_TIMEOUT_SECONDS = 45.0
+DEFAULT_SUT_TIMEOUT_SECONDS = 20.0
 
 #: The two modes the contract names.
 _LLM_MODES = ("deterministic", "live")
@@ -49,6 +50,10 @@ class Settings:
     #: deterministically rather than guessing what was meant.
     llm_mode: str = "deterministic"
     llm_timeout_seconds: float = DEFAULT_LLM_TIMEOUT_SECONDS
+    sut_url: str | None = None
+    sut_timeout_seconds: float = DEFAULT_SUT_TIMEOUT_SECONDS
+    sut_offline: bool = False
+    sut_cache_dir: Path | None = None
 
 
 def _resolve_db_path(raw: str | None) -> Path:
@@ -64,6 +69,24 @@ def _resolve_llm_mode(raw: str | None) -> str:
     """The configured mode, normalized. Unknown values are passed through."""
     value = (raw or "").strip().lower()
     return value or "deterministic"
+
+
+def _resolve_positive_float(raw: str | None, default: float) -> float:
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        return default
+    return value if value > 0 else default
+
+
+def _resolve_optional_path(raw: str | None, default: Path) -> Path:
+    value = (raw or "").strip()
+    if not value:
+        return default
+    candidate = Path(value)
+    return candidate if candidate.is_absolute() else REPO_ROOT / candidate
 
 
 def _resolve_llm_timeout(raw: str | None) -> float:
@@ -108,5 +131,14 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         llm_mode=_resolve_llm_mode(source.get("EVALPILOT_LLM_MODE")),
         llm_timeout_seconds=_resolve_llm_timeout(
             source.get("EVALPILOT_LLM_TIMEOUT_SECONDS")
+        ),
+        sut_url=(source.get("EVALPILOT_SUT_URL") or "").strip() or None,
+        sut_timeout_seconds=_resolve_positive_float(
+            source.get("EVALPILOT_SUT_TIMEOUT_SECONDS"), DEFAULT_SUT_TIMEOUT_SECONDS
+        ),
+        sut_offline=_as_bool(source.get("EVALPILOT_SUT_OFFLINE"), False),
+        sut_cache_dir=_resolve_optional_path(
+            source.get("EVALPILOT_SUT_CACHE_DIR"),
+            db_path.parent / "sut-cache",
         ),
     )

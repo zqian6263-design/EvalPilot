@@ -1,8 +1,9 @@
 """Live-mode investigation: augmentation, fallback, and the anti-override rules.
 
 The load-bearing tests here are the invariants in
-``docs/V3_LLM_INTERFACES.md``: in live mode the model may *add* hypotheses and
-*explain* the decision, and it may not change any measured value. Each of those
+``docs/V3_LLM_INTERFACES.md``: in live mode the model may add hypotheses,
+choose a bounded replay experiment, and explain the decision, but it may not
+change any measured value. Each of those
 is asserted directly against the persisted investigation, not against the
 model's response.
 
@@ -276,6 +277,83 @@ def test_live_mode_adds_model_hypotheses_and_a_rationale(client: TestClient) -> 
     assert len(rationale) == 1
     assert rationale[0]["data"]["rationale"]
     assert rationale[0]["data"]["authoritative"] is False
+
+
+def test_a_validated_model_plan_controls_the_replay_intervention(
+    client: TestClient,
+) -> None:
+    """The model may choose a bounded experiment, which the engine then measures.
+
+    The deterministic fallback would re-enable compression for this scenario.
+    The model instead selects the security guard. That choice must reach the
+    replay executor, while the resulting measured verdict remains authoritative.
+    """
+    detail = _demo_run(client)
+    _, payload = _run_investigation(
+        client,
+        detail["run"]["id"],
+        provider=StubProvider(
+            hypotheses={
+                "hypotheses": [],
+                "replay_interventions": [
+                    {
+                        "scenario_id": "escalation-path",
+                        "intervention": "security_guard_enabled",
+                        "rationale": "Test the guard hypothesis first.",
+                    }
+                ],
+            }
+        ),
+    )
+
+    assert payload["investigation"]["status"] == "completed"
+    experiment = next(
+        item
+        for item in payload["counterfactuals"]
+        if item["scenario_id"] == "escalation-path"
+    )
+    assert experiment["intervention"] == "security_guard_enabled"
+    plan = next(
+        step
+        for step in payload["steps"]
+        if step["title"] == "Model-guided counterfactual plan"
+    )
+    assert plan["data"]["authoritative"] is False
+    assert plan["data"]["replay_plan"][0]["scenario_id"] == "escalation-path"
+    assert payload["decision"]["verdict"] == "block"
+
+
+def test_an_unexecutable_model_plan_is_rejected(client: TestClient) -> None:
+    detail = _demo_run(client)
+    _, payload = _run_investigation(
+        client,
+        detail["run"]["id"],
+        provider=StubProvider(
+            hypotheses={
+                "hypotheses": [],
+                "replay_interventions": [
+                    {
+                        "scenario_id": "escalation-path",
+                        "intervention": "restart_production",
+                        "rationale": "Not an executable intervention.",
+                    }
+                ],
+            }
+        ),
+    )
+
+    experiment = next(
+        item
+        for item in payload["counterfactuals"]
+        if item["scenario_id"] == "escalation-path"
+    )
+    assert experiment["intervention"] == "compression_disabled"
+    model_step = next(
+        step
+        for step in payload["steps"]
+        if step["title"] == "Model-proposed risk hypotheses"
+    )
+    assert "not executable" in model_step["data"]["fallback_reason"]
 
 
 def test_every_llm_step_records_its_provenance(client: TestClient) -> None:
