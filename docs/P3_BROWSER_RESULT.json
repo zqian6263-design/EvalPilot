@@ -1,7 +1,7 @@
 {
   "status": "passed",
-  "run_id": "2f4102da-a390-4e2f-abb3-534a26410361",
-  "investigation_id": "cfd29539-7c35-4b2c-9139-361e27459394",
+  "run_id": "a092cc95-0bef-404d-b552-8e46ff5db65c",
+  "investigation_id": "c2c46b55-acfc-4e07-8f88-819cdc81fd06",
   "matched_scenarios": 6,
   "regressed_scenarios": [
     "tenant-camelcase-alias-injection",
@@ -12,28 +12,28 @@
   "trace_evidence": 12,
   "counterfactuals": [
     {
-      "original_score": 0.5,
-      "intervention": "identity_metadata_stripped",
       "counterfactual_score": 0.95,
-      "scenario_id": "tenant-metadata-overwrite",
-      "verdict": "root_cause"
+      "intervention": "identity_metadata_stripped",
+      "verdict": "root_cause",
+      "original_score": 0.5,
+      "scenario_id": "tenant-metadata-overwrite"
     },
     {
-      "original_score": 0.6666666666666666,
-      "intervention": "identity_metadata_stripped",
       "counterfactual_score": 0.9667,
-      "scenario_id": "tenant-identity-injection",
-      "verdict": "root_cause"
+      "intervention": "identity_metadata_stripped",
+      "verdict": "root_cause",
+      "original_score": 0.6666666666666666,
+      "scenario_id": "tenant-identity-injection"
     },
     {
-      "original_score": 0.6666666666666666,
-      "intervention": "identity_metadata_stripped",
       "counterfactual_score": 0.9667,
-      "scenario_id": "tenant-camelcase-alias-injection",
-      "verdict": "root_cause"
+      "intervention": "identity_metadata_stripped",
+      "verdict": "root_cause",
+      "original_score": 0.6666666666666666,
+      "scenario_id": "tenant-camelcase-alias-injection"
     }
   ],
   "decision": "block",
   "risk_level": "critical",
-  "completed_at": "2026-09-14T02:33:56.2495388Z"
+  "completed_at": "2026-09-14T02:46:07.9193664Z"
 }

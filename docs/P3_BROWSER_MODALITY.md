@@ -108,3 +108,7 @@ The script starts the public OSS-backed SUT, starts EvalPilot with browser execu
 - The deterministic embeddings isolate memory-scope behavior and do not exercise every production vector store.
 - Browser execution is opt-in; the default EvalPilot runtime remains offline and does not launch a browser.
 - Screenshots and traces are evidence of the adapter's rendered behavior, while scores still come from deterministic checks over the extracted answer.
+
+## Verification record
+
+Fresh end-to-end and repository-wide evidence is recorded in [docs/P3_VERIFICATION.md](P3_VERIFICATION.md).
