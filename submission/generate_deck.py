@@ -254,13 +254,27 @@ def build_pptx() -> None:
     add_text(slide, 0.85, 1.98, 5.6, 0.33, "公开 Haystack HTTP SUT", 18, TEXT, True)
     add_text(slide, 0.85, 2.5, 5.55, 0.62, "DocumentSplitter → BM25 Retriever → DocumentJoiner\n→ GroundedReranker → grounded answer", 14, ACCENT, True)
     add_text(slide, 0.85, 3.25, 5.55, 0.35, "Apache-2.0 · haystack-ai 3.1.1", 11, MUTED)
+    add_text(slide, 0.85, 3.5, 5.6, 0.32, "可校验发行包：SHA-256 + 文件清单 + 干净解压安装验收", 10, SUCCESS, True)
     add_metric(slide, 7.05, 1.7, 2.65, "上游比较", "52 / 0", "3.0.0 vs 3.1.1 语义差异", SUCCESS, SUCCESS_SOFT, 1.55)
     add_metric(slide, 9.95, 1.7, 2.83, "候选回归", "8 / 26", "mean delta -0.173", DANGER, DANGER_SOFT, 1.55)
     add_image_fit(slide, ASSETS / "report.png", 0.55, 4.25, 7.05, 2.15)
     add_rect(slide, 7.9, 4.25, 4.88, 2.15, SURFACE, BORDER, True)
-    add_text(slide, 8.2, 4.55, 4.25, 0.34, "证据不是“能跑一次”", 17, TEXT, True)
-    add_bullet_list(slide, 8.2, 5.06, 4.2, ["同版本控制 0 回归", "离线缓存精确复现", "SUT 故障明确失败，不回退 mock"], gap=0.43, size=12)
-    add_notes(slide, "说明公开开源依赖、受控 candidate patch 和失败语义。再次强调受控 patch 不代表上游项目本身有缺陷。")
+    add_text(slide, 8.2, 4.45, 4.25, 0.34, "四个真实适配器，全部实测", 16, TEXT, True)
+    add_bullet_list(
+        slide,
+        8.2,
+        4.9,
+        4.2,
+        [
+            "Haystack HTTP SUT：52 / 0 上游 · 8 / 26 受控回归",
+            "mem0 浏览器：3 次实测重放 · 18 截图 · 18 trace",
+            "MCP SDK：3 协议回归 · 3 次实测 HTTP 重放",
+            "外部 SUT 模板：8 匹配 · 5 回归 · 5 次实测重放",
+        ],
+        gap=0.34,
+        size=10.5,
+    )
+    add_notes(slide, "四个适配器都通过真实边界测量：公开 Haystack pipeline、公开 mem0 浏览器界面、第三方 MCP SDK 双运行时、以及外部团队接入模板。受控 candidate patch 不代表上游项目本身有缺陷。发行侧补充 SHA-256 与清单校验，并在全新解压目录重新安装验收。")
 
     slide = prs.slides.add_slide(blank)
     add_rect(slide, 0, 0, 13.333, 7.5, BG, BG, False, 0)
@@ -274,7 +288,7 @@ def build_pptx() -> None:
     add_text(slide, 5.15, 1.98, 3.15, 0.35, "成本与交付", 18, TEXT, True)
     add_text(slide, 5.15, 2.55, 3.15, 0.55, "$0.264697", 25, ACCENT, True)
     add_text(slide, 5.15, 3.1, 3.15, 0.32, "一次完整 Live Run 峰值下界", 11, MUTED)
-    add_bullet_list(slide, 5.15, 3.7, 3.15, ["BLOCK / REVIEW / ALLOW", "Markdown / JUnit / SARIF", "退出码 0 / 1 / 2", "GitHub PR 回写"], gap=0.55, size=12)
+    add_bullet_list(slide, 5.15, 3.6, 3.15, ["BLOCK / REVIEW / ALLOW", "Markdown / JUnit / SARIF", "退出码 0 / 1 / 2", "GitHub PR 回写", "可校验发行包（SHA-256）"], gap=0.46, size=11.5)
     add_rect(slide, 8.83, 1.68, 3.95, 4.85, SURFACE, BORDER, True)
     add_text(slide, 9.13, 1.98, 3.35, 0.35, "商业策略（假设）", 18, TEXT, True)
     add_bullet_list(slide, 9.13, 2.65, 3.35, ["Release audit\n固定范围审计", "Team subscription\n持续回归门禁", "Enterprise self-host\n私有化与合规"], gap=0.95, size=13)
@@ -286,16 +300,16 @@ def build_pptx() -> None:
     slide_header(slide, 9, "下一步", "先守住发布决策，再扩大公开证据")
     add_rect(slide, 0.55, 1.72, 3.75, 3.95, SUCCESS_SOFT, BORDER, True)
     add_text(slide, 0.85, 2.02, 3.15, 0.35, "现在：已验证", 18, SUCCESS, True)
-    add_bullet_list(slide, 0.85, 2.68, 3.15, ["公开产品站", "真实 HTTP SUT", "模型受约束规划", "Release Gate"], gap=0.68, size=13)
+    add_bullet_list(slide, 0.85, 2.55, 3.25, ["公开产品站 + 演示视频", "真实 HTTP SUT 与离线回放", "浏览器任务形态（实测重放）", "第三方 MCP 回顾（实测重放）", "外部 SUT 接入模板 + E2E", "可校验发行包"], gap=0.5, size=11)
     add_rect(slide, 4.55, 1.72, 3.75, 3.95, ACCENT_SOFT, BORDER, True)
     add_text(slide, 4.85, 2.02, 3.15, 0.35, "下一阶段", 18, ACCENT, True)
-    add_bullet_list(slide, 4.85, 2.68, 3.15, ["公开未知故障回顾", "第二模型供应商", "真实使用信号", "更多发布适配器"], gap=0.68, size=13)
+    add_bullet_list(slide, 4.85, 2.68, 3.15, ["第二模型供应商对照", "真实外部采用信号", "更多生产环境适配器", "付费试点验证（假设）"], gap=0.68, size=13)
     add_rect(slide, 8.55, 1.72, 4.23, 3.95, SURFACE, BORDER, True)
     add_image_fit(slide, ASSETS / "product-site.png", 8.85, 2.08, 3.63, 2.1)
     add_text(slide, 8.85, 4.42, 3.63, 0.8, "产品站已验证公开可访问\n所有数据均有源文件与复现命令", 12, MUTED, True)
     add_rect(slide, 0.55, 5.95, 12.23, 0.68, TEXT, TEXT, True)
     add_text(slide, 0.85, 6.08, 11.6, 0.34, "用证据决定，而不是用感觉发布。", 20, "FFFFFF", True, PP_ALIGN.CENTER)
-    add_notes(slide, "收束到一句主张：不是增加更多 AI 功能，而是把 AI 发布从主观判断变成可验证、可阻断的工程流程。")
+    add_notes(slide, "左栏是可当场复核的实测能力，右栏是尚未验证的下一步，二者不混写。真实客户生产部署、多租户权限和第二模型对照仍未验证，不作为已完成能力。")
 
     return prs
 
@@ -498,12 +512,13 @@ def pdf_slide_7(c) -> None:
     pdf_text(c, 62, 138, 410, 24, "公开 Haystack HTTP SUT", 15, TEXT)
     pdf_text(c, 62, 180, 410, 50, "DocumentSplitter → BM25 Retriever → DocumentJoiner\n→ GroundedReranker → grounded answer", 12, ACCENT)
     pdf_text(c, 62, 244, 410, 18, "Apache-2.0 · haystack-ai 3.1.1", 9, MUTED)
+    pdf_text(c, 62, 262, 410, 16, "可校验发行包：SHA-256 + 清单 + 解压安装验收", 9, SUCCESS)
     pdf_metric(c, 520, 118, 185, "上游比较", "52 / 0", "3.0.0 vs 3.1.1", SUCCESS, SUCCESS_SOFT, 165)
     pdf_metric(c, 720, 118, 200, "候选回归", "8 / 26", "mean delta -0.173", DANGER, DANGER_SOFT, 165)
     pdf_image(c, ASSETS / "report.png", 40, 310, 520, 160)
     pdf_rect(c, 585, 310, 335, 160, SURFACE)
-    pdf_text(c, 607, 328, 290, 24, "证据不是“能跑一次”", 15, TEXT)
-    pdf_bullets(c, 607, 370, 290, ["同版本控制 0 回归", "离线缓存精确复现", "SUT 故障明确失败，不回退 mock"], 35, 10)
+    pdf_text(c, 607, 326, 290, 20, "四个真实适配器，全部实测", 14, TEXT)
+    pdf_bullets(c, 607, 356, 290, ["Haystack HTTP SUT：52/0 上游 · 8/26 回归", "mem0 浏览器：3 次实测重放 · 18 截图 / 18 trace", "MCP SDK：3 协议回归 · 3 次实测 HTTP 重放", "外部 SUT 模板：8 匹配 · 5 回归 · 5 次重放"], 27, 9)
 
 
 def pdf_slide_8(c) -> None:
@@ -518,7 +533,7 @@ def pdf_slide_8(c) -> None:
     pdf_text(c, 367, 138, 220, 24, "成本与交付", 15, TEXT)
     pdf_text(c, 367, 190, 220, 32, "$0.264697", 22, ACCENT)
     pdf_text(c, 367, 230, 220, 20, "Live Run 峰值下界", 9, MUTED)
-    pdf_bullets(c, 367, 275, 220, ["BLOCK / REVIEW / ALLOW", "Markdown / JUnit / SARIF", "退出码 0 / 1 / 2", "GitHub PR 回写"], 45, 10)
+    pdf_bullets(c, 367, 268, 220, ["BLOCK / REVIEW / ALLOW", "Markdown / JUnit / SARIF", "退出码 0 / 1 / 2", "GitHub PR 回写", "可校验发行包 (SHA-256)"], 36, 9.5)
     pdf_rect(c, 630, 118, 290, 355, SURFACE)
     pdf_text(c, 652, 138, 245, 24, "商业策略（假设）", 15, TEXT)
     pdf_bullets(c, 652, 195, 245, ["Release audit / 固定范围审计", "Team subscription / 持续门禁", "Enterprise self-host / 私有化"], 75, 10)
@@ -530,10 +545,10 @@ def pdf_slide_9(c) -> None:
     pdf_header(c, 9, "下一步", "先守住发布决策，再扩大公开证据")
     pdf_rect(c, 40, 118, 275, 300, SUCCESS_SOFT)
     pdf_text(c, 62, 138, 230, 24, "现在：已验证", 15, SUCCESS)
-    pdf_bullets(c, 62, 200, 230, ["公开产品站", "真实 HTTP SUT", "模型受约束规划", "Release Gate"], 52, 11)
+    pdf_bullets(c, 62, 185, 230, ["公开产品站 + 视频", "真实 HTTP SUT + 离线回放", "浏览器任务（实测重放）", "MCP 回顾（实测重放）", "外部 SUT 接入模板", "可校验发行包"], 38, 10)
     pdf_rect(c, 335, 118, 275, 300, ACCENT_SOFT)
     pdf_text(c, 357, 138, 230, 24, "下一阶段", 15, ACCENT)
-    pdf_bullets(c, 357, 200, 230, ["公开未知故障回顾", "第二模型供应商", "真实使用信号", "更多发布适配器"], 52, 11)
+    pdf_bullets(c, 357, 200, 230, ["第二模型供应商对照", "真实外部采用信号", "更多生产环境适配器", "付费试点验证（假设）"], 52, 11)
     pdf_rect(c, 630, 118, 290, 300, SURFACE)
     pdf_image(c, ASSETS / "product-site.png", 652, 145, 245, 160)
     pdf_text(c, 652, 330, 245, 55, "产品站已验证公开可访问\n所有数据有源文件与复现命令", 10, MUTED)
