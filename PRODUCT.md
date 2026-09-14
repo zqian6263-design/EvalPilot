@@ -38,6 +38,8 @@ support.
   follow-up probes, counterfactual replay, and release decision.
 - `BLOCK / REVIEW / ALLOW` release decision with downloadable Markdown report.
 - Chinese-first professional light interface.
+- Opt-in browser task modality with host allowlisting, action traces, extracted text, and screenshot evidence.
+- Opt-in browser task modality with host allowlisting, action traces, extracted text, and screenshot evidence.
 
 ## Implemented Tool Surface
 
@@ -46,15 +48,18 @@ The current runtime registers exactly:
 - `kb_search` — deterministic in-process knowledge-base search.
 - `http_get` — allowlisted HTTP retrieval with timeout and size limits.
 - `file_read` — read-only file access within configured roots.
+- `browser_run` — opt-in Playwright task execution with host allowlisting, action trace, and screenshot evidence.
+- `browser_run` — opt-in Playwright task execution with host allowlisting, action trace, and screenshot evidence.
 
 The Python sandbox tool is present as a gated placeholder but has no execution
-implementation. Browser execution is roadmap work, not a current capability.
+implementation. Browser execution is implemented as an opt-in bounded tool and
+is disabled by default.
 
 ## LLM Integration
 
 The deterministic demo works without network access or an API key. Live mode
-uses an OpenAI-compatible provider; the current verified product runtime is
-DeepSeek V4 Pro.
+uses an OpenAI-compatible provider; DeepSeek V4 Pro and GLM-4.7 are both
+verified through the same runtime seam.
 
 The model may:
 
@@ -70,9 +75,9 @@ failure falls back to deterministic behaviour with an explicit reason.
 
 Runs persist test cases, evidence, findings, and reports. Supported evidence
 kinds are `text`, `screenshot`, `log`, `citation`, `trace`, and `metric`.
-The current deterministic demo emits structured text, citation, trace, and
-metric evidence; screenshot capture is a schema capability and roadmap item,
-not a claim about the current executor.
+The deterministic demo emits structured text, citation, trace, and metric
+evidence. The opt-in browser executor additionally persists screenshots and
+per-action traces; this is verified in `docs/P3_BROWSER_MODALITY.md`.
 
 ## Constraints
 

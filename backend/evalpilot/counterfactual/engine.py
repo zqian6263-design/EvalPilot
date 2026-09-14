@@ -233,6 +233,8 @@ class CounterfactualEngine:
                     "scenario_id": target.scenario_id,
                     "question": question,
                     "version_label": target.version_label or "candidate",
+                    **({"browser_url": target.browser_url} if target.browser_url else {}),
+                    **({"browser_actions": target.browser_actions} if target.browser_actions else {}),
                 },
                 expected=expected,
                 difficulty=scenario.difficulty,

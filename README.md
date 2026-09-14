@@ -27,6 +27,7 @@
 
 - 自动生成正常、边界和对抗测试用例。
 - 通过 API、浏览器、文件和可选沙箱工具执行任务。
+- `browser_run` 支持白名单导航、选择、点击、输入、断言、文本提取、截图和完整动作轨迹。
 - 保存文本、引用、日志、指标和执行轨迹作为证据。
 - 使用确定性检查和可注入 LLM Judge 评分。
 - 对 baseline / candidate 做匹配比较，报告 effect size、置信区间和 verdict。
@@ -82,6 +83,7 @@ python scripts/deploy.py --stop
 .\scripts\v2-e2e-check.ps1
 .\scripts\sut-e2e-check.ps1
 .\scripts\p1-mem0-retro-check.ps1
+.\scripts\p3-browser-check.ps1
 .venv\Scripts\python.exe backend\scripts\planning_quality_check.py
 .venv\Scripts\python.exe backend\scripts\planning_ood_check.py
 .venv\Scripts\python.exe backend\scripts\ood_replay_check.py

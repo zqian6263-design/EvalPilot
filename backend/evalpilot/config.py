@@ -60,6 +60,13 @@ class Settings:
     github_webhook_secret: str | None = None
     github_token: str | None = None
     github_api_url: str = "https://api.github.com"
+    browser_enabled: bool = False
+    browser_target_url: str | None = None
+    browser_allowed_hosts: tuple[str, ...] = ()
+    browser_screenshot_dir: Path | None = None
+    browser_timeout_seconds: float = 30.0
+    browser_executable_path: str | None = None
+    browser_headless: bool = True
 
 
 def _resolve_db_path(raw: str | None) -> Path:
@@ -134,9 +141,21 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
     except ValueError:
         step_delay = 0.05
 
+    artifacts_dir = db_path.parent / "artifacts"
+    browser_target_url = (source.get("EVALPILOT_BROWSER_TARGET_URL") or "").strip() or None
+    browser_allowed_hosts = tuple(
+        host.strip().lower()
+        for host in (source.get("EVALPILOT_BROWSER_ALLOWED_HOSTS") or "").split(",")
+        if host.strip()
+    )
+    if not browser_allowed_hosts and browser_target_url:
+        host = urlsplit(browser_target_url).hostname
+        if host:
+            browser_allowed_hosts = (host.lower(),)
+
     return Settings(
         db_path=db_path,
-        artifacts_dir=db_path.parent / "artifacts",
+        artifacts_dir=artifacts_dir,
         llm_base_url=source.get("EVALPILOT_LLM_BASE_URL") or None,
         llm_api_key=source.get("EVALPILOT_LLM_API_KEY") or None,
         llm_model=source.get("EVALPILOT_LLM_MODEL") or None,
@@ -171,4 +190,16 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         github_api_url=(
             source.get("EVALPILOT_GITHUB_API_URL") or "https://api.github.com"
         ).rstrip("/"),
+        browser_enabled=_as_bool(source.get("EVALPILOT_BROWSER_ENABLED"), False),
+        browser_target_url=browser_target_url,
+        browser_allowed_hosts=browser_allowed_hosts,
+        browser_screenshot_dir=_resolve_optional_path(
+            source.get("EVALPILOT_BROWSER_SCREENSHOT_DIR"),
+            artifacts_dir,
+        ),
+        browser_timeout_seconds=_resolve_positive_float(
+            source.get("EVALPILOT_BROWSER_TIMEOUT_SECONDS"), 30.0
+        ),
+        browser_executable_path=(source.get("EVALPILOT_BROWSER_EXECUTABLE") or "").strip() or None,
+        browser_headless=_as_bool(source.get("EVALPILOT_BROWSER_HEADLESS"), True),
     )

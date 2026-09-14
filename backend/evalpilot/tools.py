@@ -25,6 +25,8 @@ one is ever executed.
 from __future__ import annotations
 
 import json
+import os
+import shutil
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -33,6 +35,7 @@ from urllib.parse import urlparse
 
 import httpx
 
+from evalpilot.browser_tool import BrowserError, run_browser
 from evalpilot.fixtures import KNOWLEDGE_BASE, KnowledgeDoc
 
 #: Defaults. Deliberately small: a tool that is granted access should still be
@@ -96,6 +99,12 @@ class ToolPolicy:
     max_response_bytes: int = DEFAULT_MAX_RESPONSE_BYTES
     max_file_bytes: int = DEFAULT_MAX_FILE_BYTES
     user_agent: str = DEFAULT_USER_AGENT
+    browser_enabled: bool = False
+    browser_allowed_hosts: tuple[str, ...] = ()
+    browser_screenshot_root: Path | None = None
+    browser_timeout_seconds: float = 30.0
+    browser_executable_path: str | None = None
+    browser_headless: bool = True
 
     def allows_http(self) -> bool:
         return bool(self.http_allowed_hosts)
@@ -103,8 +112,17 @@ class ToolPolicy:
     def allows_files(self) -> bool:
         return bool(self.file_read_roots)
 
+    def allows_browser(self) -> bool:
+        return self.browser_enabled and bool(self.browser_allowed_hosts)
+
     def allows_host(self, host: str) -> bool:
         return host.lower() in {allowed.lower() for allowed in self.http_allowed_hosts}
+
+    def allows_browser_host(self, host: str) -> bool:
+        return host.lower() in {allowed.lower() for allowed in self.browser_allowed_hosts}
+
+    def browser_root(self) -> Path | None:
+        return None if self.browser_screenshot_root is None else Path(self.browser_screenshot_root).expanduser().resolve()
 
     def roots(self) -> tuple[Path, ...]:
         return tuple(Path(root).expanduser().resolve() for root in self.file_read_roots)
@@ -571,6 +589,56 @@ def _relative_to_roots(resolved: Path, roots: Sequence[Path]) -> str:
 
 
 # --------------------------------------------------------------------------
+# Browser tool
+# --------------------------------------------------------------------------
+
+
+def browser_run(
+    *,
+    url: str,
+    actions: Sequence[dict[str, Any]],
+    screenshot_path: str,
+    policy: ToolPolicy,
+) -> ToolResult:
+    """Run a bounded browser task under the configured policy."""
+    if not policy.allows_browser():
+        raise ToolNotAllowed(
+            "browser_run is disabled: enable it and configure browser_allowed_hosts",
+            reason="browser_disabled",
+        )
+    root = policy.browser_root()
+    if root is None:
+        raise ToolNotAllowed("browser screenshot root is not configured", reason="browser_screenshot_root_missing")
+    try:
+        output = run_browser(
+            url=url,
+            actions=actions,
+            screenshot=screenshot_path,
+            allowed_hosts=policy.browser_allowed_hosts,
+            screenshot_root=root,
+            timeout_seconds=policy.browser_timeout_seconds,
+            executable_path=policy.browser_executable_path,
+            headless=policy.browser_headless,
+        )
+    except BrowserError as exc:
+        raise ToolError(str(exc), reason=exc.reason) from exc
+    return ToolResult(
+        name="browser_run",
+        ok=True,
+        output=output,
+        trace={
+            "tool": "browser_run",
+            "outcome": "completed",
+            "url": output.get("final_url"),
+            "allowed_hosts": list(policy.browser_allowed_hosts),
+            "actions": output.get("action_trace", []),
+            "screenshot": output.get("screenshot_path"),
+            "console_errors": output.get("console_errors", []),
+        },
+    )
+
+
+# --------------------------------------------------------------------------
 # Python tool
 # --------------------------------------------------------------------------
 
@@ -616,6 +684,8 @@ class ToolRegistry:
             names.append("http_get")
         if self.policy.allows_files():
             names.append("file_read")
+        if self.policy.allows_browser():
+            names.append("browser_run")
         # python_run is listed only when explicitly enabled, and even then it
         # refuses: enabling the flag does not grant execution.
         if self.enable_python:
@@ -672,4 +742,17 @@ class ToolRegistry:
                     },
                 )
             return lambda **kwargs: file_read(policy=self.policy, **kwargs)
+        if name == "browser_run":
+            if not self.policy.allows_browser():
+                raise ToolError(
+                    "browser_run is disabled: no browser hosts are configured",
+                    reason="no_browser_hosts",
+                    trace={
+                        "tool": "browser_run",
+                        "allowed_hosts": [],
+                        "outcome": "denied",
+                        "reason": "no_browser_hosts",
+                    },
+                )
+            return lambda **kwargs: browser_run(policy=self.policy, **kwargs)
         raise ToolError(f"unknown or disabled tool: {name!r}", reason="unknown_tool")

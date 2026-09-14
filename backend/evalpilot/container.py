@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from evalpilot.config import Settings, load_settings
 from evalpilot.db import Database
 from evalpilot.evaluation.judge import RubricJudge
+from evalpilot.executor import execute_case
 from evalpilot.investigation import InvestigationService
 from evalpilot.investigation.engine_provider import EngineCounterfactualProvider
 from evalpilot.llm.judge_adapter import build_judge_callable
@@ -20,6 +21,7 @@ from evalpilot.orchestration_eval.service import EvaluationService
 from evalpilot.repository import Repository
 from evalpilot.runner import RunRunner
 from evalpilot.sut import HttpCaseExecutor
+from evalpilot.sut.browser_executor import BrowserCaseExecutor, CompositeCaseExecutor
 from evalpilot.tools import ToolPolicy, ToolRegistry
 
 
@@ -47,12 +49,19 @@ def build_container(settings: Settings | None = None) -> Container:
     db = Database(resolved.db_path, resolved.artifacts_dir)
     db.initialize()
     repo = Repository(db)
+    tool_policy = ToolPolicy(
+        http_allowed_hosts=("127.0.0.1",),
+        file_read_roots=(resolved.artifacts_dir.resolve(),),
+        browser_enabled=resolved.browser_enabled,
+        browser_allowed_hosts=resolved.browser_allowed_hosts,
+        browser_screenshot_root=resolved.browser_screenshot_dir,
+        browser_timeout_seconds=resolved.browser_timeout_seconds,
+        browser_executable_path=resolved.browser_executable_path,
+        browser_headless=resolved.browser_headless,
+    )
     tools = ToolRegistry(
         enable_python=resolved.enable_python_tool,
-        policy=ToolPolicy(
-            http_allowed_hosts=("127.0.0.1",),
-            file_read_roots=(resolved.artifacts_dir.resolve(),),
-        ),
+        policy=tool_policy,
     )
     # The incident history is fixture data, so it is seeded on every build.
     # `seed_incidents` is idempotent, which is what makes that safe.
@@ -80,12 +89,22 @@ def build_container(settings: Settings | None = None) -> Container:
             cache_dir=resolved.sut_cache_dir,
             discover_capabilities=resolved.sut_discover_capabilities,
         ).execute
+    if resolved.browser_enabled:
+        browser_executor = BrowserCaseExecutor(
+            policy=tool_policy,
+            target_url=resolved.browser_target_url,
+        )
+        case_executor = CompositeCaseExecutor(
+            fallback=case_executor or execute_case,
+            browser=browser_executor,
+        ).__call__
     runner = RunRunner(
         repo,
         db,
         resolved,
         evaluation_service,
         case_executor=case_executor,
+        tool_policy=tool_policy,
     )
     investigation_runner = InvestigationService(
         repo,

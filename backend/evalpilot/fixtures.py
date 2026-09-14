@@ -132,6 +132,8 @@ class SupportScenario:
     suggested_intervention: str | None = None
     probe_action: str | None = None
     recommendation: str | None = None
+    browser_url: str | None = None
+    browser_actions: tuple[dict[str, Any], ...] = ()
 
     def answer_candidates(self) -> tuple[str, ...]:
         """Factual assertions the answer is allowed to make for this scenario.
@@ -462,6 +464,15 @@ def _load_workload(path: Path) -> tuple[SupportScenario, ...]:
                     str(item["recommendation"]).strip()
                     if item.get("recommendation")
                     else None
+                ),
+                browser_url=(
+                    str(item["browser_url"]).strip()
+                    if item.get("browser_url")
+                    else None
+                ),
+                browser_actions=tuple(
+                    action for action in item.get("browser_actions", [])
+                    if isinstance(action, dict)
                 ),
             )
         )

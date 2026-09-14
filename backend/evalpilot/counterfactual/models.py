@@ -134,6 +134,10 @@ class CounterfactualTarget(CounterfactualModel):
     #: Run-specific revision label the external SUT should execute. The
     #: internal ``case.version`` remains the comparison arm used for pairing.
     version_label: str | None = None
+    #: Browser workloads need their target and action list carried into replay;
+    #: otherwise the rebuilt case cannot reproduce the original execution.
+    browser_url: str | None = None
+    browser_actions: list[dict[str, Any]] = Field(default_factory=list)
     original_evidence_ids: list[str] = Field(default_factory=list)
     #: The candidate's score as the caller recorded it. Reported alongside the
     #: engine's own re-read of the original evidence so a disagreement between

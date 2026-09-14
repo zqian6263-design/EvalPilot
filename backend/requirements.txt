@@ -9,3 +9,6 @@ haystack-ai>=3.1,<4
 
 # dev / test
 pytest>=8.0
+
+# Optional, policy-gated browser executor; no browser download is performed by pip.
+playwright>=1.50

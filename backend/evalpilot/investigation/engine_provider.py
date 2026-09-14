@@ -90,6 +90,8 @@ class EngineCounterfactualProvider:
                     expected=case.expected,
                     question=request.question,
                     version_label=run.candidate_version,
+                    browser_url=case.input.get("browser_url"),
+                    browser_actions=list(case.input.get("browser_actions") or []),
                     original_evidence_ids=list(request.evidence_ids),
                     original_score=request.original_score,
                     failing_checks=list(request.failed_checks),

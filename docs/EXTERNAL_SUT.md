@@ -133,6 +133,24 @@ same-version control, detects three tenant-isolation regressions, and verifies
 three ``identity_metadata_stripped`` counterfactual root causes. See
 ``docs/P1_PUBLIC_RETROSPECTIVE.md`` for the evidence and limitations.
 
+## Browser task modality
+
+The same case executor seam also supports opt-in browser tasks through
+`browser_run`. Browser cases use a small action vocabulary instead of arbitrary
+JavaScript, stay inside a host allowlist, and persist screenshot and trace
+evidence through the normal evidence model.
+
+The public retrospective for `mem0ai` includes a browser-facing portal over the
+public package releases. The browser acceptance check observes three tenant
+isolation regressions, preserves three controls, and confirms all three root
+causes through browser counterfactual replay.
+
+```powershell
+.\scripts\p3-browser-check.ps1
+```
+
+See `docs/P3_BROWSER_MODALITY.md` for the action and security contract.
+
 ## Reproducible acceptance
 
 ```powershell

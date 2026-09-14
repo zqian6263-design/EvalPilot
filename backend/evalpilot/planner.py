@@ -84,6 +84,8 @@ def build_cases(
                         "scenario_id": scenario.scenario_id,
                         "question": scenario.question,
                         "version": version,
+                        **({"browser_url": scenario.browser_url} if scenario.browser_url else {}),
+                        **({"browser_actions": list(scenario.browser_actions)} if scenario.browser_actions else {}),
                     },
                     expected={
                         "expected_doc_ids": list(scenario.expected_doc_ids),

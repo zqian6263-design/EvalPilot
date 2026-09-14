@@ -41,7 +41,7 @@ not treated as a prerequisite.
 - Persistent API, event flow, evidence links, calculations, and report.
 - Deterministic/offline fallback prevents a dead demo.
 - Clean worktree installed dependencies and passed the 31-check E2E.
-- Runtime tools are explicitly bounded: `kb_search`, `http_get`, `file_read`.
+- Runtime tools are explicitly bounded: `kb_search`, `http_get`, `file_read`, and opt-in `browser_run`.
 - A third-party HTTP contract and a separate Haystack-backed process prove the evaluator is not tied to its deterministic mock.
 - Offline replay is content-addressed and fails loudly on a cache miss.
 - The public SUT runs a splitter -> retriever -> joiner -> grounded reranker Haystack pipeline.
@@ -50,7 +50,7 @@ not treated as a prerequisite.
 
 - Extend the public Haystack pipeline to a second open-source application.
 - Verify the clean setup on a second physical host.
-- Decide whether browser execution belongs after the competition.
+- Browser execution is now implemented as an opt-in mode and validated end to end; remaining work is broader browser coverage, not basic feasibility.
 
 ## Market feasibility — 18/20
 
@@ -72,7 +72,7 @@ not treated as a prerequisite.
 
 - Validate pricing willingness through public adoption or a paid pilot.
 - Convert the GitHub integration into a public repository install or fork.
-- Add a workload in a different modality such as document or browser interaction.
+- Browser-interaction workload is implemented; remaining breadth is document parsing and third-party UI diversity.
 - Re-run the cost model against another model/provider.
 - Replace the deterministic grounded composer with a live upstream generator in a separate deployment profile.
 

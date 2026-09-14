@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>EvalPilot mem0 Browser SUT</title><style>body{margin:0;background:#f6f8fb;color:#182230;font:16px/1.6 system-ui,sans-serif}main{width:min(760px,calc(100% - 32px));margin:48px auto;padding:28px;background:#fff;border:1px solid #dfe3e8;border-radius:12px}h1{margin:0 0 8px}label{display:block;margin:20px 0 8px;font-weight:700}select,button{min-height:44px;border:1px solid #dfe3e8;border-radius:8px;font:inherit}select{width:100%;padding:8px 12px;background:#fff}button{margin-top:16px;padding:0 18px;background:#165dff;color:#fff;border-color:#165dff;font-weight:700}#status{margin-left:12px;color:#475467}pre{min-height:72px;margin-top:20px;padding:16px;background:#101828;color:#eaecf0;border-radius:8px;white-space:pre-wrap}</style></head><body><main><h1>Memory scope browser check</h1><p>Running the public <code>mem0ai</code> package through a browser-visible acceptance flow.</p><p>Version: <strong id='version'></strong></p><label for='scenario'>Regression scenario</label><select id='scenario'><option value='tenant-metadata-overwrite'>Tenant metadata overwrite</option><option value='tenant-identity-injection'>Identity injection</option><option value='tenant-camelcase-alias-injection'>camelCase alias injection</option><option value='normal-metadata-update-control'>Normal metadata update control</option><option value='same-tenant-metadata-control'>Same-tenant control</option><option value='run-scope-unmodified-control'>Run-scope control</option></select><button id='run' type='button'>Run browser check</button><span id='status' role='status'>Ready</span><pre id='result' data-state='empty'></pre></main><script>
+const params = new URLSearchParams(location.search);
+const version = params.get('version') || 'mem0ai-3.1.1';
+const intervention = params.get('intervention') || null;
+document.getElementById('version').textContent = version;
+const questions = {
+  'tenant-metadata-overwrite': 'Tenant A stores a memory. An update tries to move metadata.user_id to tenant B. Which tenant can read the memory afterwards?',
+  'tenant-identity-injection': 'A run-scoped memory is updated with user_id and agent_id metadata. Can the injected scopes read a memory that never belonged to them?',
+  'tenant-camelcase-alias-injection': 'A run-scoped memory is updated with camelCase userId and agentId aliases. Do those aliases grant a new tenant scope?',
+  'normal-metadata-update-control': 'A tenant updates only ordinary metadata such as category and priority. Does the memory remain readable by the original tenant?',
+  'same-tenant-metadata-control': 'A tenant updates metadata with its own unchanged user_id. Does the memory remain readable by that tenant?',
+  'run-scope-unmodified-control': 'A run-scoped memory is stored without an identity metadata update. Is it still isolated to its original run scope?'
+};
+document.getElementById('run').addEventListener('click', async () => {
+  const scenario = document.getElementById('scenario').value;
+  const status = document.getElementById('status');
+  const result = document.getElementById('result');
+  status.textContent = 'Running';
+  result.textContent = '';
+  result.dataset.state = 'running';
+  try {
+    const response = await fetch('/v1/answer', {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({run_id:'browser-run', test_case_id:'browser-case', scenario_id:scenario, question:questions[scenario], version, intervention:intervention})
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || ('HTTP ' + response.status));
+    result.textContent = payload.answer;
+    result.dataset.state = 'complete';
+    status.textContent = 'Complete';
+  } catch (error) {
+    result.textContent = String(error);
+    result.dataset.state = 'error';
+    status.textContent = 'Error';
+  }
+});
+</script></body></html>

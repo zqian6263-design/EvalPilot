@@ -1,4 +1,5 @@
 import http from "node:http";
+import { readFileSync } from "node:fs";
 import crypto from "node:crypto";
 import { URL } from "node:url";
 import { Memory as MemoryBuggy } from "mem0-buggy/oss";
@@ -252,6 +253,15 @@ async function handleMock(req, res, url) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${port}`);
   try {
+    if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/ui")) {
+      const html = readFileSync(new URL("./ui.html", import.meta.url), "utf8");
+      res.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "content-length": Buffer.byteLength(html),
+      });
+      res.end(html);
+      return;
+    }
     if (url.pathname.startsWith("/mock/v1/")) return await handleMock(req, res, url);
     if (req.method === "GET" && url.pathname === "/health") {
       return json(res, 200, { status: "ok", engine: "mem0ai", versions: Object.keys(versions) });

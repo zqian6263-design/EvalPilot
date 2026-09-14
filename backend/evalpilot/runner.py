@@ -41,7 +41,7 @@ from evalpilot.planner import (
     select_scenarios,
 )
 from evalpilot.repository import NotFoundError, Repository
-from evalpilot.tools import ToolRegistry
+from evalpilot.tools import ToolPolicy, ToolRegistry
 
 logger = logging.getLogger("evalpilot.runner")
 
@@ -74,6 +74,7 @@ class RunRunner:
         settings: Settings,
         evaluation_service: EvaluationService | None = None,
         case_executor: Callable[..., ExecutionResult] | None = None,
+        tool_policy: ToolPolicy | None = None,
     ) -> None:
         self.repo = repo
         self.db = db
@@ -83,6 +84,7 @@ class RunRunner:
         # evaluation seam still receives question text and rubric when enabled.
         self.evaluation_service = evaluation_service or EvaluationService()
         self.case_executor = case_executor or execute_case
+        self.tool_policy = tool_policy or ToolPolicy()
 
     # -- public API ---------------------------------------------------------
 
@@ -194,7 +196,10 @@ class RunRunner:
         # --- executing -----------------------------------------------------
         self._check_active(run_id)
         self.repo.set_run_status(run_id, RunStatus.EXECUTING)
-        registry = ToolRegistry(enable_python=self.settings.enable_python_tool)
+        registry = ToolRegistry(
+            enable_python=self.settings.enable_python_tool,
+            policy=self.tool_policy,
+        )
         evidence_by_case: dict[str, list[Evidence]] = {}
 
         for index, stored_case in enumerate(cases, start=1):
