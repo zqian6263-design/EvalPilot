@@ -132,6 +132,39 @@ try {
     Step 'browser replays confirm root cause' (@($counterfactuals | Where-Object { $_.verdict -ne 'root_cause' }).Count -eq 0)
     Step 'release remains blocked at critical risk' ($investigationDetail.decision.verdict -eq 'block' -and $investigationDetail.decision.risk_level -eq 'critical')
 
+    # A verdict the deterministic fallback produced is a prediction. The engine
+    # says "Replayed ..."; the fallback says "is predicted to restore ...".
+    Step 'every browser replay is a measurement, not a prediction' (
+        @($counterfactuals | Where-Object { -not $_.rationale.StartsWith('Replayed ') -or $_.rationale -match 'predicted' }).Count -eq 0
+    )
+
+    # ... and the evidence must show it: each counterfactual replays two arms
+    # through the browser, so the run gains one screenshot and one trace per arm,
+    # and the replay trace records the intervention that produced it.
+    $afterInvestigation = Api GET "/runs/$($run.id)"
+    $allScreenshots = @($afterInvestigation.evidence | Where-Object { $_.kind -eq 'screenshot' })
+    # Only the browser executor records a request on its trace row; the
+    # investigation's own follow-up probes write trace rows without one.
+    $browserTraces = @(
+        $afterInvestigation.evidence | Where-Object { $_.kind -eq 'trace' -and $_.payload.request }
+    )
+    $replayTraces = @(
+        $browserTraces | Where-Object { $_.payload.request.intervention -eq 'identity_metadata_stripped' }
+    )
+    $expectedReplayArms = $counterfactuals.Count * 2
+    Step 'every counterfactual replayed both arms through the browser' (
+        $replayTraces.Count -eq $counterfactuals.Count
+    ) "intervention_traces=$($replayTraces.Count) replays=$($counterfactuals.Count)"
+    Step 'every browser replay persisted its own browser trace' (
+        $browserTraces.Count -eq (12 + $expectedReplayArms)
+    ) "browser_traces=$($browserTraces.Count) expected=$(12 + $expectedReplayArms)"
+    Step 'every browser replay persisted its own screenshot' (
+        $allScreenshots.Count -eq (12 + $expectedReplayArms)
+    ) "screenshots=$($allScreenshots.Count)"
+    Step 'every replayed arm really loaded the page' (
+        @($replayTraces | Where-Object { @($_.payload.actions).Count -eq 0 }).Count -eq 0
+    )
+
     if ($failures.Count -gt 0) { throw "P3 browser acceptance failed: $($failures -join '; ')" }
 
     $summary = [ordered]@{
@@ -140,16 +173,24 @@ try {
         investigation_id = $investigation.id
         matched_scenarios = $report.metrics.scenario_count
         regressed_scenarios = $regressed
+        control_scenarios = @($report.metrics.control_scenarios)
         screenshot_evidence = $screenshots.Count
         trace_evidence = $traces.Count
-        counterfactuals = @($counterfactuals | ForEach-Object { @{ scenario_id = $_.scenario_id; intervention = $_.intervention; verdict = $_.verdict; original_score = $_.original_score; counterfactual_score = $_.counterfactual_score } })
+        measured_browser_replays = $replayTraces.Count
+        measured_replay_arms = $expectedReplayArms
+        measured_replay_screenshots = $allScreenshots.Count
+        measured_replay_traces = $browserTraces.Count
+        mean_difference = $report.metrics.mean_difference
+        ci = @($report.metrics.ci_lower, $report.metrics.ci_upper)
+        counterfactuals = @($counterfactuals | ForEach-Object { [ordered]@{ scenario_id = $_.scenario_id; intervention = $_.intervention; verdict = $_.verdict; original_score = $_.original_score; counterfactual_score = $_.counterfactual_score; rationale = $_.rationale } })
         decision = $investigationDetail.decision.verdict
         risk_level = $investigationDetail.decision.risk_level
         completed_at = (Get-Date).ToUniversalTime().ToString('o')
     }
     $summary | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $workDir 'summary.json') -Encoding utf8
+    $summary | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $repoRoot 'docs/P3_BROWSER_RESULT.json') -Encoding utf8
     Write-Host "`nP3 browser acceptance OK" -ForegroundColor Green
-    Write-Host "Evidence: $(Join-Path $workDir 'summary.json')"
+    Write-Host "Evidence: $(Join-Path $repoRoot 'docs/P3_BROWSER_RESULT.json')"
 } catch {
     Write-Host "`nP3 browser acceptance FAILED: $($_.Exception.Message)" -ForegroundColor Red
     throw

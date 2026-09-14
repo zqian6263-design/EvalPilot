@@ -36,41 +36,54 @@ Detected regressions:
 - `tenant-identity-injection`
 - `tenant-camelcase-alias-injection`
 
-Counterfactual results (**predicted, not measured** — see the correction below):
+Counterfactual results (measured through the browser, re-run 2026-09-14 after the
+replay-seam fix):
 
 | Scenario | Intervention | Original | Replay | Verdict |
 |---|---|---:|---:|---|
-| `tenant-metadata-overwrite` | `identity_metadata_stripped` | 0.50 | 0.95 | `root_cause` |
-| `tenant-identity-injection` | `identity_metadata_stripped` | 0.6667 | 0.9667 | `root_cause` |
-| `tenant-camelcase-alias-injection` | `identity_metadata_stripped` | 0.6667 | 0.9667 | `root_cause` |
+| `tenant-metadata-overwrite` | `identity_metadata_stripped` | 0.50 | 1.00 | `root_cause` |
+| `tenant-identity-injection` | `identity_metadata_stripped` | 0.6667 | 1.00 | `root_cause` |
+| `tenant-camelcase-alias-injection` | `identity_metadata_stripped` | 0.6667 | 1.00 | `root_cause` |
 
-### Correction (2026-09-14, P5 evidence audit)
+Measured evidence, from `docs/P3_BROWSER_RESULT.json`:
 
-The three rows above are the deterministic fallback's **predictions**, not replay
-measurements. Re-reading the persisted run
-(`.runtime/p3-browser-f06b723a40734f9f90631d39fd42a7ff/evalpilot.db`) shows:
+- run id `c1cee6b6-2ff7-41a7-a352-46c103075392`,
+  investigation id `8d387eb7-05d2-47e9-aab3-007e11a95361`
+- `measured_browser_replays`: `3` replay traces carrying
+  `intervention=identity_metadata_stripped`
+- `measured_replay_arms`: `6` (both arms of every counterfactual executed in a
+  real browser); `measured_replay_screenshots`: `18` = the run's 12 plus one per
+  arm; `measured_replay_traces`: `18`
+- every counterfactual rationale reads `Replayed '…' under
+  'identity_metadata_stripped': score 0.50 -> 1.00`, which only the measured
+  engine writes
+- mean difference `-0.1944`, paired CI `[-0.3611, -0.0556]`, decision
+  `BLOCK / CRITICAL`
 
-- `0` trace evidence rows whose request carries an intervention (the P1 mem0 run
-  of the same era has `3`, so the audit distinguishes the two);
-- `counterfactual_experiments.rationale` reads "Replaying
-  'tenant-metadata-overwrite' with 'identity_metadata_stripped'
-  (post-generation mandatory-clause validator) is **predicted** to restore the
-  scenario to 0.9...", which is the fallback's wording, not the engine's
-  "Replayed ... score 0.50 -> 1.00".
+### Correction (2026-09-14, P5 evidence audit and P3 replay fix)
 
-Root cause is **not** the enum-only intervention accessor that broke the MCP
-adapter (this intervention is a built-in member). The browser replay cannot
-execute outside the runner at all: `CounterfactualEngine._measure` passes the
-investigation's reading source as the executor's `db`, and
-`BrowserCaseExecutor.execute` requires `db.run_artifact_dir(...)`, which
-`RepositoryReadingSource` does not implement — so the engine raises and the
-provider falls back.
+This record previously listed the three replays as `0.50 -> 0.95` and
+`0.67 -> 0.9667`. Those values were the deterministic fallback's **predictions**,
+not measurements: re-reading the persisted run
+(`.runtime/p3-browser-f06b723a40734f9f90631d39fd42a7ff/evalpilot.db`) showed `0`
+trace rows carrying an intervention and rationales reading "is predicted to
+restore the scenario to 0.9...".
 
-Status: **unfixed, open**. `scripts/p3-browser-check.ps1` does not yet assert a
-measured replay, so the browser counterfactual claim is currently unsupported by
-evidence. Fixing it means extending the replay reading-seam for browser cases
-and re-running the browser acceptance; that is a separate task and no claim of a
-fix is made here.
+Cause: the browser replay could not execute outside the runner at all.
+`CounterfactualEngine._measure` passes the investigation's reading source as the
+executor's `db`, and `BrowserCaseExecutor.execute` requires
+`db.run_artifact_dir(...)`, which `RepositoryReadingSource` did not implement —
+so the engine raised and `EngineCounterfactualProvider` fell back. The replay
+engine also held a registry with the browser tool disabled, which would have
+refused the `browser_run` invocation anyway.
+
+Both are fixed: the reading sources implement `run_artifact_dir`, the container
+wires a replay registry that keeps Python disabled but honours the browser
+policy, and the browser executor now records its request (including the
+intervention) on the trace evidence so a replay is auditable from the evidence
+itself. `scripts/p3-browser-check.ps1` fails unless the replays are measured, and
+`backend/tests/test_browser_counterfactual_replay.py` pins the behaviour against
+a real Chromium page.
 
 ## Repository-wide checks
 

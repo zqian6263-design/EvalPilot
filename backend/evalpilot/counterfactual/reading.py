@@ -23,7 +23,9 @@ the database.
 
 from __future__ import annotations
 
+import tempfile
 from collections.abc import Iterable, Sequence
+from pathlib import Path
 from typing import Protocol, runtime_checkable
 
 from evalpilot.models import Evidence, EvidenceKind
@@ -70,6 +72,17 @@ class InvestigationReadingSource(Protocol):
         """Persist a text artefact and return its location."""
         ...
 
+    def run_artifact_dir(self, run_id: str) -> Path:
+        """A directory a replayed executor may write its own artefacts into.
+
+        A browser replay screenshots through the same executor a run uses, and
+        that executor needs a per-run directory. Without it the executor raises
+        before launching the browser, the provider falls back to the
+        deterministic predictor, and the investigation reports a *prediction*
+        where its contract promises a measurement.
+        """
+        ...
+
 
 class InMemoryReadingSource:
     """A dict-of-evidence implementation for tests and offline callers.
@@ -79,9 +92,15 @@ class InMemoryReadingSource:
     simulate a missing evidence row only has to cite an id it never wrote.
     """
 
-    def __init__(self, evidence: Iterable[Evidence] | None = None) -> None:
+    def __init__(
+        self,
+        evidence: Iterable[Evidence] | None = None,
+        *,
+        artifact_root: Path | None = None,
+    ) -> None:
         self._evidence: dict[str, Evidence] = {item.id: item for item in evidence or ()}
         self._artifacts: dict[str, str] = {}
+        self._artifact_root = artifact_root
         self.added: list[Evidence] = []
 
     # -- reads ---------------------------------------------------------------
@@ -116,6 +135,20 @@ class InMemoryReadingSource:
         uri = f"memory://artifacts/{run_id}/{filename}"
         self._artifacts[uri] = content
         return uri
+
+    def run_artifact_dir(self, run_id: str) -> Path:
+        """A per-run directory under a temporary root, created on first use.
+
+        Offline callers get a real directory rather than an exception, so a
+        browser replay behaves the same way here as it does against the
+        repository-backed source.
+        """
+
+        if self._artifact_root is None:
+            self._artifact_root = Path(tempfile.mkdtemp(prefix="evalpilot-replay-"))
+        path = self._artifact_root / run_id
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
 
 def resolve_evidence(

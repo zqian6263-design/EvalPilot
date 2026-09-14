@@ -142,9 +142,10 @@ evidence through the normal evidence model.
 
 The public retrospective for `mem0ai` includes a browser-facing portal over the
 public package releases. The browser acceptance check observes three tenant
-isolation regressions and preserves three controls; its counterfactual
-verdicts are currently produced by the deterministic fallback rather than by a
-replayed browser session — see the correction in `docs/P3_VERIFICATION.md`.
+isolation regressions, preserves three controls, and confirms all three root
+causes through browser counterfactual replay: each replay executes both arms in a
+real browser (18 screenshots and 18 browser traces in total) and the run records
+the intervention that produced them. See `docs/P3_VERIFICATION.md`.
 
 ```powershell
 .\scripts\p3-browser-check.ps1

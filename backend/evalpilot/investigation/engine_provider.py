@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
 from evalpilot.counterfactual import (
     CounterfactualEngine,
@@ -24,6 +25,7 @@ from evalpilot.counterfactual import (
 from evalpilot.executor import ExecutionResult
 from evalpilot.models import Evidence
 from evalpilot.repository import Repository
+from evalpilot.tools import ToolRegistry
 
 from .providers import Attempt, CounterfactualRequest, DeterministicProvider
 
@@ -43,6 +45,15 @@ class RepositoryReadingSource:
     def write_artifact(self, run_id: str, filename: str, content: str) -> str:
         return self.repo.db.write_artifact(run_id, filename, content)
 
+    def run_artifact_dir(self, run_id: str) -> Path:
+        """The same per-run directory the runner gives the case executor.
+
+        A browser replay persists its screenshot through the executor, so it
+        needs this exactly as a normal execution does.
+        """
+
+        return self.repo.db.run_artifact_dir(run_id)
+
 
 class EngineCounterfactualProvider:
     """Provider backed by measured counterfactual replay."""
@@ -56,10 +67,12 @@ class EngineCounterfactualProvider:
         engine: CounterfactualEngine | None = None,
         fallback: DeterministicProvider | None = None,
         executor: Callable[..., ExecutionResult] | None = None,
+        registry: ToolRegistry | None = None,
     ) -> None:
         self.repo = repo
         self.engine = engine or CounterfactualEngine(
             source=RepositoryReadingSource(repo),
+            registry=registry,
             executor=executor,
         )
         self.fallback = fallback or DeterministicProvider()

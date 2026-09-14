@@ -1,39 +1,56 @@
 {
   "status": "passed",
-  "run_id": "a092cc95-0bef-404d-b552-8e46ff5db65c",
-  "investigation_id": "c2c46b55-acfc-4e07-8f88-819cdc81fd06",
+  "run_id": "c1cee6b6-2ff7-41a7-a352-46c103075392",
+  "investigation_id": "8d387eb7-05d2-47e9-aab3-007e11a95361",
   "matched_scenarios": 6,
   "regressed_scenarios": [
     "tenant-camelcase-alias-injection",
     "tenant-identity-injection",
     "tenant-metadata-overwrite"
   ],
+  "control_scenarios": [
+    "normal-metadata-update-control",
+    "run-scope-unmodified-control",
+    "same-tenant-metadata-control"
+  ],
   "screenshot_evidence": 12,
   "trace_evidence": 12,
+  "measured_browser_replays": 3,
+  "measured_replay_arms": 6,
+  "measured_replay_screenshots": 18,
+  "measured_replay_traces": 18,
+  "mean_difference": -0.19444444444444445,
+  "ci": [
+    -0.36111111111111116,
+    -0.05555555555555556
+  ],
   "counterfactuals": [
     {
-      "counterfactual_score": 0.95,
+      "scenario_id": "tenant-metadata-overwrite",
       "intervention": "identity_metadata_stripped",
       "verdict": "root_cause",
       "original_score": 0.5,
-      "scenario_id": "tenant-metadata-overwrite"
+      "counterfactual_score": 1.0,
+      "rationale": "Replayed 'tenant-metadata-overwrite' under 'identity_metadata_stripped': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'owner_visible=true; foreign_visible=false'. Evidence: 4f6c85b4-9ea3-41df-8831-a7642997b7f2, c88fb384-db85-47b0-94b1-b0eabd2e4a9d, 17d7f72a-6063-4ec9-b29d-ba917cd547a0, 6a05c6da-3c17-4cbc-9b47-357f1314cc45, 0a5f9eda-3214-4f96-bdb3-3aa1b9f6adb6, 51071337-c583-4985-8e2e-c943c3000cc4, 55cc394d-1bb3-442e-b8d2-6dcdd3e8925c."
     },
     {
-      "counterfactual_score": 0.9667,
+      "scenario_id": "tenant-identity-injection",
       "intervention": "identity_metadata_stripped",
       "verdict": "root_cause",
       "original_score": 0.6666666666666666,
-      "scenario_id": "tenant-identity-injection"
+      "counterfactual_score": 1.0,
+      "rationale": "Replayed 'tenant-identity-injection' under 'identity_metadata_stripped': score 0.67 -> 1.00 (delta +0.33). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'run_visible=true; injected_user_visible=false; injected_agent_visible=false'. Evidence: af32bb1c-4796-4d67-b45d-664d87c00049, cd411e8d-ed17-4a81-8abc-bb210f78bc66, 95bbddf7-6d6a-4b95-b1a1-d36932192f67, bec40451-c246-4bc4-addd-f244f567dd32, 78411c81-9138-48c2-80f4-e8017899664a, 9f776c9e-4c3c-463e-8013-d11388e1e7ac, 13d0ab36-1a88-4679-88f6-60e4989b1f2b."
     },
     {
-      "counterfactual_score": 0.9667,
+      "scenario_id": "tenant-camelcase-alias-injection",
       "intervention": "identity_metadata_stripped",
       "verdict": "root_cause",
       "original_score": 0.6666666666666666,
-      "scenario_id": "tenant-camelcase-alias-injection"
+      "counterfactual_score": 1.0,
+      "rationale": "Replayed 'tenant-camelcase-alias-injection' under 'identity_metadata_stripped': score 0.67 -> 1.00 (delta +0.33). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'run_visible=true; camel_user_visible=false; camel_agent_visible=false'. Evidence: 562618ce-c849-4837-951b-3e8f0c8fbc7d, 72beb2d0-e4f1-45f4-bc4d-08fce53ec7c9, acb61cfc-242b-482a-9d6c-6f8c6bbb65f0, 093bff89-01e2-49f6-be75-3f139df16908, 9dd66bee-3649-460a-ad98-e89c27e321d7, 1c017f30-7fd0-4225-b81d-63a7844a907c, 2740070d-02fb-4556-83f1-4ec88a02609c."
     }
   ],
   "decision": "block",
   "risk_level": "critical",
-  "completed_at": "2026-09-14T02:46:07.9193664Z"
+  "completed_at": "2026-09-14T10:37:59.1627655Z"
 }

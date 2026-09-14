@@ -106,11 +106,21 @@ def build_container(settings: Settings | None = None) -> Container:
         case_executor=case_executor,
         tool_policy=tool_policy,
     )
+    # A counterfactual replay runs the same executor as the run it explains, so
+    # it needs the same tool policy: a browser replay has to be able to invoke
+    # ``browser_run`` or the provider silently degrades to a prediction. Python
+    # execution stays off here regardless of the run's setting, because a replay
+    # must not be able to execute arbitrary input.
+    replay_registry = ToolRegistry(enable_python=False, policy=tool_policy)
     investigation_runner = InvestigationService(
         repo,
         settings=resolved,
         evaluation_service=evaluation_service,
-        provider=EngineCounterfactualProvider(repo=repo, executor=case_executor),
+        provider=EngineCounterfactualProvider(
+            repo=repo,
+            executor=case_executor,
+            registry=replay_registry,
+        ),
         llm_runtime=llm_runtime,
     )
     return Container(

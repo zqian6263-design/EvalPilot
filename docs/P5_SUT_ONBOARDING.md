@@ -308,21 +308,21 @@ intervention 字符串，内置枚举行为不变；`Intervention.parse` 的封�
 
 - P4（MCP 适配器）：记录中的 `0.50 -> 0.95` 是 fallback 预测；修复后重跑为
   `0.50 -> 1.00` 且带 3 条真实 HTTP 重放 trace；
-- P3（浏览器适配器）：记录中的 `0.50 -> 0.95` / `0.67 -> 0.9667` 同样是预测，
-  且**原因不同、目前仍未修复**——浏览器重放需要 `db.run_artifact_dir(...)`，
-  而重放用的 reading source 没有实现它，因此浏览器反事实在 runner 之外无法执行。
-  P3 的评测本身（运行、回归、对照、截图与 trace）不受影响。
+- P3（浏览器适配器）的 `0.50 -> 0.95` / `0.67 -> 0.9667` 当时同样是预测。
+  原因是重放需要 `db.run_artifact_dir(...)`，而重放用的 reading source 没有实现它，
+  且重放引擎的 registry 关闭了浏览器工具，因此浏览器重放在 runner 之外无法执行。
+  该缺陷已修复并重跑：`scripts/p3-browser-check.ps1` 现在要求 3 条实测浏览器重放
+  （每条重放两臂都真实执行，共 18 张截图 / 18 条浏览器 trace），分数为
+  `0.50 -> 1.00`、`0.67 -> 1.00`，详见 `docs/P3_VERIFICATION.md`。
 
-`backend/tests/test_acceptance_evidence.py` 与 `scripts/p4-mcp-retro-check.ps1` 现已把
-「至少每个反事实一条真实 HTTP 重放 trace，且 rationale 是引擎措辞而非 "predicted"」
-变成硬性断言，预测结果无法再被标记为实测。
+`backend/tests/test_acceptance_evidence.py`、`scripts/p4-mcp-retro-check.ps1` 与
+`scripts/p3-browser-check.ps1` 现已把「至少每个反事实一条真实重放 trace，且 rationale 是
+引擎措辞而非 "predicted"」变成硬性断言，预测结果无法再被标记为实测。
 
 未解决边界：
 
 - Docker 不可用，`.devcontainer` 的镜像构建与 `postCreateCommand` **未在真实容器中执行**；
   已用 JSON 解析器校验 `devcontainer.json`，脚本为纯 shell，首次使用请按
   `.devcontainer/README.md` 在本地构建一次。
-- 浏览器（P3）反事实重放仍未实测，见上；需要扩展重放 reading seam 支持浏览器 case，
-  属于独立任务。
 - `scripts/p5-sut-e2e-check.ps1` 的回归检测是统计结论，依赖模板 workload 的
   5 回归 / 3 对照结构；替换 workload 后需重新确认是否达到 `regression_confirmed`。

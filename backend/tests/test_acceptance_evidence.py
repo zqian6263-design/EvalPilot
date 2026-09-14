@@ -21,6 +21,7 @@ import pytest
 from evalpilot.counterfactual import Intervention
 
 ROOT = Path(__file__).resolve().parents[2]
+P3_RESULT = ROOT / "docs" / "P3_BROWSER_RESULT.json"
 P4_RESULT = ROOT / "docs" / "P4_MCP_RESULT.json"
 P5_RESULT = ROOT / "docs" / "P5_E2E_RESULT.json"
 TEMPLATE_WORKLOAD = ROOT / "integrations" / "sut_template" / "workload.json"
@@ -33,23 +34,25 @@ def _load(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _assert_measured_replays(document: dict, expected: int) -> None:
+def _assert_measured_replays(
+    document: dict, expected: int, *, counter_key: str = "measured_http_replays"
+) -> None:
     """Every recorded counterfactual must be a measurement, not a prediction.
 
     Two independent signals are required, because either one alone can be faked
     by a careless script:
 
-    1. the run persisted at least one HTTP replay trace per counterfactual, so
-       the replay actually reached the system under test; and
+    1. the run persisted a replay trace per counterfactual, so the replay
+       actually reached the system under test; and
     2. the persisted rationale is the engine's wording ("Replayed ... "), not the
        deterministic fallback's ("... is predicted to restore ...").
     """
 
     counterfactuals = document["counterfactuals"]
     assert len(counterfactuals) == expected
-    assert document.get("measured_http_replays", 0) >= expected, (
-        "a counterfactual without a measured HTTP replay trace is a fallback "
-        "prediction, not a measurement"
+    assert document.get(counter_key, 0) >= expected, (
+        f"a counterfactual without a measured replay trace ({counter_key}) is a "
+        "fallback prediction, not a measurement"
     )
     for item in counterfactuals:
         assert item["verdict"] == "root_cause", item
@@ -57,6 +60,28 @@ def _assert_measured_replays(document: dict, expected: int) -> None:
         rationale = item["rationale"]
         assert rationale.startswith("Replayed "), rationale
         assert "predicted" not in rationale.lower(), rationale
+
+
+def test_p3_browser_evidence_records_measured_replays() -> None:
+    document = _load(P3_RESULT)
+
+    assert document["status"] == "passed"
+    assert document["run_id"] and document["investigation_id"]
+    assert document["matched_scenarios"] == 6
+    assert len(document["regressed_scenarios"]) == 3
+    assert len(document["control_scenarios"]) == 3
+    assert document["decision"] == "block"
+    _assert_measured_replays(
+        document, expected=3, counter_key="measured_browser_replays"
+    )
+
+    # Both arms of every counterfactual ran in a real browser, so the run gained
+    # one screenshot and one browser trace per arm on top of its own 12.
+    arms = document["measured_replay_arms"]
+    assert arms == 2 * len(document["counterfactuals"])
+    assert document["measured_replay_traces"] == 12 + arms
+    assert document["measured_replay_screenshots"] == 12 + arms
+    assert document["trace_evidence"] == 12 and document["screenshot_evidence"] == 12
 
 
 def test_p4_mcp_evidence_records_measured_replays() -> None:

@@ -58,15 +58,27 @@ class BrowserCaseExecutor:
         created_at = utc_now()
         base = {"run_id": case.run_id, "test_case_id": case.id, "created_at": created_at.isoformat()}
         screenshot_relative = f"data/artifacts/{case.run_id}/{screenshot_name}"
+        # The request is recorded next to the observed action trace, the same way
+        # the HTTP executor records its request. Without the intervention in the
+        # payload, a counterfactual replay's browser evidence is indistinguishable
+        # from an ordinary execution's, so "this replay ran" could not be audited
+        # from the evidence itself.
+        request = {
+            "url": target_url,
+            "actions": actions,
+            "scenario_id": case.input.get("scenario_id"),
+            "version": case.input.get("version_label") or case.version,
+            "intervention": intervention,
+        }
         trace_uri = db.write_artifact(
             case.run_id,
             f"{case.id}-browser-trace.json",
-            json.dumps({"request": {"url": target_url, "actions": actions}, "result": output}, ensure_ascii=False, indent=2, default=str),
+            json.dumps({"request": request, "result": output}, ensure_ascii=False, indent=2, default=str),
         )
         evidence = [
             Evidence(id=new_id(), run_id=case.run_id, test_case_id=case.id, kind="text", uri=None, payload={"answer": answer, "final_url": output.get("final_url"), **base}, created_at=created_at),
             Evidence(id=new_id(), run_id=case.run_id, test_case_id=case.id, kind="screenshot", uri=screenshot_relative, payload={"path": screenshot_relative, **base}, created_at=created_at),
-            Evidence(id=new_id(), run_id=case.run_id, test_case_id=case.id, kind="trace", uri=trace_uri, payload={"actions": output.get("action_trace", []), "console_errors": output.get("console_errors", []), **base}, created_at=created_at),
+            Evidence(id=new_id(), run_id=case.run_id, test_case_id=case.id, kind="trace", uri=trace_uri, payload={"request": request, "actions": output.get("action_trace", []), "console_errors": output.get("console_errors", []), **base}, created_at=created_at),
         ]
         output.update({"scenario_id": case.input.get("scenario_id"), "version": case.input.get("version_label") or case.version, "answer": answer, "citations": [], "tool_calls": output.get("tool_calls", [])})
         return ExecutionResult(output=output, evidence=evidence)

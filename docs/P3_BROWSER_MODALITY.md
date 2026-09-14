@@ -75,20 +75,20 @@ Detected regressions:
 - `tenant-identity-injection`
 - `tenant-camelcase-alias-injection`
 
-Browser counterfactual replay — **predicted, not measured**:
+Browser counterfactual replay (measured, re-run 2026-09-14):
 
 | Scenario | Intervention | Original | Replay | Verdict |
 |---|---|---:|---:|---|
-| `tenant-metadata-overwrite` | `identity_metadata_stripped` | 0.50 | 0.95 | `root_cause` |
-| `tenant-identity-injection` | `identity_metadata_stripped` | 0.67 | 0.97 | `root_cause` |
-| `tenant-camelcase-alias-injection` | `identity_metadata_stripped` | 0.67 | 0.97 | `root_cause` |
+| `tenant-metadata-overwrite` | `identity_metadata_stripped` | 0.50 | 1.00 | `root_cause` |
+| `tenant-identity-injection` | `identity_metadata_stripped` | 0.67 | 1.00 | `root_cause` |
+| `tenant-camelcase-alias-injection` | `identity_metadata_stripped` | 0.67 | 1.00 | `root_cause` |
 
-These values come from the deterministic fallback, not from a replayed browser
-session: the run has no trace evidence carrying an intervention, and the
-persisted rationale says "is predicted to restore the scenario". See the
-correction in `docs/P3_VERIFICATION.md` for the evidence and the (separate,
-still open) cause. The browser *evaluation* itself — run, regressions, controls,
-screenshots and traces — is measured and unaffected.
+Every replay executed both arms in a real browser: 3 replay traces carrying the
+intervention, 18 screenshots and 18 browser traces in total (the run's 12 plus
+one per replay arm), and rationales reading "Replayed ... score 0.50 -> 1.00".
+The earlier version of this table recorded the deterministic fallback's
+predictions (`0.95` / `0.9667`); see the correction in `docs/P3_VERIFICATION.md`
+for the cause and the fix.
 
 Final decision: `BLOCK / CRITICAL`.
 
@@ -98,7 +98,7 @@ Final decision: `BLOCK / CRITICAL`.
 pwsh -NoProfile -File .\scripts\p3-browser-check.ps1
 ```
 
-The script starts the public OSS-backed SUT, starts EvalPilot with browser execution enabled, runs both versions, checks screenshot and trace evidence, runs the investigation, and verifies three browser-based root-cause verdicts. It does not yet verify that the counterfactual replays were executed rather than predicted.
+The script starts the public OSS-backed SUT, starts EvalPilot with browser execution enabled, runs both versions, checks screenshot and trace evidence, runs the investigation, and requires three *measured* browser root-cause replays: it fails unless every counterfactual rationale is written by the replay engine and the run holds one browser trace per replayed arm plus the matching screenshots.
 
 ## Evidence
 
