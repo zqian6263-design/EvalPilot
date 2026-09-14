@@ -40,7 +40,7 @@ EvalPilot 只通过 HTTP 与你通信，你不需要 import 任何 EvalPilot 代
 {
   "contract_version": "1.0",
   "versions": ["v1.0-baseline", "v1.1-candidate"],
-  "interventions": ["full_context_enabled"],
+  "interventions": ["compression_disabled", "full_context_restored"],
   "features": ["citations", "tool_calls", "refusal", "offline_cache"]
 }
 ```
@@ -49,7 +49,7 @@ EvalPilot 只通过 HTTP 与你通信，你不需要 import 任何 EvalPilot 代
 | --- | --- | --- | --- |
 | `contract_version` | string | 否（默认 `1.0`） | 契约版本 |
 | `versions` | string[] | 建议 | 可服务的版本标签，必须真实可服务 |
-| `interventions` | string[] | 否 | 白名单开关名，必须真实可执行 |
+| `interventions` | string[] | 否 | 白名单开关名。可以是引擎内置词表里的名字（如 `compression_disabled`），也可以是你自己的名字——引擎会原样下发并真实测量 |
 | `features` | string[] | 否 | 能力声明，仅用于记录 |
 
 未知字段会被拒绝：`SutCapabilities` 使用 `extra="forbid"`。
@@ -64,7 +64,7 @@ EvalPilot 只通过 HTTP 与你通信，你不需要 import 任何 EvalPilot 代
 {
   "run_id": "8f0c...",
   "test_case_id": "3a91...",
-  "scenario_id": "refund-window",
+  "scenario_id": "refund-return-window",
   "question": "How many days do I have to return a product for a refund?",
   "version": "v1.1-candidate",
   "intervention": null
@@ -111,7 +111,7 @@ EvalPilot 只通过 HTTP 与你通信，你不需要 import 任何 EvalPilot 代
   "candidate_version": "v1.1-candidate",
   "scenarios": [
     {
-      "scenario_id": "refund-window",
+      "scenario_id": "refund-return-window",
       "question": "How many days do I have to return a product for a refund?",
       "category": "normal",
       "difficulty": 0.15,
@@ -217,6 +217,37 @@ python scripts/deploy.py
 然后在控制台 `http://127.0.0.1:5173/` 创建 `v1.0-baseline -> v1.1-candidate` 的运行。
 契约细节见 `docs/EXTERNAL_SUT.md`。
 
+## 5.1 一键端到端验收（推荐）
+
+```powershell
+pwsh -NoProfile -File .\scripts\p5-sut-e2e-check.ps1
+```
+
+该脚本真实启动模板 SUT 与 EvalPilot 后端，依次完成：接入校验 →
+同版本对照 → `v1.0-baseline` vs `v1.1-candidate` 评测 → 自主调查与反事实重放，
+并把实测结果写入 `docs/P5_E2E_RESULT.json`。实测数据（2026-09-14）：
+
+| 项目 | 实测值 |
+| --- | --- |
+| 接入校验 | 28 项检查全通过，退出码 `0` |
+| 对照运行（candidate vs candidate） | 平均差 `0.0`，无回归 |
+| 回归运行 id | `b0c9531d-357b-49e1-874f-678941fdb491` |
+| 对照运行 id | `0f17ecb6-4802-4f9d-ae89-e65ce53ffbca` |
+| 调查 id | `f3b99d9b-e71b-4ca3-8bd4-99f374337ec0` |
+| 匹配场景 | `8` |
+| baseline 通过率 / 平均分 | `1.0 / 1.0` |
+| candidate 通过率 / 平均分 | `0.375 / 0.6875` |
+| 平均差与 95% 区间 | `-0.3125`，`[-0.4375, -0.125]`（阈值 `-0.05`，direction=`regression`） |
+| 回归场景 | `credential-handling-policy`、`escalation-deadline`、`escalation-human-handoff`、`refund-processing-time`、`shipping-express-cutoff` |
+| 对照场景 | `refund-payout-method`、`refund-return-window`、`shipping-standard-sla` |
+| 证据 | 16 条 SUT trace（8 场景 × 2 版本）、5 条 finding |
+| 反事实重放 | `5` 条全部 `root_cause`，`0.50 -> 1.00`，**全部为真实 HTTP 重放**（`measured_http_replays = 5`） |
+| 发布决策 | `block / critical` |
+
+重放使用的 intervention 名是模板自定义的 `full_context_restored`——它不在评测引擎内置的
+intervention 词表里。这一条件保证了一个外部服务声明的自定义 intervention 会被真正下发并测量，
+而不是退化成离线预测（见第 8 节）。
+
 ## 6. Dev Container
 
 `.devcontainer/` 提供 Python 3.11 + Node 22 的一次性环境，`postCreateCommand` 现场创建
@@ -248,21 +279,50 @@ bash .devcontainer/verify.sh
 
 已在本仓库自动化环境（Windows，Python 3.11.15）验证：
 
-- `integrations/sut_template` 可以真实启动（`scripts/p5-onboarding-check.ps1` 用 uvicorn
-  启动真实进程）；
-- `scripts/validate-sut.ps1` 对模板返回退出码 `0`；对 6 个故意破坏的 SUT 分别返回非零：
-  `health`（503）、`capabilities`（404）、`version`（声明但不可服务）、
+- `integrations/sut_template` 可以真实启动（`scripts/p5-onboarding-check.ps1` 与
+  `scripts/p5-sut-e2e-check.ps1` 都用 uvicorn 启动真实进程）；
+- `scripts/validate-sut.ps1` 对模板返回退出码 `0`（28 项检查）；对 6 个故意破坏的 SUT 分别
+  返回非零：`health`（503）、`capabilities`（404）、`version`（声明但不可服务）、
   `intervention`（声明但 500）、`silent`（静默接受未声明版本）、`response`（字段类型错误 +
   空 answer）；
+- 用模板跑通了完整的 baseline/candidate 评测与自主调查，实测数据见第 5.1 节，
+  机器可读证据为 `docs/P5_E2E_RESULT.json`；
 - `schemas/workload.schema.json` 由 `jsonschema` 4.26 校验，并通过测试接受本仓库全部
   真实工作负载（`integrations/mcp_retro`、`integrations/mem0_retro`、模板示例）；
 - 全量后端测试通过。
+
+### 关于「预测 vs 实测」的修正
+
+P5 的端到端验收暴露了一个真实性问题：反事实引擎原先只认识自己内置的 `Intervention`
+枚举成员，遇到外部服务自定义的 intervention 名会在读取 `executor_value` 时抛错，调查层
+捕获后静默退化为 deterministic fallback——于是**预测值被当成实测值**呈现。
+
+该缺陷已在本分支最小化修复（`backend/evalpilot/counterfactual/`：接受并保留任意非空
+intervention 字符串，内置枚举行为不变；`Intervention.parse` 的封闭白名单保持不变）。
+回归测试见 `backend/tests/test_external_intervention_replay.py`（修复前：
+自定义 intervention 的 HTTP 重放 trace 数为 `0`、模型直接拒绝该名字；修复后：
+5 条真实重放、`0.50 -> 1.00`）。
+
+同一缺陷类别也影响了此前 P4 与 P3 记录中的反事实数字，事实已在
+`docs/P4_VERIFICATION.md`、`docs/P3_VERIFICATION.md` 中更正：
+
+- P4（MCP 适配器）：记录中的 `0.50 -> 0.95` 是 fallback 预测；修复后重跑为
+  `0.50 -> 1.00` 且带 3 条真实 HTTP 重放 trace；
+- P3（浏览器适配器）：记录中的 `0.50 -> 0.95` / `0.67 -> 0.9667` 同样是预测，
+  且**原因不同、目前仍未修复**——浏览器重放需要 `db.run_artifact_dir(...)`，
+  而重放用的 reading source 没有实现它，因此浏览器反事实在 runner 之外无法执行。
+  P3 的评测本身（运行、回归、对照、截图与 trace）不受影响。
+
+`backend/tests/test_acceptance_evidence.py` 与 `scripts/p4-mcp-retro-check.ps1` 现已把
+「至少每个反事实一条真实 HTTP 重放 trace，且 rationale 是引擎措辞而非 "predicted"」
+变成硬性断言，预测结果无法再被标记为实测。
 
 未解决边界：
 
 - Docker 不可用，`.devcontainer` 的镜像构建与 `postCreateCommand` **未在真实容器中执行**；
   已用 JSON 解析器校验 `devcontainer.json`，脚本为纯 shell，首次使用请按
   `.devcontainer/README.md` 在本地构建一次。
-- 上表「用真实评测跑一次」是既有能力（P1-P4 e2e 已覆盖同一契约），P5 未新增评测口径，
-  也**没有**在本分支上重跑一次完整评测；如需端到端证据请运行
-  `scripts/sut-e2e-check.ps1`。
+- 浏览器（P3）反事实重放仍未实测，见上；需要扩展重放 reading seam 支持浏览器 case，
+  属于独立任务。
+- `scripts/p5-sut-e2e-check.ps1` 的回归检测是统计结论，依赖模板 workload 的
+  5 回归 / 3 对照结构；替换 workload 后需重新确认是否达到 `regression_confirmed`。

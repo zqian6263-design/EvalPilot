@@ -16,10 +16,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from evalpilot.counterfactual import Intervention
 
 ROOT = Path(__file__).resolve().parents[2]
 P4_RESULT = ROOT / "docs" / "P4_MCP_RESULT.json"
+P5_RESULT = ROOT / "docs" / "P5_E2E_RESULT.json"
+TEMPLATE_WORKLOAD = ROOT / "integrations" / "sut_template" / "workload.json"
 
 BUILTIN_INTERVENTIONS = {member.value for member in Intervention}
 
@@ -77,3 +81,50 @@ def test_p4_replay_intervention_is_not_a_builtin_name() -> None:
     assert {
         item["intervention"] for item in document["counterfactuals"]
     }.isdisjoint(BUILTIN_INTERVENTIONS)
+
+
+def test_p5_template_e2e_evidence_records_measured_replays() -> None:
+    document = _load(P5_RESULT)
+
+    assert document["status"] == "passed"
+    assert document["workload_file"] == "integrations/sut_template/workload.json"
+    assert document["onboarding_gate"]["exit_code"] == 0
+    assert document["onboarding_gate"]["checks_failed"] == 0
+    assert document["regression_run_id"] and document["control_run_id"]
+    assert document["investigation_id"]
+    assert document["matched_scenarios"] == 8
+    assert document["regression_confirmed"] is True
+    assert document["control_run_mean_difference"] == 0.0
+    assert document["decision"] == "block"
+    _assert_measured_replays(document, expected=5)
+
+
+def test_p5_replay_used_a_custom_intervention_name() -> None:
+    """The P5 proof is only meaningful if the replayed intervention was *not* one
+    of the engine's built-in names: that is the path that used to fall back."""
+
+    document = _load(P5_RESULT)
+    custom = document["custom_intervention"]
+
+    assert custom not in BUILTIN_INTERVENTIONS
+    assert custom in document["sut_interventions"]
+    assert {item["intervention"] for item in document["counterfactuals"]} == {custom}
+
+
+def test_p5_regressed_scenarios_match_the_template_workload() -> None:
+    """The recorded result must describe the workload that is actually shipped."""
+
+    document = _load(P5_RESULT)
+    workload = json.loads(TEMPLATE_WORKLOAD.read_text(encoding="utf-8"))
+
+    declared_regressions = {
+        scenario["scenario_id"]
+        for scenario in workload["scenarios"]
+        if scenario.get("suggested_intervention")
+    }
+    assert set(document["regressed_scenarios"]) == declared_regressions
+    assert set(document["failing_scenarios"]) == declared_regressions
+    assert declared_regressions.isdisjoint(set(document["control_scenarios"]))
+    assert set(document["control_scenarios"]) <= {
+        scenario["scenario_id"] for scenario in workload["scenarios"]
+    }

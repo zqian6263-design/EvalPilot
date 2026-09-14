@@ -104,6 +104,7 @@ pwsh -NoProfile -File .\scripts\validate-sut.ps1 `
 .\scripts\p3-browser-check.ps1
 .\scripts\p4-mcp-retro-check.ps1
 .\scripts\p5-onboarding-check.ps1
+.\scripts\p5-sut-e2e-check.ps1
 .\scripts\validate-sut.ps1 -BaseUrl http://127.0.0.1:8020 -Workload .\integrations\sut_template\workload.json
 .\scripts\build-release.ps1 -Version evalpilot-p4-20260914
 .\scripts\install-check.ps1
