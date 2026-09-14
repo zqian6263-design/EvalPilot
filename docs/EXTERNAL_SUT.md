@@ -173,3 +173,19 @@ configurations. It verifies:
 
 A machine-readable `summary.json` and both server logs are written under
 `.runtime/sut-e2e-*`.
+
+## Third-party MCP SDK retrospective
+
+`integrations/mcp_retro/server.py` adds a version-isolated HTTP SUT for the
+public `modelcontextprotocol/python-sdk` error-propagation boundary. It pins
+`mcp==1.30.0` and `mcp==2.2.0` in separate virtual environments and starts a
+real MCP stdio server/client in each. The workload detects protocol error
+channel, code, and data regressions while keeping success, ordinary tool
+exception, and tool discovery controls stable.
+
+```powershell
+.\scripts\p4-mcp-retro-check.ps1
+```
+
+The public issue and measured result are recorded in
+`docs/P4_MCP_RETROSPECTIVE.md` and `docs/P4_VERIFICATION.md`.

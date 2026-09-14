@@ -42,6 +42,8 @@
 - 支持 Judge 调用/token 预算和配对样本功效诊断。
 - 外部 SUT 通过能力发现声明支持的版本、干预和证据能力。
 - 支持 `EVALPILOT_WORKLOAD_FILE` 外部工作负载：不修改内置 fixture 即可评测公开应用的历史版本回归。
+- 第三方 MCP SDK 回顾性诊断：隔离运行公开 mcp==1.30.0 与 mcp==2.2.0，识别协议错误通道、错误码和数据丢失，并用 v2 错误路径反事实恢复。
+- 可校验源码发行包：生成 SHA-256、内部文件清单，并在全新解压目录中启动前后端完成安装验收。
 
 ## 快速开始
 
@@ -84,6 +86,9 @@ python scripts/deploy.py --stop
 .\scripts\sut-e2e-check.ps1
 .\scripts\p1-mem0-retro-check.ps1
 .\scripts\p3-browser-check.ps1
+.\scripts\p4-mcp-retro-check.ps1
+.\scripts\build-release.ps1 -Version evalpilot-p4-20260914
+.\scripts\install-check.ps1
 .venv\Scripts\python.exe backend\scripts\planning_quality_check.py
 .venv\Scripts\python.exe backend\scripts\planning_ood_check.py
 .venv\Scripts\python.exe backend\scripts\ood_replay_check.py
