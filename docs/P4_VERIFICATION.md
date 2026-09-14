@@ -4,7 +4,7 @@ Status: **PASSED**
 
 Date: 2026-09-14
 
-Verified implementation commit: `484963d9879517558f0c3314466bfb7d9ad1d292`
+Final preflight commit: `31c23ebe544c44d21dbe8cd0dad745cac149b8bf`
 
 ## Third-party MCP retrospective
 
@@ -61,8 +61,8 @@ pwsh -NoProfile -File .\scripts\install-check.ps1 -ArchivePath .\dist\evalpilot-
 Result: exit code `0`, `P4 release installation OK`.
 
 - Release: `evalpilot-p4-20260914`
-- Verified commit: `484963d`
-- Archive SHA-256: `2e74746684262ac4a2274e21eaccc84ca820f6be8b161a01541cc716e7fd8271`
+- Verified preflight commit: `31c23eb`
+- Archive SHA-256: `968801ea71978e55171febbe1cc4d2a23b11aff922a468df62833f3649985b69`
 - Backend after clean extraction: healthy
 - Frontend after clean extraction: healthy
 
@@ -70,6 +70,12 @@ The installation test verifies the outer archive checksum, every file in
 `MANIFEST.sha256`, extraction into a new directory, creation of a new Python
 virtual environment, frontend dependency installation, and both service health
 endpoints. Evidence: `docs/P4_INSTALL_RESULT.json`.
+## Repository-wide checks
+
+- Backend: `402` tests collected; full suite exit code `0`; `1` skipped.
+- Frontend: `153 / 153` Vitest tests passed.
+- Frontend typecheck and production build: passed.
+- Public site checker: passed.
 
 ## Boundaries
 

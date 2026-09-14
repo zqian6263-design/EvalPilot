@@ -1,12 +1,12 @@
 {
   "status": "passed",
   "release": "evalpilot-p4-20260914",
-  "commit": "484963d9879517558f0c3314466bfb7d9ad1d292",
-  "archive_sha256": "2e74746684262ac4a2274e21eaccc84ca820f6be8b161a01541cc716e7fd8271",
+  "commit": "31c23ebe544c44d21dbe8cd0dad745cac149b8bf",
+  "archive_sha256": "968801ea71978e55171febbe1cc4d2a23b11aff922a468df62833f3649985b69",
   "backend_url": "http://127.0.0.1:8190/api/health",
   "frontend_url": "http://127.0.0.1:5190/",
   "backend_healthy": true,
   "frontend_healthy": true,
   "status_output": "backend  http://127.0.0.1:8190  healthy\r\nfrontend http://127.0.0.1:5190  healthy",
-  "installed_at": "2026-09-14T04:34:22.5502241Z"
+  "installed_at": "2026-09-14T04:54:25.9097614Z"
 }
