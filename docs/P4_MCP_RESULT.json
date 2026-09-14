@@ -8,9 +8,9 @@
   ],
   "baseline_version": "mcp-2.2.0",
   "candidate_version": "mcp-1.30.0",
-  "regression_run_id": "d3026200-718e-4bb3-9a2c-03bd34582590",
-  "control_run_id": "6cb0a78a-2f34-4742-9310-523e3ad0b27c",
-  "investigation_id": "7c24d488-d891-4a10-a296-5ab7d21817a9",
+  "regression_run_id": "371a6414-0941-4aaf-8ed0-86bb14d7d297",
+  "control_run_id": "9e6c5d22-9243-48b9-ba54-aaa8c1191dd3",
+  "investigation_id": "a2d9f2ca-fda2-417c-9cf6-2142b9eae963",
   "matched_scenarios": 6,
   "regressed_scenarios": [
     "protocol-error-channel",
@@ -33,30 +33,30 @@
   "risk_level": "critical",
   "counterfactuals": [
     {
-      "intervention": "mcp_v2_error_path_enabled",
+      "counterfactual_score": 1.0,
       "scenario_id": "protocol-error-channel",
+      "intervention": "mcp_v2_error_path_enabled",
       "verdict": "root_cause",
-      "original_score": 0.5,
-      "rationale": "Replayed 'protocol-error-channel' under 'mcp_v2_error_path_enabled': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'runtime=2.2.0; channel=jsonrpc_error'. Evidence: 31abcae0-b35c-4fd1-aba3-1851e740b2e1, df06e394-bb81-4c4c-9033-3a00fbde9a4d, 81cecd24-c71f-4f36-925c-513978b9ff21, f3ef9b70-bf79-47d5-88b7-b1989202cee3, ac959f69-ba29-459c-866c-0d46ca506b68, e21f2bde-8942-45da-b764-18ee09eebc81, b94963d2-b2c6-472f-8c3d-2bd05b4b2003, 90866855-658f-421b-b9af-b12c8b8130c5, 434d0926-f438-4274-a599-d5fbb10b7358, bc6a9156-782d-4068-9037-20f45260f364, 8e0f447b-dc0a-4952-a631-26c48e37e87a.",
-      "counterfactual_score": 1.0
+      "rationale": "Replayed 'protocol-error-channel' under 'mcp_v2_error_path_enabled': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'runtime=2.2.0; channel=jsonrpc_error'. Evidence: 30334297-34b7-48fe-8e99-0f09b3d49111, 207b3b92-3f61-42cb-b07a-48307ef5d404, 78443370-d4ca-4426-ba23-4c13b9c9420c, 27cb71b9-9af9-4b7a-870b-47e13db600f7, 70e101ed-a792-417d-b378-7863ca16a934, 9e612e6a-8620-4cac-818b-55c25e8a6aa4, 4f36dea3-db2a-4fd8-9643-688a00276d87, 01fb037c-a2dd-4031-87e7-0cfb5c6bb83a, b5efc562-5c9a-4372-97e7-10b929e46e4a, ac022ef9-ceae-4511-80c0-48f2f3645dec, 917424bc-2105-4da9-9ca3-268995a953aa.",
+      "original_score": 0.5
     },
     {
-      "intervention": "mcp_v2_error_path_enabled",
+      "counterfactual_score": 1.0,
       "scenario_id": "protocol-error-code",
+      "intervention": "mcp_v2_error_path_enabled",
       "verdict": "root_cause",
-      "original_score": 0.5,
-      "rationale": "Replayed 'protocol-error-code' under 'mcp_v2_error_path_enabled': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'runtime=2.2.0; structured_code=-32000'. Evidence: 41d7e561-971f-4709-a289-f3148ef20c11, 9985be56-83ec-475b-9459-405dc3946538, 174caf53-707e-46a9-8ddd-ff7ae0462c90, ec187127-ba84-4df0-8fb5-2aa269a207ef, 23c7c5f9-0dbd-479c-aade-d0fd70165800, 8bb1328f-466b-4d9a-afb3-48915af79dee, da28c8e0-e845-4207-9db2-650e31cf8546, 894a880a-5129-4a49-a165-78aa0c61b909, 8cb85213-19e6-4716-83ac-c67f642e7ebe, 0ff1cf8a-32e2-4e0b-a867-00b4f5a7dd41, bba8a981-e326-4ca8-b988-5ca67b83baee.",
-      "counterfactual_score": 1.0
+      "rationale": "Replayed 'protocol-error-code' under 'mcp_v2_error_path_enabled': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'runtime=2.2.0; structured_code=-32000'. Evidence: fe8a5e8e-7f19-4697-812d-e402560393db, 4f1ca5ab-6b92-4e59-bc40-89591e83bd93, 4ef75ef4-e9d4-4077-8833-7349822168bc, 7bbfc090-e025-469a-80a4-e4de1ec38c22, 36e05174-8c8d-4a7b-ac96-9724a5d15070, ab3961fc-e7c7-4fc6-9deb-fee2cca3b526, 7ccf1abc-c8f5-4e85-9290-7caaee7b30cd, a942837e-3348-4c09-8a0f-9fd52df96f38, 369ce3eb-57d4-45b6-bac4-3f9a8581ad37, 3221cf87-dd5a-4290-a430-d8eda39607d9, 30fd9c4f-3ec0-4211-bc9a-4a9906b47dad.",
+      "original_score": 0.5
     },
     {
-      "intervention": "mcp_v2_error_path_enabled",
+      "counterfactual_score": 1.0,
       "scenario_id": "protocol-error-data",
+      "intervention": "mcp_v2_error_path_enabled",
       "verdict": "root_cause",
-      "original_score": 0.5,
-      "rationale": "Replayed 'protocol-error-data' under 'mcp_v2_error_path_enabled': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'runtime=2.2.0; data_preserved=true'. Evidence: 2df82789-df84-474a-a468-df6c049edbd6, 6499fd88-3772-4589-9e70-7e4c6c5c42a8, 7d804f44-250d-461d-aa99-5d86f82282ec, 0d1bf245-d1a5-43be-bf44-4ffe56a33468, ff2be0d8-401a-4d41-ab5f-78f18e9dbffc, 16ea3886-8a68-4234-88b7-e00fe2032a11, ba7f4a61-5f59-49a4-a93a-e6f978ad6ac0, c89b36e4-0912-42f0-8dac-a3b47798fa3d, e415a8a3-6b40-495b-94b2-28fe03e79042, fce4d0ff-b6e0-4739-8500-b30ffe0ed5c8, 3a190ea8-db41-4500-acab-67aa68379705.",
-      "counterfactual_score": 1.0
+      "rationale": "Replayed 'protocol-error-data' under 'mcp_v2_error_path_enabled': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'runtime=2.2.0; data_preserved=true'. Evidence: 1c216a53-13ef-40bc-ae5b-f1c25e542a31, e5d7a5a7-c842-4c3d-8788-0c59ac367129, f0c98b7b-514c-4035-8e55-b54449402e8e, 82318771-c0f6-4aab-82ae-f7c66e03bfc2, f9b93720-61a7-4059-9df7-bc7ac3a54ed0, ad9f4ea3-39b8-4b93-8538-2890a006686a, 955e2ef9-9ca6-48b8-baa1-898f1020e638, 49e4da90-2ce2-49e7-8c06-b468ed1ed1c0, b095b91a-94e9-4cda-a712-0c076a35f164, 4a15e22d-bc13-46e1-864f-74ffbdb6d543, faf57395-9622-4bb7-8ba8-16e8585bdfae.",
+      "original_score": 0.5
     }
   ],
-  "report": "D:\\z工程文件\\EvalPilot\\.runtime\\p4-mcp-retro-64a4bce2e24f4f56b0a38c7079318312\\investigation-report.md",
-  "completed_at": "2026-09-14T09:26:34.8184392Z"
+  "report": "D:\\z工程文件\\EvalPilot\\.runtime\\p4-mcp-retro-e1071e4f5d304bf4a2568c4fa7e49d8b\\investigation-report.md",
+  "completed_at": "2026-09-14T10:59:55.7101398Z"
 }

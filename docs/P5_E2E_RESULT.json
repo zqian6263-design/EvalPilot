@@ -15,9 +15,9 @@
     "checks_total": 28,
     "checks_failed": 0
   },
-  "control_run_id": "0f17ecb6-4802-4f9d-ae89-e65ce53ffbca",
-  "regression_run_id": "b0c9531d-357b-49e1-874f-678941fdb491",
-  "investigation_id": "f3b99d9b-e71b-4ca3-8bd4-99f374337ec0",
+  "control_run_id": "edc5b741-2c6a-47b3-b9a1-d4b9d9a7172d",
+  "regression_run_id": "151c496b-c546-4abd-a371-1e5516135e9d",
+  "investigation_id": "2502dcb6-4534-4a56-8203-c090653faf0a",
   "cases_per_version": 8,
   "matched_scenarios": 8,
   "baseline_version": "v1.0-baseline",
@@ -66,7 +66,7 @@
       "verdict": "root_cause",
       "original_score": 0.5,
       "counterfactual_score": 1.0,
-      "rationale": "Replayed 'refund-processing-time' under 'full_context_restored': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'Refunds are issued within 5 business days after the warehouse receives the return'. Evidence: 3409ce68-c522-4b5e-b5bd-59782ce9ca01, 864db26f-fab2-4a76-89b4-595ff919a71d, bebf36d8-9c71-4ad6-aa69-2785b7ecd312, 070cf685-0dbf-4a87-b181-38245e62fa94, da558a64-89c3-4346-bd60-a600b3c6f1a8, 49802b38-c846-4cfd-833b-edfeb61eec01, d56f54e3-9e51-409c-8f14-b9bf424334bb, fcb6b787-d84b-46b9-a3cb-f120efdfe796, e6271ea7-41d5-40fb-8e83-cff5f6e50d21."
+      "rationale": "Replayed 'refund-processing-time' under 'full_context_restored': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'Refunds are issued within 5 business days after the warehouse receives the return'. Evidence: c91af5b8-ef87-4d67-a557-3e7f267ee1a8, 63afdaca-ec70-4e20-a363-3e81922647be, e47a8a49-1839-4ff4-93f5-f9d2b83d200c, 83a136eb-3666-4833-927c-05ba90a539c3, d47bab50-b569-4f66-8084-8e8377e8deed, d21257bf-1232-4d7c-a13e-a1dc1e7f81a3, 41359437-8812-4598-ad4d-e61eb411b625, 5bc28e76-9ee0-4941-9dc2-49777fd51e13, 41466272-b9ef-4be9-8e04-ab967256eed4."
     },
     {
       "scenario_id": "shipping-express-cutoff",
@@ -74,7 +74,7 @@
       "verdict": "root_cause",
       "original_score": 0.5,
       "counterfactual_score": 1.0,
-      "rationale": "Replayed 'shipping-express-cutoff' under 'full_context_restored': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'Express shipping arrives by the next business day when the order is placed before 15:00 local time'. Evidence: 39721f20-58cc-42e1-ada4-8db1f463cccf, c917ef07-9ae1-488e-904d-36f769d017d7, e5c303b3-10ff-43d2-b2ad-5009ba73ddfa, c20a5df6-5a7b-4138-8958-8b5d5189b8b0, 4e4e96ef-406d-4529-bac9-7ac0f363b941, ee2667da-893c-48f3-acec-f0554d6f8b9f, 665be45a-8ebe-437d-9b7a-052fbe72f2f6, 0d4bb80a-f2ae-4e0e-8d49-db363ccd5fe5, 04563661-9ced-4207-a0de-a0494b9d0ac1."
+      "rationale": "Replayed 'shipping-express-cutoff' under 'full_context_restored': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'Express shipping arrives by the next business day when the order is placed before 15:00 local time'. Evidence: 531d033a-30b2-45cc-a5d5-8408ea065503, 7af5f6b8-075a-45cf-bb14-cfd579c1e8ec, 0a58d0ec-f904-421b-9bfe-668cd89895af, c506ff88-56e8-4505-a46b-a44f825dd91f, f015cffe-6c9d-4f75-a49a-1b56310201d1, 94880c8e-aace-405d-aaa2-ca20ca89725f, 13681e61-3190-4490-96b4-7309a698fffb, 26c7f125-1793-471a-9506-5330f7ae49ce, 37cfbeb0-9ed2-47a2-8f7d-5f38fabf087e."
     },
     {
       "scenario_id": "escalation-human-handoff",
@@ -82,7 +82,7 @@
       "verdict": "root_cause",
       "original_score": 0.5,
       "counterfactual_score": 1.0,
-      "rationale": "Replayed 'escalation-human-handoff' under 'full_context_restored': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'Based on Support Escalation Path: For unresolved issues, escalate to a human agent through the in-app Help Center within 24 hours. Never promise a resolution timeline that is not documented in this knowledge base.'. Evidence: 1fb683fe-df24-4141-9dd6-6053258b329f, f67718ca-47e4-4f29-967f-5781208c0a21, 5a2f9f29-a14f-42fc-a0c3-107001391656, 0faf9e1f-2d19-4e4c-b319-27e1d482c2df, 5d9c7a5b-b179-4153-ac6a-d99d88b7f7c2, 1942f171-549b-41bb-8c14-408f550d54df, 1df12414-2530-4b50-805a-16e03989e0cc, 9fc3961a-ca99-47f1-9890-752734584f19, f58cd6d5-1a2c-4a36-b114-9308171c6253."
+      "rationale": "Replayed 'escalation-human-handoff' under 'full_context_restored': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'Based on Support Escalation Path: For unresolved issues, escalate to a human agent through the in-app Help Center within 24 hours. Never promise a resolution timeline that is not documented in this knowledge base.'. Evidence: 188f1b28-f7db-49d7-8fb6-428e080df6d6, 6dca644c-1b0a-4511-a38d-4d38b01e54b0, 5b734e93-f851-4fd5-816d-082039d25c0b, ef1e0e77-f26b-4731-96ee-197789b4390e, db9ecf0e-4af5-40de-b665-ade0ecfe8e92, 39ad8152-4ca9-4837-bcfd-4499b7426bf6, c8a73b96-98ac-44fd-b121-36abf822b6b1, 986e2f99-aa56-4f39-ba73-70f39f86f0ca, 0add909e-43db-4eed-a42c-9fcaa7223ec6."
     },
     {
       "scenario_id": "escalation-deadline",
@@ -90,7 +90,7 @@
       "verdict": "root_cause",
       "original_score": 0.5,
       "counterfactual_score": 1.0,
-      "rationale": "Replayed 'escalation-deadline' under 'full_context_restored': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'Based on Support Escalation Path: For unresolved issues, escalate to a human agent through the in-app Help Center within 24 hours. Never promise a resolution timeline that is not documented in this knowledge base.'. Evidence: 2e0e4d02-acff-489f-bdb9-d42b3f0251cf, c8c0f769-c82c-48d3-95f5-41f0b2942a2f, 532f3dac-a9e6-497f-9373-0ac58a53363e, 10effb44-e18c-4b7b-b35f-0a98b4af3350, 0548f3bd-ce5b-40b9-bf1a-fa2262d801e1, 7a88c814-4b59-40e1-9124-161dfd701429, 6f0364a4-df23-4fa8-81d2-356043ac190e, f3a55bd7-2561-433c-aa64-6708b3a513e6, cd35be39-1851-4eb5-ad0e-b460bacb18e6."
+      "rationale": "Replayed 'escalation-deadline' under 'full_context_restored': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'Based on Support Escalation Path: For unresolved issues, escalate to a human agent through the in-app Help Center within 24 hours. Never promise a resolution timeline that is not documented in this knowledge base.'. Evidence: ccb5e694-bb67-4320-9be2-e0c36f2f0355, e916de14-9b45-4b52-b02c-ee64a89d76b9, e3f1006d-0657-450f-8d9f-9dfe9efa7174, 3848cee3-ba4a-414d-beb4-6cb26406e7bb, 5d37d2a6-e834-405b-937a-a0db72114d18, 049fdd84-8813-442f-84b9-8311a3506c8b, cc715909-29a8-42dd-b485-972f3306633c, a8dad849-b99b-4e1f-805c-c407c06b413c, da76675a-96a1-44af-a71c-8f7d9c196b00."
     },
     {
       "scenario_id": "credential-handling-policy",
@@ -98,9 +98,9 @@
       "verdict": "root_cause",
       "original_score": 0.5,
       "counterfactual_score": 1.0,
-      "rationale": "Replayed 'credential-handling-policy' under 'full_context_restored': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'Based on Account Security and Privacy: Support never asks customers for full passwords or one-time codes. Personal data is deleted 90 days after account closure.'. Evidence: 3db808a7-29b9-44c6-bcac-f0ac49d4c81c, 8b7470de-212c-4e79-972e-95f2362aae12, 6c62e15d-0977-41c7-994e-48e6cb0d1b5a, b6fdc042-e393-4f93-98cd-5f18f2fcd2f5, 8763b226-0da7-4ade-b1be-b6c41c9bd469, d635ddea-0de1-4559-aee1-ccbb948088b7, 3a37f461-48d1-413d-9be5-36c6b694dc1b, a7706743-6f3a-427f-ab54-4219f0af810c, 5504f0ba-d886-49d7-abbb-467637181a6c."
+      "rationale": "Replayed 'credential-handling-policy' under 'full_context_restored': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'Based on Account Security and Privacy: Support never asks customers for full passwords or one-time codes. Personal data is deleted 90 days after account closure.'. Evidence: c14a7bd4-6183-402b-9a2d-ba4240689931, d3dbd742-ff99-4d9c-a01b-32478656a0bf, 1a851c31-c19a-4ad0-8870-b40e0cb495d9, 854be7be-215f-4a79-8bd9-a96e76183650, 0473e679-f9f0-4afd-bedf-b2d281ab9513, 0a7ba22b-e4d7-4bae-b44e-ca1bca14ed4b, 99cb17f5-bf05-43b0-ae60-4a1c5a682d68, 2a1a6c4a-bfd2-4cc0-aa33-0356923155b0, bf0c4298-5bfd-4607-be04-df10e936052c."
     }
   ],
-  "evidence_dir": ".runtime/p5-sut-e2e-9765b1f6dc2c4d77a5e31ff2869d4cf8",
-  "completed_at": "2026-09-14T09:27:55.4627617Z"
+  "evidence_dir": ".runtime/p5-sut-e2e-32bc43d040084c4185df4083cf6b0ee9",
+  "completed_at": "2026-09-14T10:58:56.0762615Z"
 }
