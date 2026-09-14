@@ -1,0 +1,75 @@
+{
+  "workload_id": "mcp-error-propagation-retrospective",
+  "source_issue": "https://github.com/modelcontextprotocol/python-sdk/issues/2770",
+  "source_fix": "https://github.com/modelcontextprotocol/python-sdk/issues/2770#issuecomment-5292538870",
+  "baseline_version": "mcp-2.2.0",
+  "candidate_version": "mcp-1.30.0",
+  "scenarios": [
+    {
+      "scenario_id": "protocol-error-channel",
+      "question": "When an MCP tool handler raises MCPError, which channel carries the failure back to the client?",
+      "category": "adversarial",
+      "difficulty": 0.91,
+      "expected_doc_ids": ["mcp-error-propagation-policy"],
+      "must_include": ["channel=jsonrpc_error"],
+      "hypothesis_domain": "agent_protocol",
+      "hypothesis_kind": "error_channel",
+      "hypothesis_title": "protocol errors collapse into tool-result errors",
+      "suggested_intervention": "mcp_v2_error_path_enabled",
+      "probe_action": "Route the request through the v2 error path and verify that the failure is delivered as JSON-RPC error.",
+      "recommendation": "Keep protocol-level MCPError on the JSON-RPC error channel instead of converting it into CallToolResult(isError=true)."
+    },
+    {
+      "scenario_id": "protocol-error-code",
+      "question": "Does the client receive the structured JSON-RPC error code from an MCP tool handler that raises MCPError?",
+      "category": "adversarial",
+      "difficulty": 0.9,
+      "expected_doc_ids": ["mcp-error-propagation-policy"],
+      "must_include": ["structured_code=-32000"],
+      "hypothesis_domain": "agent_protocol",
+      "hypothesis_kind": "error_code",
+      "hypothesis_title": "structured protocol error codes are discarded",
+      "suggested_intervention": "mcp_v2_error_path_enabled",
+      "probe_action": "Use the v2 error path and verify that code -32000 survives the client/server boundary.",
+      "recommendation": "Preserve the original MCPError code across the transport so callers can make retry and escalation decisions without parsing text."
+    },
+    {
+      "scenario_id": "protocol-error-data",
+      "question": "Does the client retain MCPError data when a tool call raises a protocol-level failure?",
+      "category": "boundary",
+      "difficulty": 0.86,
+      "expected_doc_ids": ["mcp-error-propagation-policy"],
+      "must_include": ["data_preserved=true"],
+      "hypothesis_domain": "agent_protocol",
+      "hypothesis_kind": "error_data",
+      "hypothesis_title": "structured error data is lost in v1",
+      "suggested_intervention": "mcp_v2_error_path_enabled",
+      "probe_action": "Use the v2 error path and verify that the structured data payload survives the client/server boundary.",
+      "recommendation": "Preserve structured MCPError data so agent runtimes can distinguish protocol failures from ordinary tool execution failures."
+    },
+    {
+      "scenario_id": "tool-success-control",
+      "question": "Does a normal MCP tool call still return its successful result?",
+      "category": "normal",
+      "difficulty": 0.18,
+      "expected_doc_ids": ["mcp-error-propagation-policy"],
+      "must_include": ["outcome=result", "is_error=false", "text=ok:success"]
+    },
+    {
+      "scenario_id": "ordinary-exception-control",
+      "question": "Does a normal Python exception inside an MCP tool remain a tool execution error?",
+      "category": "boundary",
+      "difficulty": 0.34,
+      "expected_doc_ids": ["mcp-error-propagation-policy"],
+      "must_include": ["outcome=result", "is_error=true"]
+    },
+    {
+      "scenario_id": "tool-discovery-control",
+      "question": "Does the MCP client still discover the probe tool through tools/list?",
+      "category": "normal",
+      "difficulty": 0.16,
+      "expected_doc_ids": ["mcp-error-propagation-policy"],
+      "must_include": ["tool_listed=true"]
+    }
+  ]
+}

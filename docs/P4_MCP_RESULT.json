@@ -1,0 +1,58 @@
+{
+  "status": "passed",
+  "workload": "mcp-error-propagation-retrospective",
+  "source_issue": "https://github.com/modelcontextprotocol/python-sdk/issues/2770",
+  "public_versions": [
+    "mcp==1.30.0",
+    "mcp==2.2.0"
+  ],
+  "baseline_version": "mcp-2.2.0",
+  "candidate_version": "mcp-1.30.0",
+  "regression_run_id": "0fd86f01-9c68-4bab-8bc0-8feb48d035bf",
+  "control_run_id": "ef700f32-5a75-4bd2-8ab1-aeaf5c459f0a",
+  "investigation_id": "2f4cc1b0-95b3-4b31-a64c-a9626a7bcb5d",
+  "matched_scenarios": 6,
+  "regressed_scenarios": [
+    "protocol-error-channel",
+    "protocol-error-code",
+    "protocol-error-data"
+  ],
+  "control_scenarios": [
+    "ordinary-exception-control",
+    "tool-discovery-control",
+    "tool-success-control"
+  ],
+  "trace_evidence": 12,
+  "mean_difference": -0.25,
+  "ci": [
+    -0.4166666666666667,
+    -0.08333333333333333
+  ],
+  "decision": "block",
+  "risk_level": "critical",
+  "counterfactuals": [
+    {
+      "scenario_id": "protocol-error-channel",
+      "original_score": 0.5,
+      "intervention": "mcp_v2_error_path_enabled",
+      "verdict": "root_cause",
+      "counterfactual_score": 0.95
+    },
+    {
+      "scenario_id": "protocol-error-code",
+      "original_score": 0.5,
+      "intervention": "mcp_v2_error_path_enabled",
+      "verdict": "root_cause",
+      "counterfactual_score": 0.95
+    },
+    {
+      "scenario_id": "protocol-error-data",
+      "original_score": 0.5,
+      "intervention": "mcp_v2_error_path_enabled",
+      "verdict": "root_cause",
+      "counterfactual_score": 0.95
+    }
+  ],
+  "report": "D:\\z工程文件\\EvalPilot\\.runtime\\p4-mcp-retro-6fc079597bed45fc8deb265c03317d0e\\investigation-report.md",
+  "completed_at": "2026-09-14T04:30:59.9603684Z"
+}
