@@ -41,6 +41,7 @@
 - GitHub Webhook 支持 HMAC 校验和 PR 发布门禁回写。
 - 支持 Judge 调用/token 预算和配对样本功效诊断。
 - 外部 SUT 通过能力发现声明支持的版本、干预和证据能力。
+- 外部团队接入模板：`integrations/sut_template/` 是一个可直接运行的 FastAPI SUT（两个版本 + 一个白名单干预），`scripts/validate-sut.ps1` 逐项校验健康检查、能力声明、每个声明版本与每个工作负载场景的响应契约，并用 `schemas/workload.schema.json` 校验工作负载。接入步骤见 `docs/P5_SUT_ONBOARDING.md`。
 - 支持 `EVALPILOT_WORKLOAD_FILE` 外部工作负载：不修改内置 fixture 即可评测公开应用的历史版本回归。
 - 第三方 MCP SDK 回顾性诊断：隔离运行公开 mcp==1.30.0 与 mcp==2.2.0，识别协议错误通道、错误码和数据丢失，并用 v2 错误路径反事实恢复。
 - 可校验源码发行包：生成 SHA-256、内部文件清单，并在全新解压目录中启动前后端完成安装验收。
@@ -76,6 +77,21 @@ python scripts/deploy.py --stop
 .\scripts\start-all.ps1 -Stop
 ```
 
+## 接入你自己的服务（P5）
+
+```powershell
+# 1. 启动示例外部 SUT
+.venv\Scripts\python.exe -m uvicorn app:app --app-dir integrations\sut_template --host 127.0.0.1 --port 8020
+
+# 2. 校验它是否符合接入契约（失败返回非零退出码）
+pwsh -NoProfile -File .\scripts\validate-sut.ps1 `
+  -BaseUrl http://127.0.0.1:8020 `
+  -Workload .\integrations\sut_template\workload.json
+```
+
+30 分钟接入清单、请求/响应示例、字段表和排错表见 `docs/P5_SUT_ONBOARDING.md`；
+模板说明见 `integrations/sut_template/README.md`；一次性开发环境见 `.devcontainer/README.md`。
+
 ## 验证
 
 ```powershell
@@ -87,6 +103,8 @@ python scripts/deploy.py --stop
 .\scripts\p1-mem0-retro-check.ps1
 .\scripts\p3-browser-check.ps1
 .\scripts\p4-mcp-retro-check.ps1
+.\scripts\p5-onboarding-check.ps1
+.\scripts\validate-sut.ps1 -BaseUrl http://127.0.0.1:8020 -Workload .\integrations\sut_template\workload.json
 .\scripts\build-release.ps1 -Version evalpilot-p4-20260914
 .\scripts\install-check.ps1
 .venv\Scripts\python.exe backend\scripts\planning_quality_check.py

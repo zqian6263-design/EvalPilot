@@ -174,6 +174,32 @@ configurations. It verifies:
 A machine-readable `summary.json` and both server logs are written under
 `.runtime/sut-e2e-*`.
 
+## Onboarding a service for the first time
+
+A team integrating its own service should not have to read this repository. The
+short path is:
+
+1. Copy `integrations/sut_template/` and replace its knowledge base and answer
+   function with your own logic. It already implements `GET /health`,
+   `GET /capabilities` and `POST /v1/answer`, plus two revisions and one
+   whitelisted intervention.
+2. Describe your scenarios in a workload file that satisfies
+   `schemas/workload.schema.json`.
+3. Run the onboarding validator, which exercises the real service over HTTP:
+
+   ```powershell
+   pwsh -NoProfile -File .\scripts\validate-sut.ps1 `
+     -BaseUrl http://127.0.0.1:8020 `
+     -Workload .\integrations\sut_template\workload.json
+   ```
+
+Onboarding additionally requires `GET /health`, and requires an unadvertised
+`version` or `intervention` to be rejected with HTTP 4xx. Both are stricter than
+the runtime contract above, which still tolerates a 404 on `/capabilities`
+(legacy fallback) and never probes `/health`. `scripts/validate-sut.ps1` exits
+non-zero when any of it fails. Step-by-step instructions, field tables and a
+troubleshooting table are in `docs/P5_SUT_ONBOARDING.md`.
+
 ## Third-party MCP SDK retrospective
 
 `integrations/mcp_retro/server.py` adds a version-isolated HTTP SUT for the

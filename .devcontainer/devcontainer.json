@@ -1,0 +1,39 @@
+{
+  "name": "EvalPilot (Python 3.11 + Node 22)",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "${containerWorkspaceFolder}/.venv/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["backend/tests"],
+        "python.analysis.extraPaths": ["${containerWorkspaceFolder}/backend"],
+        "terminal.integrated.env.linux": {
+          "PYTHONPATH": "${containerWorkspaceFolder}/backend"
+        }
+      }
+    }
+  },
+  "containerEnv": {
+    "PYTHONPATH": "${containerWorkspaceFolder}/backend",
+    "PYTHONUNBUFFERED": "1"
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "vscode",
+  "hostRequirements": {
+    "cpus": 2
+  }
+}

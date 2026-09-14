@@ -9,6 +9,11 @@ haystack-ai>=3.1,<4
 
 # dev / test
 pytest>=8.0
+# Standard JSON Schema library. Validates the published workload authoring
+# contract (schemas/workload.schema.json) in scripts/validate-sut.ps1 and in the
+# tests that keep the schema and the real workloads in sync. Nothing in the
+# evaluation engine imports it.
+jsonschema>=4.21
 
 # Optional, policy-gated browser executor; no browser download is performed by pip.
 playwright>=1.50
