@@ -29,7 +29,9 @@ from fastapi.responses import JSONResponse
 
 BASELINE_VERSION = "v1.0-baseline"
 CANDIDATE_VERSION = "v1.1-candidate"
-FULL_CONTEXT_ENABLED = "full_context_enabled"
+COMPRESSION_DISABLED = "compression_disabled"
+FULL_CONTEXT_RESTORED = "full_context_restored"
+INTERVENTIONS: tuple[str, ...] = (COMPRESSION_DISABLED, FULL_CONTEXT_RESTORED)
 GHOST_VERSION = "v2.0-ghost"
 GHOST_INTERVENTION = "ghost_intervention"
 
@@ -60,7 +62,7 @@ def _declared_versions(mode: str) -> list[str]:
 
 
 def _declared_interventions(mode: str) -> list[str]:
-    interventions = [FULL_CONTEXT_ENABLED]
+    interventions = list(INTERVENTIONS)
     if mode == "intervention":
         interventions.append(GHOST_INTERVENTION)
     return interventions
@@ -119,7 +121,7 @@ def create_app(mode: str) -> FastAPI:
             return JSONResponse(
                 status_code=400, content={"detail": f"unsupported version {version!r}"}
             )
-        if intervention is not None and intervention != FULL_CONTEXT_ENABLED:
+        if intervention is not None and intervention not in INTERVENTIONS:
             return JSONResponse(
                 status_code=400,
                 content={"detail": f"unsupported intervention {intervention!r}"},

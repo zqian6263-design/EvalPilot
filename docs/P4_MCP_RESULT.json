@@ -8,9 +8,9 @@
   ],
   "baseline_version": "mcp-2.2.0",
   "candidate_version": "mcp-1.30.0",
-  "regression_run_id": "0fd86f01-9c68-4bab-8bc0-8feb48d035bf",
-  "control_run_id": "ef700f32-5a75-4bd2-8ab1-aeaf5c459f0a",
-  "investigation_id": "2f4cc1b0-95b3-4b31-a64c-a9626a7bcb5d",
+  "regression_run_id": "d3026200-718e-4bb3-9a2c-03bd34582590",
+  "control_run_id": "6cb0a78a-2f34-4742-9310-523e3ad0b27c",
+  "investigation_id": "7c24d488-d891-4a10-a296-5ab7d21817a9",
   "matched_scenarios": 6,
   "regressed_scenarios": [
     "protocol-error-channel",
@@ -23,6 +23,7 @@
     "tool-success-control"
   ],
   "trace_evidence": 12,
+  "measured_http_replays": 3,
   "mean_difference": -0.25,
   "ci": [
     -0.4166666666666667,
@@ -32,27 +33,30 @@
   "risk_level": "critical",
   "counterfactuals": [
     {
+      "intervention": "mcp_v2_error_path_enabled",
       "scenario_id": "protocol-error-channel",
-      "original_score": 0.5,
-      "intervention": "mcp_v2_error_path_enabled",
       "verdict": "root_cause",
-      "counterfactual_score": 0.95
+      "original_score": 0.5,
+      "rationale": "Replayed 'protocol-error-channel' under 'mcp_v2_error_path_enabled': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'runtime=2.2.0; channel=jsonrpc_error'. Evidence: 31abcae0-b35c-4fd1-aba3-1851e740b2e1, df06e394-bb81-4c4c-9033-3a00fbde9a4d, 81cecd24-c71f-4f36-925c-513978b9ff21, f3ef9b70-bf79-47d5-88b7-b1989202cee3, ac959f69-ba29-459c-866c-0d46ca506b68, e21f2bde-8942-45da-b764-18ee09eebc81, b94963d2-b2c6-472f-8c3d-2bd05b4b2003, 90866855-658f-421b-b9af-b12c8b8130c5, 434d0926-f438-4274-a599-d5fbb10b7358, bc6a9156-782d-4068-9037-20f45260f364, 8e0f447b-dc0a-4952-a631-26c48e37e87a.",
+      "counterfactual_score": 1.0
     },
     {
+      "intervention": "mcp_v2_error_path_enabled",
       "scenario_id": "protocol-error-code",
-      "original_score": 0.5,
-      "intervention": "mcp_v2_error_path_enabled",
       "verdict": "root_cause",
-      "counterfactual_score": 0.95
+      "original_score": 0.5,
+      "rationale": "Replayed 'protocol-error-code' under 'mcp_v2_error_path_enabled': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'runtime=2.2.0; structured_code=-32000'. Evidence: 41d7e561-971f-4709-a289-f3148ef20c11, 9985be56-83ec-475b-9459-405dc3946538, 174caf53-707e-46a9-8ddd-ff7ae0462c90, ec187127-ba84-4df0-8fb5-2aa269a207ef, 23c7c5f9-0dbd-479c-aade-d0fd70165800, 8bb1328f-466b-4d9a-afb3-48915af79dee, da28c8e0-e845-4207-9db2-650e31cf8546, 894a880a-5129-4a49-a165-78aa0c61b909, 8cb85213-19e6-4716-83ac-c67f642e7ebe, 0ff1cf8a-32e2-4e0b-a867-00b4f5a7dd41, bba8a981-e326-4ca8-b988-5ca67b83baee.",
+      "counterfactual_score": 1.0
     },
     {
-      "scenario_id": "protocol-error-data",
-      "original_score": 0.5,
       "intervention": "mcp_v2_error_path_enabled",
+      "scenario_id": "protocol-error-data",
       "verdict": "root_cause",
-      "counterfactual_score": 0.95
+      "original_score": 0.5,
+      "rationale": "Replayed 'protocol-error-data' under 'mcp_v2_error_path_enabled': score 0.50 -> 1.00 (delta +0.50). With this behaviour restored the case passes with no failing check remaining, and the failure it was reported for (facts) is gone: this behaviour accounts for the failure. Restored text: 'runtime=2.2.0; data_preserved=true'. Evidence: 2df82789-df84-474a-a468-df6c049edbd6, 6499fd88-3772-4589-9e70-7e4c6c5c42a8, 7d804f44-250d-461d-aa99-5d86f82282ec, 0d1bf245-d1a5-43be-bf44-4ffe56a33468, ff2be0d8-401a-4d41-ab5f-78f18e9dbffc, 16ea3886-8a68-4234-88b7-e00fe2032a11, ba7f4a61-5f59-49a4-a93a-e6f978ad6ac0, c89b36e4-0912-42f0-8dac-a3b47798fa3d, e415a8a3-6b40-495b-94b2-28fe03e79042, fce4d0ff-b6e0-4739-8500-b30ffe0ed5c8, 3a190ea8-db41-4500-acab-67aa68379705.",
+      "counterfactual_score": 1.0
     }
   ],
-  "report": "D:\\z工程文件\\EvalPilot\\.runtime\\p4-mcp-retro-6fc079597bed45fc8deb265c03317d0e\\investigation-report.md",
-  "completed_at": "2026-09-14T04:30:59.9603684Z"
+  "report": "D:\\z工程文件\\EvalPilot\\.runtime\\p4-mcp-retro-64a4bce2e24f4f56b0a38c7079318312\\investigation-report.md",
+  "completed_at": "2026-09-14T09:26:34.8184392Z"
 }

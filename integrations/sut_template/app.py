@@ -25,14 +25,19 @@ Contract rules that the onboarding validator enforces
   whitelist, must be rejected with HTTP 4xx. Silently answering with a different
   revision is what makes a regression report untrustworthy.
 
-Two revisions and one intervention
-----------------------------------
+Two revisions and two interventions
+-----------------------------------
 * ``v1.0-baseline`` returns the complete retrieved document.
 * ``v1.1-candidate`` applies a compression pass that drops sentences carrying a
   mandatory clause, which is the controlled regression this template
   demonstrates.
-* ``full_context_enabled`` restores the dropped content on the candidate, which
-  is how the evaluator confirms the root cause instead of guessing it.
+* ``compression_disabled`` and ``full_context_restored`` both restore the
+  dropped content on the candidate, which is how the evaluator confirms the root
+  cause instead of guessing it. The first is EvalPilot's published name for this
+  behaviour; the second is this template's own name. Advertise whatever names
+  you like — the evaluator passes them through verbatim — but the counterfactual
+  is only *measured* when the name reaches your service and your service honours
+  it, so a name you declare must actually do something.
 
 Run it:
 
@@ -54,8 +59,16 @@ BASELINE_VERSION = "v1.0-baseline"
 CANDIDATE_VERSION = "v1.1-candidate"
 VERSIONS: tuple[str, ...] = (BASELINE_VERSION, CANDIDATE_VERSION)
 
-FULL_CONTEXT_ENABLED = "full_context_enabled"
-INTERVENTIONS: tuple[str, ...] = (FULL_CONTEXT_ENABLED,)
+#: Intervention names this service honours. ``compression_disabled`` is the name
+#: EvalPilot's own published vocabulary uses for exactly this behaviour;
+#: ``full_context_restored`` is a template-specific name that is in no platform
+#: list. Both are accepted, because the evaluator passes whatever you declare in
+#: ``GET /capabilities`` straight through to this endpoint. Replace these with
+#: your own feature-flag names.
+COMPRESSION_DISABLED = "compression_disabled"
+FULL_CONTEXT_RESTORED = "full_context_restored"
+DISABLES_COMPRESSION: tuple[str, ...] = (COMPRESSION_DISABLED, FULL_CONTEXT_RESTORED)
+INTERVENTIONS: tuple[str, ...] = DISABLES_COMPRESSION
 
 #: Replace this with your own data source (a database, an API, a vector store).
 KNOWLEDGE_BASE: tuple[dict[str, Any], ...] = (
@@ -265,7 +278,10 @@ def answer_question(request: SutRequest) -> SutResponse:
         )
 
     body = document["text"]
-    compress = _is_candidate(request.version) and request.intervention != FULL_CONTEXT_ENABLED
+    compress = (
+        _is_candidate(request.version)
+        and request.intervention not in DISABLES_COMPRESSION
+    )
     if compress:
         body = _drop_mandatory_clauses(body)
     if not body:

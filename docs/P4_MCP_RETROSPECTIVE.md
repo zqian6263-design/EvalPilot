@@ -51,11 +51,33 @@ the normal external-SUT contract and persists the request/response trace.
 
 The public workload contains three protocol observations and three controls.
 EvalPilot found all three regressions, left all three controls stable, persisted
-12 SUT traces, and confirmed every root cause with the executable v2 error-path
-intervention. The release decision is `BLOCK / CRITICAL`.
+12 SUT traces, and replayed every regressed observable **through the HTTP
+boundary** under the executable v2 error-path intervention: 3 measured replays,
+each scoring `0.50 -> 1.00` with its own persisted SUT trace. The release
+decision is `BLOCK / CRITICAL`.
 
 See `docs/P4_MCP_RESULT.json` for run ids, scores, confidence interval, and
 counterfactual results.
+
+### Correction (2026-09-14)
+
+An earlier version of this record, and the earlier
+`docs/P4_MCP_RESULT.json` / `docs/P4_VERIFICATION.md`, reported the three
+counterfactual replays as `0.50 -> 0.95`. Those numbers were **not measured**:
+`mcp_v2_error_path_enabled` is not a member of the engine's built-in
+`Intervention` enum, the replay raised while reading the enum-only
+`executor_value` accessor, and the investigation silently substituted the
+deterministic fallback's *prediction* (`original + 0.9 * gap`). The published
+claim that the root causes were confirmed by an executed intervention was
+therefore not backed by any request to the adapter.
+
+The counterfactual seam now accepts and preserves any non-blank intervention name
+an external SUT declares, so the replay is executed and measured for real:
+`counterfactual_experiments.rationale` reads "Replayed ... score 0.50 -> 1.00",
+the run carries 3 extra trace rows whose request names the intervention, and
+`scripts/p4-mcp-retro-check.ps1` now fails unless at least 3 such measured
+replays exist. Predicted fallback results are no longer presented as measured
+ones.
 
 ## Reproduce
 

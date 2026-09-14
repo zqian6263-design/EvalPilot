@@ -16,16 +16,19 @@ pwsh -NoProfile -File .\scripts\p4-mcp-retro-check.ps1
 
 Result: exit code `0`, `P4 MCP retrospective OK`.
 
-- Regression run: `0fd86f01-9c68-4bab-8bc0-8feb48d035bf`
-- Same-version control run: `ef700f32-5a75-4bd2-8ab1-aeaf5c459f0a`
-- Investigation: `2f4cc1b0-95b3-4b31-a64c-a9626a7bcb5d`
+- Regression run: `d3026200-718e-4bb3-9a2c-03bd34582590`
+- Same-version control run: `6cb0a78a-2f34-4742-9310-523e3ad0b27c`
+- Investigation: `7c24d488-d891-4a10-a296-5ab7d21817a9`
 - Matched scenarios: `6`
 - Regressions: `3`
 - Stable controls: `3`
 - Persisted SUT traces: `12`
 - Mean difference: `-0.25`
 - Paired CI: `[-0.4167, -0.0833]`
-- Counterfactual replays: `3`, all `root_cause`
+- Counterfactual replays: `3`, all `root_cause`, all **measured** — `3` persisted
+  HTTP replay traces carrying `intervention=mcp_v2_error_path_enabled`, and
+  rationales reading `Replayed '…' under 'mcp_v2_error_path_enabled': score 0.50
+  -> 1.00` (the fallback's wording is "is predicted to restore …")
 - Decision: `BLOCK / CRITICAL`
 
 Detected regressions:
@@ -34,15 +37,36 @@ Detected regressions:
 - `protocol-error-code`
 - `protocol-error-data`
 
-Counterfactual results:
+Counterfactual results (measured through the HTTP adapter):
 
 | Scenario | Intervention | Original | Replay | Verdict |
 |---|---|---:|---:|---|
-| `protocol-error-channel` | `mcp_v2_error_path_enabled` | 0.50 | 0.95 | `root_cause` |
-| `protocol-error-code` | `mcp_v2_error_path_enabled` | 0.50 | 0.95 | `root_cause` |
-| `protocol-error-data` | `mcp_v2_error_path_enabled` | 0.50 | 0.95 | `root_cause` |
+| `protocol-error-channel` | `mcp_v2_error_path_enabled` | 0.50 | 1.00 | `root_cause` |
+| `protocol-error-code` | `mcp_v2_error_path_enabled` | 0.50 | 1.00 | `root_cause` |
+| `protocol-error-data` | `mcp_v2_error_path_enabled` | 0.50 | 1.00 | `root_cause` |
 
 Evidence: `docs/P4_MCP_RESULT.json`.
+
+### Correction (2026-09-14, P5 external-intervention fix)
+
+This record previously listed the three replays as `0.50 -> 0.95` and described
+them as counterfactual replays. They were the deterministic fallback's
+**predictions**: the intervention name is not in the engine's built-in
+`Intervention` enum, so the engine raised before executing anything and the
+provider fell back. The run's own evidence confirms it — the before/after probe
+of `.runtime/p4-mcp-retro-6fc079597bed45fc8deb265c03317d0e/evalpilot.db` shows
+`0` trace rows carrying an intervention and rationales reading "is predicted to
+restore the scenario to 0.95".
+
+After the fix the same command reports `0.50 -> 1.00`, `3` measured HTTP replay
+traces, and rationales reading "Replayed ... score 0.50 -> 1.00".
+`scripts/p4-mcp-retro-check.ps1` now fails unless at least three measured replays
+are present, and `backend/tests/test_acceptance_evidence.py` reads this file and
+rejects any counterfactual whose recorded rationale is a prediction, so the
+distinction cannot silently regress again.
+
+See also: `docs/P3_VERIFICATION.md` carries the same correction for the browser
+adapter, where the replay still does not execute (separate, unfixed cause).
 
 ## Installable release
 

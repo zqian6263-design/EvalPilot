@@ -107,22 +107,29 @@ def test_answer_response_matches_the_executor_contract(client: TestClient, templ
         assert parsed.latency_ms >= 0
 
 
-def test_candidate_drops_a_mandatory_clause_and_the_intervention_restores_it(
+def test_candidate_drops_a_mandatory_clause_and_every_declared_intervention_restores_it(
     client: TestClient, template
 ) -> None:
     question = "My problem is unresolved. How do I reach a human agent?"
     baseline = _ask(client, version=template.BASELINE_VERSION, question=question)
     candidate = _ask(client, version=template.CANDIDATE_VERSION, question=question)
-    restored = _ask(
-        client,
-        version=template.CANDIDATE_VERSION,
-        question=question,
-        intervention=template.FULL_CONTEXT_ENABLED,
-    )
 
     assert "human agent" in baseline["answer"]
     assert "human agent" not in candidate["answer"]
-    assert "human agent" in restored["answer"]
+
+    # Every intervention the template advertises must really undo the defect:
+    # an advertised-but-inert switch would make a counterfactual replay look like
+    # a measured no-effect.
+    assert template.COMPRESSION_DISABLED in template.INTERVENTIONS
+    assert template.FULL_CONTEXT_RESTORED in template.INTERVENTIONS
+    for intervention in template.INTERVENTIONS:
+        restored = _ask(
+            client,
+            version=template.CANDIDATE_VERSION,
+            question=question,
+            intervention=intervention,
+        )
+        assert "human agent" in restored["answer"], intervention
 
 
 def test_intervention_does_not_change_the_baseline_revision(
@@ -134,7 +141,7 @@ def test_intervention_does_not_change_the_baseline_revision(
         client,
         version=template.BASELINE_VERSION,
         question=question,
-        intervention=template.FULL_CONTEXT_ENABLED,
+        intervention=template.COMPRESSION_DISABLED,
     )
 
     assert plain == intervened

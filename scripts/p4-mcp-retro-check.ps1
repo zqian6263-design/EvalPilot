@@ -198,6 +198,22 @@ try {
         @($counterfactuals | Where-Object { @($_.evidence_ids).Count -eq 0 }).Count -eq 0
     )
 
+    # A verdict that came from the deterministic fallback is a prediction, not a
+    # measurement. The MCP intervention name is not in the engine's built-in
+    # vocabulary, so this asserts the replay actually crossed the HTTP boundary:
+    # one persisted SUT trace per replay, carrying the custom intervention.
+    $afterReplay = Api GET "/runs/$($positiveRun.id)"
+    $interventionRequests = @(
+        $afterReplay.evidence |
+            Where-Object {
+                $_.kind -eq 'trace' -and
+                $_.payload.request -and
+                $_.payload.request.intervention -eq 'mcp_v2_error_path_enabled'
+            }
+    )
+    Step 'every counterfactual has a real HTTP replay trace' ($interventionRequests.Count -ge 3) `
+        "measured_replays=$($interventionRequests.Count)"
+
     $reportMarkdown = (Invoke-WebRequest -Uri "$api/investigations/$($investigation.id)/report.md" -TimeoutSec 30 -UseBasicParsing).Content
     $reportPath = Join-Path $workDir 'investigation-report.md'
     [System.IO.File]::WriteAllText($reportPath, $reportMarkdown, [System.Text.UTF8Encoding]::new($false))
@@ -218,6 +234,7 @@ try {
         regressed_scenarios = $regressed
         control_scenarios = $controls
         trace_evidence = $traceEvidence.Count
+        measured_http_replays = $interventionRequests.Count
         mean_difference = $positiveReport.metrics.mean_difference
         ci = @($positiveReport.metrics.ci_lower, $positiveReport.metrics.ci_upper)
         decision = $investigationDetail.decision.verdict
@@ -230,6 +247,11 @@ try {
                     verdict = $_.verdict
                     original_score = $_.original_score
                     counterfactual_score = $_.counterfactual_score
+                    # The engine writes "Replayed ... under <intervention>: score
+                    # x -> y"; the deterministic fallback writes "is predicted to
+                    # restore ...". Recording it makes the difference auditable
+                    # from the committed evidence alone.
+                    rationale = $_.rationale
                 }
             }
         )

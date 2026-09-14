@@ -71,6 +71,8 @@ from .models import (
     ExperimentVerdict,
     ReplayRunResult,
     ReplayRunSummary,
+    intervention_executor_value,
+    intervention_name,
 )
 from .reading import (
     REPLAY_CONDITION_KEY,
@@ -152,7 +154,9 @@ class CounterfactualEngine:
         # A control replays the case unmodified. It is not a formality: it is
         # how a caller proves the replay path itself is faithful, and how the
         # engine proves it changed nothing by accident.
-        replayed = self._measure(case, intervention=target.intervention.executor_value)
+        replayed = self._measure(
+            case, intervention=intervention_executor_value(target.intervention)
+        )
 
         return self._classify(target, investigation_id, original, replayed)
 
@@ -548,7 +552,7 @@ class CounterfactualEngine:
             scenario_id=target.scenario_id,
             run_id=target.run_id,
             test_case_id=target.test_case_id,
-            intervention=target.intervention.value,
+            intervention=intervention_name(target.intervention),
             verdict=verdict,
             original_score=original_score,
             original_score_source=score_source,
@@ -608,7 +612,8 @@ class CounterfactualEngine:
         """Render the rationale from the measured numbers, never before them."""
         restored = _restored_text(original, replayed)
         parts = [
-            f"Replayed {target.scenario_id!r} under {target.intervention.value!r}: "
+            f"Replayed {target.scenario_id!r} under "
+            f"{intervention_name(target.intervention)!r}: "
             f"score {_fmt(original.score)} -> {_fmt(replayed.score)} "
             f"(delta {delta:+.2f}). ",
             sentence + " ",

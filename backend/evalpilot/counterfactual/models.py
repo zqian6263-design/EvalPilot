@@ -25,7 +25,7 @@ import enum
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 CaseVersion = Literal["baseline", "candidate"]
 
@@ -98,6 +98,60 @@ class Intervention(str, enum.Enum):
         return None if self.is_control else self.value
 
 
+#: An intervention name is either one of the members above or a plain string.
+#: The members enumerate the interventions this repository's own fixtures use.
+#: An external system under test publishes *its* vocabulary in ``GET
+#: /capabilities``, and those names cannot be enum members (the enum is frozen),
+#: so they travel as strings and are passed to the service verbatim.
+def intervention_name(intervention: "Intervention | str") -> str:
+    """The name recorded for an intervention, enum member or external string."""
+
+    if isinstance(intervention, Intervention):
+        return intervention.value
+    text = str(intervention).strip()
+    if not text:
+        raise ValueError("intervention name must not be blank")
+    return text
+
+
+def intervention_executor_value(intervention: "Intervention | str | None") -> str | None:
+    """The value the case executor sends to the system under test.
+
+    ``None`` means "no intervention" (the original arm). A blank name is an
+    error rather than a no-op: a replay that quietly ran the unmodified
+    candidate would report ``no_effect`` for a hypothesis that was never tested.
+    """
+
+    if intervention is None:
+        return None
+    if isinstance(intervention, Intervention):
+        return intervention.executor_value
+    text = str(intervention).strip()
+    if not text:
+        raise ValueError("intervention name must not be blank")
+    return text
+
+
+def coerce_intervention(intervention: "Intervention | str") -> "Intervention | str":
+    """Normalise a declared intervention name.
+
+    A name that matches a built-in :class:`Intervention` becomes that member, so
+    every existing behaviour is unchanged. Any other non-blank name is kept as
+    an external intervention string instead of being rejected: refusing it here
+    would silently downgrade a measurable replay into a prediction.
+    """
+
+    if isinstance(intervention, Intervention):
+        return intervention
+    text = str(intervention).strip()
+    if not text:
+        raise ValueError("intervention name must not be blank")
+    for member in Intervention:
+        if member.value == text:
+            return member
+    return text
+
+
 class ExperimentVerdict(str, enum.Enum):
     """What a replay established, in the frozen vocabulary.
 
@@ -123,12 +177,16 @@ class CounterfactualTarget(CounterfactualModel):
     candidate's failing run. The engine reads the original output and score
     *through* these ids, so an experiment can never be grounded in a score that
     is not attached to persisted evidence.
+
+    ``intervention`` accepts a built-in :class:`Intervention` member or any
+    non-blank name an external system under test declared, so a custom
+    intervention is replayed against the service rather than rejected.
     """
 
     scenario_id: str
     run_id: str
     test_case_id: str
-    intervention: Intervention
+    intervention: Intervention | str
     expected: dict[str, Any] = Field(default_factory=dict)
     question: str = ""
     #: Run-specific revision label the external SUT should execute. The
@@ -144,6 +202,11 @@ class CounterfactualTarget(CounterfactualModel):
     #: the two is visible instead of hidden.
     original_score: float | None = None
     failing_checks: list[str] = Field(default_factory=list)
+
+    @field_validator("intervention")
+    @classmethod
+    def _normalise_intervention(cls, value: Intervention | str) -> Intervention | str:
+        return coerce_intervention(value)
 
     @model_validator(mode="after")
     def _require_non_blank_identity(self) -> "CounterfactualTarget":

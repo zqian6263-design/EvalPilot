@@ -75,13 +75,20 @@ Detected regressions:
 - `tenant-identity-injection`
 - `tenant-camelcase-alias-injection`
 
-Browser counterfactual replay:
+Browser counterfactual replay — **predicted, not measured**:
 
 | Scenario | Intervention | Original | Replay | Verdict |
 |---|---|---:|---:|---|
 | `tenant-metadata-overwrite` | `identity_metadata_stripped` | 0.50 | 0.95 | `root_cause` |
 | `tenant-identity-injection` | `identity_metadata_stripped` | 0.67 | 0.97 | `root_cause` |
 | `tenant-camelcase-alias-injection` | `identity_metadata_stripped` | 0.67 | 0.97 | `root_cause` |
+
+These values come from the deterministic fallback, not from a replayed browser
+session: the run has no trace evidence carrying an intervention, and the
+persisted rationale says "is predicted to restore the scenario". See the
+correction in `docs/P3_VERIFICATION.md` for the evidence and the (separate,
+still open) cause. The browser *evaluation* itself — run, regressions, controls,
+screenshots and traces — is measured and unaffected.
 
 Final decision: `BLOCK / CRITICAL`.
 
@@ -91,7 +98,7 @@ Final decision: `BLOCK / CRITICAL`.
 pwsh -NoProfile -File .\scripts\p3-browser-check.ps1
 ```
 
-The script starts the public OSS-backed SUT, starts EvalPilot with browser execution enabled, runs both versions, checks screenshot and trace evidence, runs the investigation, and verifies three browser-based root-cause replays.
+The script starts the public OSS-backed SUT, starts EvalPilot with browser execution enabled, runs both versions, checks screenshot and trace evidence, runs the investigation, and verifies three browser-based root-cause verdicts. It does not yet verify that the counterfactual replays were executed rather than predicted.
 
 ## Evidence
 

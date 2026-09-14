@@ -10,17 +10,14 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import socket
 import sys
-import threading
-import time
-from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
-import uvicorn
 
 from evalpilot.sut.validator import CheckResult, ValidationReport, main, run_validation
+
+from .uvicorn_server import free_port, serve_app
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE_DIR = ROOT / "integrations" / "sut_template"
@@ -48,34 +45,6 @@ def faulty():
     return _load_module("p5_faulty_sut", FAULTY_APP_PATH)
 
 
-def _free_port() -> int:
-    with socket.socket() as sock:
-        sock.bind(("127.0.0.1", 0))
-        return int(sock.getsockname()[1])
-
-
-@contextmanager
-def serve(app):
-    """Run a real uvicorn server in a background thread."""
-
-    port = _free_port()
-    server = uvicorn.Server(
-        uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
-    )
-    thread = threading.Thread(target=server.run, daemon=True)
-    thread.start()
-    deadline = time.monotonic() + 30
-    while not server.started and time.monotonic() < deadline:
-        time.sleep(0.02)
-    if not server.started:
-        raise RuntimeError("uvicorn test server did not start")
-    try:
-        yield f"http://127.0.0.1:{port}"
-    finally:
-        server.should_exit = True
-        thread.join(timeout=20)
-
-
 def names(report: ValidationReport) -> set[str]:
     return {check.name for check in report.checks}
 
@@ -85,7 +54,7 @@ def failing(report: ValidationReport) -> list[CheckResult]:
 
 
 def test_validator_accepts_the_onboarding_template(template) -> None:
-    with serve(template.app) as base_url:
+    with serve_app(template.app) as base_url:
         report = run_validation(
             base_url=base_url,
             workload_path=TEMPLATE_WORKLOAD_PATH,
@@ -103,7 +72,7 @@ def test_validator_accepts_the_onboarding_template(template) -> None:
 
 
 def test_validator_probes_every_declared_version_for_every_scenario(template) -> None:
-    with serve(template.app) as base_url:
+    with serve_app(template.app) as base_url:
         report = run_validation(
             base_url=base_url,
             workload_path=TEMPLATE_WORKLOAD_PATH,
@@ -123,7 +92,7 @@ def test_validator_validates_the_workload_against_the_json_schema(template, tmp_
     path = tmp_path / "broken-workload.json"
     path.write_text(json.dumps(broken), encoding="utf-8")
 
-    with serve(template.app) as base_url:
+    with serve_app(template.app) as base_url:
         report = run_validation(base_url=base_url, workload_path=path, timeout_seconds=10)
 
     schema_checks = [check for check in report.checks if check.name == "workload-schema"]
@@ -133,7 +102,7 @@ def test_validator_validates_the_workload_against_the_json_schema(template, tmp_
 
 
 def test_validator_reports_a_broken_capability_declaration(faulty) -> None:
-    with serve(faulty.create_app("capabilities")) as base_url:
+    with serve_app(faulty.create_app("capabilities")) as base_url:
         report = run_validation(base_url=base_url, timeout_seconds=10)
 
     assert report.ok is False
@@ -142,7 +111,7 @@ def test_validator_reports_a_broken_capability_declaration(faulty) -> None:
 
 
 def test_validator_rejects_a_declared_version_that_is_not_served(faulty) -> None:
-    with serve(faulty.create_app("version")) as base_url:
+    with serve_app(faulty.create_app("version")) as base_url:
         report = run_validation(base_url=base_url, timeout_seconds=10)
 
     assert report.ok is False
@@ -152,7 +121,7 @@ def test_validator_rejects_a_declared_version_that_is_not_served(faulty) -> None
 
 
 def test_validator_rejects_a_declared_intervention_that_fails(faulty) -> None:
-    with serve(faulty.create_app("intervention")) as base_url:
+    with serve_app(faulty.create_app("intervention")) as base_url:
         report = run_validation(base_url=base_url, timeout_seconds=10)
 
     assert report.ok is False
@@ -162,7 +131,7 @@ def test_validator_rejects_a_declared_intervention_that_fails(faulty) -> None:
 
 
 def test_validator_rejects_a_response_that_violates_the_contract(faulty) -> None:
-    with serve(faulty.create_app("response")) as base_url:
+    with serve_app(faulty.create_app("response")) as base_url:
         report = run_validation(base_url=base_url, timeout_seconds=10)
 
     assert report.ok is False
@@ -174,7 +143,7 @@ def test_validator_rejects_a_response_that_violates_the_contract(faulty) -> None
 
 
 def test_validator_rejects_a_missing_health_endpoint(faulty) -> None:
-    with serve(faulty.create_app("health")) as base_url:
+    with serve_app(faulty.create_app("health")) as base_url:
         report = run_validation(base_url=base_url, timeout_seconds=10)
 
     assert report.ok is False
@@ -182,7 +151,7 @@ def test_validator_rejects_a_missing_health_endpoint(faulty) -> None:
 
 
 def test_validator_rejects_a_sut_that_silently_accepts_undeclared_versions(faulty) -> None:
-    with serve(faulty.create_app("silent")) as base_url:
+    with serve_app(faulty.create_app("silent")) as base_url:
         report = run_validation(base_url=base_url, timeout_seconds=10)
 
     assert report.ok is False
@@ -193,7 +162,7 @@ def test_validator_rejects_a_sut_that_silently_accepts_undeclared_versions(fault
 
 
 def test_validator_fails_loudly_when_the_sut_is_unreachable() -> None:
-    base_url = f"http://127.0.0.1:{_free_port()}"
+    base_url = f"http://127.0.0.1:{free_port()}"
     report = run_validation(base_url=base_url, timeout_seconds=2)
 
     assert report.ok is False
@@ -214,7 +183,7 @@ def test_validator_rejects_a_workload_path_that_does_not_exist(tmp_path: Path) -
 
 
 def test_report_serialises_to_ci_friendly_json(template) -> None:
-    with serve(template.app) as base_url:
+    with serve_app(template.app) as base_url:
         report = run_validation(base_url=base_url, timeout_seconds=10)
 
     payload = report.to_json()
@@ -227,7 +196,7 @@ def test_report_serialises_to_ci_friendly_json(template) -> None:
 
 def test_cli_exit_codes_and_json_report(template, tmp_path: Path, capsys) -> None:
     report_path = tmp_path / "report.json"
-    with serve(template.app) as base_url:
+    with serve_app(template.app) as base_url:
         good = main(
             [
                 "--base-url",
@@ -245,7 +214,7 @@ def test_cli_exit_codes_and_json_report(template, tmp_path: Path, capsys) -> Non
     assert written["ok"] is True
     assert "[PASS]" in capsys.readouterr().out
 
-    bad = main(["--base-url", f"http://127.0.0.1:{_free_port()}", "--timeout-seconds", "2"])
+    bad = main(["--base-url", f"http://127.0.0.1:{free_port()}", "--timeout-seconds", "2"])
     assert bad == 1
 
 

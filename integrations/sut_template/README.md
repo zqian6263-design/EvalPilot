@@ -3,7 +3,7 @@
 把 EvalPilot 接到你自己的 HTTP 服务上，不需要读 EvalPilot 的内部代码：只要实现下面三个
 端点，就能跑出带证据的版本回归报告。
 
-本目录是一个最小可运行示例，包含两个版本和一个白名单 intervention，可直接跑通
+本目录是一个最小可运行示例，包含两个版本和两个白名单 intervention，可直接跑通
 `scripts/validate-sut.ps1`。
 
 ```
@@ -57,7 +57,7 @@ pwsh -NoProfile -File .\scripts\validate-sut.ps1 `
 {
   "contract_version": "1.0",
   "versions": ["v1.0-baseline", "v1.1-candidate"],
-  "interventions": ["full_context_enabled"],
+  "interventions": ["compression_disabled", "full_context_restored"],
   "features": ["citations", "tool_calls", "refusal", "offline_cache"]
 }
 ```
@@ -70,7 +70,7 @@ pwsh -NoProfile -File .\scripts\validate-sut.ps1 `
 {
   "run_id": "run uuid",
   "test_case_id": "case uuid",
-  "scenario_id": "refund-window",
+  "scenario_id": "refund-return-window",
   "question": "How many days do I have to return a product for a refund?",
   "version": "v1.1-candidate",
   "intervention": null
@@ -104,12 +104,13 @@ pwsh -NoProfile -File .\scripts\validate-sut.ps1 `
 
 `workload.json` 里 8 个场景全部指向模板自带的知识库，可以直接评估：
 
-- 3 个对照场景（`refund-window`、`refund-method`、`shipping-sla`）在两个版本上答案相同；
-- 5 个回归场景（`refund-timing`、`express-cutoff`、`escalation-human`、
-  `escalation-timeframe`、`security-password-request`）的必含事实所在的句子，会被候选版本的
+- 3 个对照场景（`refund-return-window`、`refund-payout-method`、`shipping-standard-sla`）在两个版本上答案相同；
+- 5 个回归场景（`refund-processing-time`、`shipping-express-cutoff`、`escalation-human-handoff`、
+  `escalation-deadline`、`credential-handling-policy`）的必含事实所在的句子，会被候选版本的
   压缩层删除；
-- 这 5 个场景声明了 `suggested_intervention: "full_context_enabled"`，用它可以做
-  反事实重放，确认根因。
+- 这 5 个场景声明了 `suggested_intervention: "full_context_restored"`——模板自定义的名字，
+  不在评测引擎内置词表里，因此它也顺带验证了「外部服务自定义 intervention 会被真正下发并
+  测量」这条路径。`compression_disabled` 是引擎内置词表中语义相同的名字，声明哪个都可以。
 
 替换成你自己的场景时，`must_include` 必须是基线版本真实能答出来的内容，否则基线自己就
 不合格——`backend/tests/test_sut_template_contract.py` 会检查这一点。

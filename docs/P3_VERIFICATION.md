@@ -36,13 +36,41 @@ Detected regressions:
 - `tenant-identity-injection`
 - `tenant-camelcase-alias-injection`
 
-Counterfactual results:
+Counterfactual results (**predicted, not measured** — see the correction below):
 
 | Scenario | Intervention | Original | Replay | Verdict |
 |---|---|---:|---:|---|
 | `tenant-metadata-overwrite` | `identity_metadata_stripped` | 0.50 | 0.95 | `root_cause` |
 | `tenant-identity-injection` | `identity_metadata_stripped` | 0.6667 | 0.9667 | `root_cause` |
 | `tenant-camelcase-alias-injection` | `identity_metadata_stripped` | 0.6667 | 0.9667 | `root_cause` |
+
+### Correction (2026-09-14, P5 evidence audit)
+
+The three rows above are the deterministic fallback's **predictions**, not replay
+measurements. Re-reading the persisted run
+(`.runtime/p3-browser-f06b723a40734f9f90631d39fd42a7ff/evalpilot.db`) shows:
+
+- `0` trace evidence rows whose request carries an intervention (the P1 mem0 run
+  of the same era has `3`, so the audit distinguishes the two);
+- `counterfactual_experiments.rationale` reads "Replaying
+  'tenant-metadata-overwrite' with 'identity_metadata_stripped'
+  (post-generation mandatory-clause validator) is **predicted** to restore the
+  scenario to 0.9...", which is the fallback's wording, not the engine's
+  "Replayed ... score 0.50 -> 1.00".
+
+Root cause is **not** the enum-only intervention accessor that broke the MCP
+adapter (this intervention is a built-in member). The browser replay cannot
+execute outside the runner at all: `CounterfactualEngine._measure` passes the
+investigation's reading source as the executor's `db`, and
+`BrowserCaseExecutor.execute` requires `db.run_artifact_dir(...)`, which
+`RepositoryReadingSource` does not implement — so the engine raises and the
+provider falls back.
+
+Status: **unfixed, open**. `scripts/p3-browser-check.ps1` does not yet assert a
+measured replay, so the browser counterfactual claim is currently unsupported by
+evidence. Fixing it means extending the replay reading-seam for browser cases
+and re-running the browser acceptance; that is a separate task and no claim of a
+fix is made here.
 
 ## Repository-wide checks
 

@@ -74,7 +74,10 @@ class CounterfactualRequest:
     evidence_ids: tuple[str, ...] = ()
     failure_kind: FailureKind = "unknown"
     #: Intervention the recalled incident history points at, when there is one.
-    suggested_intervention: Intervention | None = None
+    #: A built-in :class:`~evalpilot.counterfactual.models.Intervention` member or
+    #: any non-blank name an external system under test declared in its
+    #: capability response.
+    suggested_intervention: Intervention | str | None = None
 
 
 @dataclass(frozen=True)

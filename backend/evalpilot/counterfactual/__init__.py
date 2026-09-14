@@ -52,6 +52,9 @@ from .models import (
     Intervention,
     ReplayRunResult,
     ReplayRunSummary,
+    coerce_intervention,
+    intervention_executor_value,
+    intervention_name,
 )
 from .reading import (
     REPLAY_CONDITION_KEY,
@@ -77,5 +80,8 @@ __all__ = [
     "InvestigationReadingSource",
     "ReplayRunResult",
     "ReplayRunSummary",
+    "coerce_intervention",
+    "intervention_executor_value",
+    "intervention_name",
     "resolve_evidence",
 ]
